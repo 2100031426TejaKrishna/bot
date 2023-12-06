@@ -1,11 +1,16 @@
 import React, { Component } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
+// import { insertQuestionData } from './database';
 
 class CreateQuestion extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      question: '',
+      marks: '',
+      explanation: '',
+      nextQuestion: '',
       questionType: '',
       selectedOption: 'multipleChoice',
       options: [{ label: 'Option 1', value: 'Option 1' }],
@@ -136,7 +141,11 @@ class CreateQuestion extends Component {
         };
       }
     });
-};
+  };
+
+  handleInputChange = (e) => {
+    this.setState({ [e.target.id]: e.target.value });
+  };
 
   handleOptionChange = (index, value) => {
     const { options } = this.state;
@@ -144,6 +153,10 @@ class CreateQuestion extends Component {
       i === index ? { ...option, label: value, value: value } : option
     ));
     this.setState({ options: updatedOptions });
+  };
+
+  handleOptionInputChange = (e, index) => {
+    this.handleOptionChange(index, e.target.value);
   };
 
   handleGridRowChange = (rowIndex, value) => {
@@ -168,14 +181,13 @@ class CreateQuestion extends Component {
                   type={selectedOption === 'multipleChoice' ? 'radio' : 'checkbox'}
                   className="form-check-input"
                   checked={option.isCorrect}
-                  onChange={() => this.setCorrectAnswer(index)}
                   disabled={this.state.isLeadingQuestion}
                 />
                 <input
                   type="text"
                   className="form-control mx-2"
-                  value={option.label}
                   onChange={(e) => this.handleOptionChange(index, e.target.value)}
+                  placeholder={`Option ${index + 1}`}
                 />
                 {options.length > 1 && (
                   <button
@@ -249,8 +261,8 @@ class CreateQuestion extends Component {
                 <input
                   type="text"
                   className="form-control mx-2"
-                  value={option.label}
                   onChange={(e) => this.handleOptionChange(index, e.target.value)}
+                  placeholder={`Option ${index + 1}`}
                 />
                 {options.length > 1 && (
                   <button
@@ -320,7 +332,7 @@ class CreateQuestion extends Component {
                               />
                               <input
                                 type="text"
-                                className="form-control"
+                                className="form-control mx-2"
                                 placeholder={`Column ${rowIndex + 1}`}
                               />
                             </>
@@ -373,21 +385,41 @@ class CreateQuestion extends Component {
     }));
   };
 
-  setCorrectAnswer = (index) => {
-    if (this.state.isLeadingQuestion) return;
-
-    const updatedOptions = this.state.options.map((option, i) => ({
-      ...option,
-      isCorrect: i === index,
-    }));
-    this.setState({ options: updatedOptions });
-  };
-
   toggleExplanation = () => {
     this.setState((prevState) => ({
       showExplanation: !prevState.showExplanation,
     }));
   };
+
+  handleInputChange = (e) => {
+    this.setState({ [e.target.id]: e.target.value });
+  };
+  
+  handleSubmit = async (e) => {
+    e.preventDefault();
+  
+    const { questionType, question, selectedOption, options, isLeadingQuestion, marks, showCountry, countries, explanation, nextQuestion } = this.state;
+    
+    const formattedOptions = options.map(option => ({
+      label: option.label,
+      nextQuestion: isLeadingQuestion ? nextQuestion : undefined
+    }));
+  
+    const dataToInsert = {
+      questionType,
+      question,
+      optionType: selectedOption,
+      options: formattedOptions,
+      correctAnswer: options.find(option => option.isCorrect)?.label,
+      mark: isLeadingQuestion ? undefined : marks,
+      specificCountry: showCountry ? countries : undefined,
+      explanation: explanation,
+      nextQuestion: isLeadingQuestion ? undefined : nextQuestion
+    };
+  
+    // await insertQuestionData(dataToInsert);
+  };
+  
 
   render() {
     const { questionType, selectedOption, showCountry, countries, isLeadingQuestion, showExplanation } = this.state;
@@ -457,15 +489,15 @@ class CreateQuestion extends Component {
                     <label htmlFor="question" className="col-form-label">
                       Question:
                     </label>
-                    <input type="text" className="form-control" id="question" />
+                    <input type="text" className="form-control" id="question" value={this.state.question} onChange={this.handleInputChange} />
                   </div>
                   <div className="mb-3">
-                    <label htmlFor="optionsSelection" className="col-form-label">
-                      Options Selection:
+                    <label htmlFor="optionsType" className="col-form-label">
+                      Options Types:
                     </label>
                     <select
                       className="form-select"
-                      id="optionsSelection"
+                      id="optionsType"
                       value={selectedOption}
                       onChange={(e) => this.setState({ selectedOption: e.target.value })}
                     >
@@ -485,15 +517,15 @@ class CreateQuestion extends Component {
                       <label htmlFor="explanation" className="col-form-label">
                         {explanationLabel}:
                       </label>
-                      <textarea className="form-control" id="explanation"></textarea>
+                      <textarea className="form-control" id="explanation" value={this.state.explanation} onChange={this.handleInputChange}></textarea>
                     </div>
                   )}
                   {!isLeadingQuestion && (
                     <div className="mb-3">
-                      <label htmlFor="marks" className="col-form-label">
+                      <label htmlFor="mark" className="col-form-label">
                         Marks:
                       </label>
-                      <input type="text" className="form-control" id="marks" />
+                      <input type="text" className="form-control" id="mark" value={this.state.marks} onChange={this.handleInputChange} />
                     </div>
                   )}
                   {showCountry && (
@@ -501,7 +533,7 @@ class CreateQuestion extends Component {
                       <label htmlFor="country" className="col-form-label">
                         Country:
                       </label>
-                      <select className="form-select" aria-label="Country" id="country">
+                      <select className="form-select" aria-label="Country" id="country" value={this.state.country} onChange={this.handleInputChange}>
                         {countries.map((country, index) => (
                           <option key={index} value={country}>{country}</option>
                         ))}
@@ -554,7 +586,7 @@ class CreateQuestion extends Component {
                       </label>
                     </div>
                   </div>
-                  <button type="button" className="btn btn-dark">
+                  <button type="button" className="btn btn-dark" onClick={this.handleSubmit}>
                     Submit
                   </button>
                 </div>
