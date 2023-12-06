@@ -84,6 +84,7 @@ class CreateQuestion extends Component {
 
   addOption = (e) => {
     e.preventDefault();
+    e.stopPropagation()
     this.setState((prevState) => ({
       options: [...prevState.options, { label: `Option ${prevState.options.length + 1}`, value: `Option ${prevState.options.length + 1}` }],
     }));
@@ -95,9 +96,14 @@ class CreateQuestion extends Component {
     }));
   };
   
-  addGridRow = () => {
+  addGridRow = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     this.setState(prevState => ({
-      gridOptions: [...prevState.gridOptions, { rowLabel: '', columnLabels: Array(prevState.gridOptions[0].columnLabels.length).fill('') }]
+      gridOptions: [
+        ...prevState.gridOptions, 
+        { rowLabel: '', columnLabels: [] } 
+      ]
     }));
   };
   
@@ -107,14 +113,30 @@ class CreateQuestion extends Component {
     }));
   };
   
-  addGridColumn = () => {
-    this.setState(prevState => ({
-      gridOptions: prevState.gridOptions.map(row => ({
-        ...row,
-        columnLabels: [...row.columnLabels, '']
-      }))
-    }));
-  };
+  addGridColumn = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    this.setState(prevState => {
+      const allRowsHaveColumns = prevState.gridOptions.every(row => row.columnLabels.length > 0);
+      if (allRowsHaveColumns) {
+        return {
+          gridOptions: [
+            ...prevState.gridOptions,
+            { rowLabel: '', columnLabels: [''] } 
+          ]
+        };
+      } else {
+        return {
+          gridOptions: prevState.gridOptions.map((row, index, array) => {
+            if (index === array.findIndex(r => r.columnLabels.length < array[0].columnLabels.length)) {
+                return { ...row, columnLabels: [...row.columnLabels, ''] };
+            }
+            return row;
+          })
+        };
+      }
+    });
+};
 
   handleOptionChange = (index, value) => {
     const { options } = this.state;
@@ -129,20 +151,6 @@ class CreateQuestion extends Component {
     const updatedGridOptions = gridOptions.map((row, i) => (
       i === rowIndex ? { ...row, rowLabel: value } : row
     ));
-    this.setState({ gridOptions: updatedGridOptions });
-  };
-
-  handleGridColumnChange = (rowIndex, colIndex, value) => {
-    const { gridOptions } = this.state;
-    const updatedGridOptions = gridOptions.map((row, i) => {
-      if (i === rowIndex) {
-        const updatedColumnLabels = row.columnLabels.map((label, j) => (
-          j === colIndex ? value : label
-        ));
-        return { ...row, columnLabels: updatedColumnLabels };
-      }
-      return row;
-    });
     this.setState({ gridOptions: updatedGridOptions });
   };
 
@@ -300,7 +308,7 @@ class CreateQuestion extends Component {
                               <input
                                 type="text"
                                 className="form-control mx-2"
-                                placeholder={`Column ${colIndex + 1}`}
+                                placeholder={`Column ${rowIndex + 1}`}
                               />
                             </>
                           ) : (
@@ -313,23 +321,38 @@ class CreateQuestion extends Component {
                               <input
                                 type="text"
                                 className="form-control"
-                                placeholder={`Column ${colIndex + 1}`}
+                                placeholder={`Column ${rowIndex + 1}`}
                               />
                             </>
+                          )}
+                          {gridOptions.length > 1 && (
+                            <button
+                              className="btn btn-outline-secondary"
+                              type="button"
+                              onClick={() => this.deleteGridRow(rowIndex)} // Add this line
+                            >
+                              &times;
+                            </button>
                           )}
                         </div>
                       </td>
                     ))}
                   </tr>
                 ))}
+                <tr>
+                  <td>
+                    <button className="btn btn-outline-dark" onClick={this.addGridRow}>
+                      Add Row
+                    </button>
+                  </td>
+                  <td colSpan={gridOptions[0].columnLabels.length}>
+                    <button className="btn btn-outline-dark" onClick={this.addGridColumn}>
+                      Add Column
+                    </button>
+                  </td>
+                </tr>
               </tbody>
             </table>
-            <button className="btn btn-outline-dark" onClick={this.addGridRow}>
-              Add Row
-            </button>
-            <button className="btn btn-outline-dark" onClick={this.addGridColumn}>
-              Add Column
-            </button>
           </>
         );
   
@@ -387,7 +410,7 @@ class CreateQuestion extends Component {
             </div>
           </div>
         </nav>
-        <div className="modal fade" id="createQuestion" tabIndex="-1" aria-labelledby="createQuestionLabel" aria-hidden="true" onHidden={this.resetState}>
+        <div className="modal fade" id="createQuestion" tabIndex="-1" aria-labelledby="createQuestionLabel" aria-hidden="true">
           <div className="modal-dialog modal-dialog-scrollable modal-lg">
             <div className="modal-content">
               <div className="modal-header">
@@ -489,46 +512,52 @@ class CreateQuestion extends Component {
                 </form>
               </div>
               <div className="modal-footer">
-              <div className="form-check form-switch form-check-inline">
-                    <input
-                      className="form-check-input"
-                      type="checkbox"
-                      role="switch"
-                      id="specific"
-                      onChange={this.toggleCountryDropdown}
-                    />
-                    <label className="form-check-label" htmlFor="specific">
-                      Specific Country
-                    </label>
+                <div className="d-flex justify-content-between w-100">
+                  <div>
+                    <div className="form-check form-switch form-check-inline">
+                      <input
+                        className="form-check-input"
+                        type="checkbox"
+                        role="switch"
+                        id="specific"
+                        checked={showCountry}
+                        onChange={this.toggleCountryDropdown}
+                      />
+                      <label className="form-check-label" htmlFor="specific">
+                        Specific Country
+                      </label>
+                    </div>
+                    <div className="form-check form-switch form-check-inline">
+                      <input
+                        className="form-check-input"
+                        type="checkbox"
+                        role="switch"
+                        id="leading"
+                        checked={isLeadingQuestion}
+                        onChange={this.toggleLeadingQuestion}
+                      />
+                      <label className="form-check-label" htmlFor="leading">
+                        Leading Question
+                      </label>
+                    </div>
+                    <div className="form-check form-switch form-check-inline">
+                      <input
+                        className="form-check-input"
+                        type="checkbox"
+                        role="switch"
+                        id="explanationCheck"
+                        checked={showExplanation}
+                        onChange={this.toggleExplanation}
+                      />
+                      <label className="form-check-label" htmlFor="explanationCheck">
+                        {explanationLabel}
+                      </label>
+                    </div>
                   </div>
-                  <div className="form-check form-switch form-check-inline">
-                    <input
-                      className="form-check-input"
-                      type="checkbox"
-                      role="switch"
-                      id="leading"
-                      checked={isLeadingQuestion}
-                      onChange={this.toggleLeadingQuestion}
-                    />
-                    <label className="form-check-label" htmlFor="leading">
-                      Leading Question
-                    </label>
-                  </div>
-                  <div className="form-check form-switch form-check-inline">
-                    <input
-                      className="form-check-input"
-                      type="checkbox"
-                      role="switch"
-                      id="explanationCheck"
-                      onChange={this.toggleExplanation}
-                    />
-                    <label className="form-check-label" htmlFor="explanationCheck">
-                      {explanationLabel}
-                    </label>
-                  </div>
-                <button type="button" className="btn btn-dark">
-                  Submit
-                </button>
+                  <button type="button" className="btn btn-dark">
+                    Submit
+                  </button>
+                </div>
               </div>
             </div>
           </div>
