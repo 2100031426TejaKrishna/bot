@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
-// import { insertQuestionData } from './database';
 
 class CreateQuestion extends Component {
   constructor(props) {
@@ -58,6 +57,7 @@ class CreateQuestion extends Component {
         "Vanuatu", "Vatican City", "Venezuela", "Vietnam", "Yemen",
         "Zambia", "Zimbabwe"
       ],
+      selectedCountries: [],
       isLeadingQuestion: false,
       showExplanation: false,
       minScale: 1,
@@ -65,16 +65,11 @@ class CreateQuestion extends Component {
     };
 
     this.initialState = { ...this.state };
-
     this.resetState = this.resetState.bind(this);
   }
 
   resetState() {
-    this.setState({
-      ...this.initialState,
-      showCountry: false, 
-      showExplanation: false,
-    });
+    this.setState({ ...this.initialState });
   }
 
   componentDidMount() {
@@ -144,7 +139,18 @@ class CreateQuestion extends Component {
   };
 
   handleInputChange = (e) => {
-    this.setState({ [e.target.id]: e.target.value });
+    if (e.target.id === "country") {
+      const options = e.target.options;
+      const selectedCountries = [];
+      for (let i = 0; i < options.length; i++) {
+        if (options[i].selected) {
+          selectedCountries.push(options[i].value);
+        }
+      }
+      this.setState({ selectedCountries });
+    } else {
+      this.setState({ [e.target.id]: e.target.value });
+    }
   };
 
   handleOptionChange = (index, value) => {
@@ -341,7 +347,7 @@ class CreateQuestion extends Component {
                             <button
                               className="btn btn-outline-secondary"
                               type="button"
-                              onClick={() => this.deleteGridRow(rowIndex)} // Add this line
+                              onClick={() => this.deleteGridRow(rowIndex)}
                             >
                               &times;
                             </button>
@@ -391,14 +397,10 @@ class CreateQuestion extends Component {
     }));
   };
 
-  handleInputChange = (e) => {
-    this.setState({ [e.target.id]: e.target.value });
-  };
-  
   handleSubmit = async (e) => {
     e.preventDefault();
   
-    const { questionType, question, selectedOption, options, isLeadingQuestion, marks, showCountry, countries, explanation, nextQuestion } = this.state;
+    const { questionType, question, selectedOption, options, isLeadingQuestion, marks, showCountry, countries, selectedCountries, explanation, nextQuestion } = this.state;
     
     const formattedOptions = options.map(option => ({
       label: option.label,
@@ -417,12 +419,27 @@ class CreateQuestion extends Component {
       nextQuestion: isLeadingQuestion ? undefined : nextQuestion
     };
   
-    // await insertQuestionData(dataToInsert);
+    try {
+      const response = await fetch('http://localhost:5000/insertQuestion', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(dataToInsert),
+      });
+
+      if (response.ok) {
+          console.log("Data submitted successfully");
+      } else {
+          console.error("Error submitting data");
+      }
+    } catch (error) {
+        console.error("Network error:", error);
+    }
   };
-  
 
   render() {
-    const { questionType, selectedOption, showCountry, countries, isLeadingQuestion, showExplanation } = this.state;
+    const { questionType, selectedOption, showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
 
     return (
@@ -533,7 +550,7 @@ class CreateQuestion extends Component {
                       <label htmlFor="country" className="col-form-label">
                         Country:
                       </label>
-                      <select className="form-select" aria-label="Country" id="country" value={this.state.country} onChange={this.handleInputChange}>
+                      <select className="form-select" aria-label="Country" id="country" value={selectedCountries} onChange={this.handleInputChange} multiple size="5">
                         {countries.map((country, index) => (
                           <option key={index} value={country}>{country}</option>
                         ))}

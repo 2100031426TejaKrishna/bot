@@ -1,4 +1,4 @@
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion } = require('mongodb');
 
 const uri = "mongodb+srv://rethinkpack:RTfhUb5xVCI4QUhK@rtpdb.eswmapx.mongodb.net/?retryWrites=true&w=majority";
 
@@ -10,10 +10,6 @@ const client = new MongoClient(uri,  {
         }
     }
 );
-
-const database = client.db("rethinkpackDB");
-const collectionName = "Question";
-const collection = database.collection(collectionName);
 
 async function run() {
   try {
@@ -31,16 +27,16 @@ async function run() {
 }
 run().catch(console.dir);
 
-async function insertQuestionData(data) {
+async function insertQuestion(questionData) {
   try {
-    if (!client.isConnected()) {
-      await client.connect();
-    }
-    await collection.insertOne(data);
-    console.log("Data inserted successfully");
-  } catch (e) {
-    console.error(e);
+    await client.connect();
+
+    const database = client.db("Questions");
+    const collection = database.collection("Questions");
+    const result = await collection.insertOne(questionData);
+
+    return result;
+  } finally {
+    await client.close();
   }
 }
-
-module.exports = { insertQuestionData };
