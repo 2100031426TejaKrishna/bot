@@ -40,3 +40,5 @@ async function insertQuestion(questionData) {
     await client.close();
   }
 }
+
+module.exports = { insertQuestion };

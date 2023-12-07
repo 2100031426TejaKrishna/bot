@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
+// import { insertQuestion } from './database';
 
 class CreateQuestion extends Component {
   constructor(props) {
@@ -416,42 +417,44 @@ class CreateQuestion extends Component {
 
   handleSubmit = async (e) => {
     e.preventDefault();
-  
-    const { questionType, question, selectedOption, options, isLeadingQuestion, marks, showCountry, countries, selectedCountries, explanation, nextQuestion } = this.state;
-    
-    const formattedOptions = options.map(option => ({
-      label: option.label,
-      nextQuestion: isLeadingQuestion ? nextQuestion : undefined
-    }));
-  
+
+    const {
+      questionType,
+      question,
+      selectedOption,
+      options,
+      isLeadingQuestion,
+      marks,
+      showCountry,
+      selectedCountries,
+      explanation,
+      nextQuestion,
+    } = this.state;
+
     const dataToInsert = {
       questionType,
       question,
       optionType: selectedOption,
-      options: formattedOptions,
-      correctAnswer: options.find(option => option.isCorrect)?.label,
-      mark: isLeadingQuestion ? undefined : marks,
-      specificCountry: showCountry ? countries : undefined,
+      options: options.map((option) => ({
+        label: option.label,
+        isCorrect: option.isCorrect || false, 
+      })),
+      marks: isLeadingQuestion ? undefined : marks,
+      countries: showCountry ? selectedCountries : undefined,
       explanation: explanation,
-      nextQuestion: isLeadingQuestion ? undefined : nextQuestion
+      nextQuestion: isLeadingQuestion ? undefined : nextQuestion,
     };
-  
-    try {
-      const response = await fetch('database/insertQuestion', {
-          method: 'POST',
-          headers: {
-              'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(dataToInsert),
-      });
 
-      if (response.ok) {
-          console.log("Data submitted successfully");
+    try {
+      const result = await insertQuestion(dataToInsert); 
+
+      if (result && result.insertedCount === 1) {
+        console.log('Data submitted successfully');
       } else {
-          console.error("Error submitting data");
+        console.error('Error submitting data');
       }
     } catch (error) {
-        console.error("Network error:", error);
+      console.error('Network error:', error);
     }
   };
 
