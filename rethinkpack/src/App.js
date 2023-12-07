@@ -184,7 +184,7 @@ class CreateQuestion extends Component {
             {options.map((option, index) => (
               <div key={index} className="d-flex align-items-center mb-2">
                 <input
-                  type={selectedOption === 'multipleChoice' ? 'radio' : 'checkbox'}
+                  type={selectedOption === 'multipleChoice' ? 'checkbox' : 'checkbox'}
                   className="form-check-input"
                   checked={option.isCorrect}
                   disabled={this.state.isLeadingQuestion}
@@ -397,6 +397,23 @@ class CreateQuestion extends Component {
     }));
   };
 
+  handleCountryChange = (event) => {
+    const { value } = event.target;
+    this.setState((prevState) => {
+      if (prevState.selectedCountries.includes(value)) {
+        return {
+          selectedCountries: prevState.selectedCountries.filter(
+            (country) => country !== value
+          ),
+        };
+      } else {
+        return {
+          selectedCountries: [...prevState.selectedCountries, value],
+        };
+      }
+    });
+  };
+
   handleSubmit = async (e) => {
     e.preventDefault();
   
@@ -420,7 +437,7 @@ class CreateQuestion extends Component {
     };
   
     try {
-      const response = await fetch('http://localhost:5000/insertQuestion', {
+      const response = await fetch('database/insertQuestion', {
           method: 'POST',
           headers: {
               'Content-Type': 'application/json',
@@ -545,19 +562,41 @@ class CreateQuestion extends Component {
                       <input type="text" className="form-control" id="mark" value={this.state.marks} onChange={this.handleInputChange} />
                     </div>
                   )}
-                  {showCountry && (
+                  {/* {showCountry && (
                     <div className="mb-3">
                       <label htmlFor="country" className="col-form-label">
                         Country:
                       </label>
-                      <select className="form-select" aria-label="Country" id="country" value={selectedCountries} onChange={this.handleInputChange} multiple size="5">
+                      <select className="form-select" aria-label="Country" id="country" value={selectedCountries} onChange={this.handleInputChange} size="5">
                         {countries.map((country, index) => (
                           <option key={index} value={country}>{country}</option>
                         ))}
                       </select>
                     </div>
+                  )} */}
+                  {showCountry && (
+                    <div className="mb-3">
+                      <label className="col-form-label">Country:</label>
+                      <div style={{ maxHeight: '130px', overflowY: 'auto'}}>
+                        {countries.map((country, index) => (
+                          <div key={index} className="form-check">
+                            <input
+                              type="checkbox"
+                              id={country}
+                              value={country}
+                              checked={selectedCountries.includes(country)}
+                              onChange={this.handleCountryChange}
+                              className="form-check-input"
+                              size={5}
+                            />
+                            <label htmlFor={country} className="form-check-label">
+                              {country}
+                            </label>
+                          </div>
+                        ))}
+                      </div> 
+                    </div>
                   )}
-                  
                 </form>
               </div>
               <div className="modal-footer">
