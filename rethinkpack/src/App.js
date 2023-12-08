@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
-// import { insertQuestion } from './database';
 
 class CreateQuestion extends Component {
   constructor(props) {
@@ -446,9 +445,15 @@ class CreateQuestion extends Component {
     };
 
     try {
-      const result = await insertQuestion(dataToInsert); 
-
-      if (result && result.insertedCount === 1) {
+      const response = await fetch('database/insertQuestion', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dataToInsert),
+      });
+  
+      if (response.ok) {
         console.log('Data submitted successfully');
       } else {
         console.error('Error submitting data');
