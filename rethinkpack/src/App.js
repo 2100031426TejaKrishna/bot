@@ -445,7 +445,7 @@ class CreateQuestion extends Component {
     };
 
     try {
-      const response = await fetch('database/insertQuestion', {
+      const response = await fetch('http://localhost:5000/insertQuestion', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

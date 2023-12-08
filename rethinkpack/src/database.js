@@ -16,17 +16,14 @@ const db = mongoose.connection;
 
 db.once('open', async () => {
   try {
-    // Get the list of database names
     const adminDb = db.db.admin();
     const databaseList = await adminDb.listDatabases();
 
-    // Print the list of database names
     console.log("List of databases:");
     databaseList.databases.forEach((db) => {
       console.log(db.name);
     });
 
-    // Close the database connection
     db.close();
   } catch (error) {
     console.error('Error listing databases:', error);
@@ -40,10 +37,30 @@ db.on('error', (error) => {
 const questionSchema = new mongoose.Schema({
   questionType: String,
   question: String,
-  // ... other fields
+  optionType: String,
+  options: [{
+    text: String,
+    isCorrect: Boolean,
+  }],
+  mark: Number,
+  nextQuestion: mongoose.Schema.Types.ObjectId
 });
 
 const Question = mongoose.model('Questions', questionSchema);
+
+const questionData = {
+  questionType: "Product Information",
+  question: "What is this question?",
+  optionType: "Multiple choice",
+  options: [
+    { text: "abc", isCorrect: false },
+    { text: "bcd", isCorrect: true },
+    { text: "cde", isCorrect: true },
+    { text: "def", isCorrect: false }
+  ],
+  mark: 2,
+  nextQuestion: "Question 2"
+};
 
 app.post('/insertQuestion', async (req, res) => {
   try {
