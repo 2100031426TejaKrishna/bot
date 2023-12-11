@@ -1,8 +1,10 @@
 const mongoose = require('mongoose');
 const express = require('express');
 const bodyParser = require('body-parser');
+const cors = require('cors');
 
 const app = express();
+app.use(cors());
 app.use(bodyParser.json());
 
 const uri = "mongodb+srv://rethinkpack:RTfhUb5xVCI4QUhK@rtpdb.eswmapx.mongodb.net/?retryWrites=true&w=majority";
@@ -23,8 +25,9 @@ db.once('open', async () => {
     databaseList.databases.forEach((db) => {
       console.log(db.name);
     });
+    insertQuestion();
 
-    db.close();
+    // db.close();
   } catch (error) {
     console.error('Error listing databases:', error);
   }
@@ -40,39 +43,66 @@ const questionSchema = new mongoose.Schema({
   optionType: String,
   options: [{
     text: String,
-    isCorrect: Boolean,
+    isCorrect: Boolean
   }],
   mark: Number,
-  nextQuestion: mongoose.Schema.Types.ObjectId
+  countries: [String],
+  explanation: String,
+  recommendation: String,
+  nextQuestion: String
 });
 
-const Question = mongoose.model('Questions', questionSchema);
+const insertQuestion = async () => {
+  const questionData = {
+    questionType: "Product Information",
+    question: "What is this question?",
+    optionType: "Multiple choice",
+    options: [
+      { text: "abc", isCorrect: false },
+      { text: "bcd", isCorrect: true },
+      { text: "cde", isCorrect: true },
+      { text: "def", isCorrect: false }
+    ],
+    mark: 2,
+    nextQuestion: "Question 2"
+  };
 
-const questionData = {
-  questionType: "Product Information",
-  question: "What is this question?",
-  optionType: "Multiple choice",
-  options: [
-    { text: "abc", isCorrect: false },
-    { text: "bcd", isCorrect: true },
-    { text: "cde", isCorrect: true },
-    { text: "def", isCorrect: false }
-  ],
-  mark: 2,
-  nextQuestion: "Question 2"
+  try {
+    const questionsDb = mongoose.connection.useDb('Questions');
+    const collection = questionsDb.collection('questions');
+
+    const result = await collection.insertOne(questionData);
+    console.log("Question inserted with ID:", result.insertedId);
+  } catch (error) {
+    console.error("Error inserting question:", error);
+  }
 };
+
+const questionsDb = mongoose.connection.useDb('Questions');
+const collection = questionsDb.collection('questions');
 
 app.post('/insertQuestion', async (req, res) => {
   try {
-    const newQuestion = new Question(req.body);
-    const result = await newQuestion.save();
-    res.status(200).json(result);
+    let questionData = req.body;
+
+    if (questionData.isLeadingQuestion) {
+      questionData.recommendation = questionData.explanation;
+      delete questionData.explanation;
+      delete questionData.mark;
+    }
+
+    if (!questionData.showCountry) {
+      delete questionData.countries;
+    }
+
+    const result = await collection.insertOne(questionData);
+    console.log("Question inserted with ID:", result.insertedId);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Error inserting question:", error);
   }
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

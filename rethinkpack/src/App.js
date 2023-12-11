@@ -61,7 +61,16 @@ class CreateQuestion extends Component {
       isLeadingQuestion: false,
       showExplanation: false,
       minScale: 1,
-      maxScale: 5
+      maxScale: 5,
+      validationErrors: {
+        questionType: '',
+        question: '',
+        optionType: '',
+        options: '',
+        marks: '',
+        country: '',
+        explanation: '',
+      },
     };
 
     this.initialState = { ...this.state };
@@ -414,8 +423,67 @@ class CreateQuestion extends Component {
     });
   };
 
+  validateQuestionType = () => {
+    const { questionType } = this.state;
+    return questionType !== '';
+  };
+  
+  validateQuestion = () => {
+    const { question } = this.state;
+    return question.trim() !== '';
+  };
+  
+  validateOptionType = () => {
+    const { selectedOption } = this.state;
+    return selectedOption !== '';
+  };
+  
+  validateOptions = () => {
+    const { options } = this.state;
+    return options.length >= 2;
+  };
+  
+  validateMarks = () => {
+    const { marks, isLeadingQuestion } = this.state;
+    return isLeadingQuestion || (marks.trim() !== '' && !isNaN(marks));
+  };
+  
+  validateCountries = () => {
+    const { selectedCountries, showCountry } = this.state;
+    return !showCountry || (selectedCountries.length > 0);
+  };
+  
+  validateExplanation = () => {
+    const { explanation, showExplanation } = this.state;
+    return !showExplanation || explanation.trim() !== '';
+  };  
+
   handleSubmit = async (e) => {
     e.preventDefault();
+
+    const isQuestionTypeValid = this.validateQuestionType();
+    const isQuestionValid = this.validateQuestion();
+    const isOptionTypeValid = this.validateOptionType();
+    const isOptionsValid = this.validateOptions();
+    const isMarksValid = this.validateMarks();
+    const isCountriesValid = this.validateCountries();
+    const isExplanationValid = this.validateExplanation();
+
+    this.setState({
+      validationErrors: {
+        questionType: isQuestionTypeValid ? '' : 'Select one question type',
+        question: isQuestionValid ? '' : 'Enter the question',
+        optionType: isOptionTypeValid ? '' : 'Select an option type',
+        options: isOptionsValid ? '' : 'Add at least two options for this question',
+        marks: isMarksValid ? '' : 'Enter the marks for this question',
+        country: isCountriesValid ? '' : 'Select at least one country',
+        explanation: isExplanationValid ? '' : (this.state.isLeadingQuestion ? 'Enter the recommendation for this question' : 'Enter the explanation for the correct answer'),
+      },
+    });
+
+    if (!isQuestionTypeValid || !isQuestionValid || !isOptionTypeValid || !isOptionsValid || !isMarksValid || !isCountriesValid || !isExplanationValid) {
+      return;
+    }
 
     const {
       questionType,
@@ -427,6 +495,7 @@ class CreateQuestion extends Component {
       showCountry,
       selectedCountries,
       explanation,
+      showExplanation,
       nextQuestion,
     } = this.state;
 
@@ -440,7 +509,9 @@ class CreateQuestion extends Component {
       })),
       marks: isLeadingQuestion ? undefined : marks,
       countries: showCountry ? selectedCountries : undefined,
-      explanation: explanation,
+      explanation: showExplanation ? explanation : undefined,
+      isLeadingQuestion,
+      showCountry,
       nextQuestion: isLeadingQuestion ? undefined : nextQuestion,
     };
 
@@ -456,7 +527,9 @@ class CreateQuestion extends Component {
       if (response.ok) {
         console.log('Data submitted successfully');
       } else {
-        console.error('Error submitting data');
+        console.error('Server responded with an error:', response.status, response.statusText);
+      const responseData = await response.json(); // If the server sends a JSON error response
+      console.error('Server error data:', responseData);
       }
     } catch (error) {
       console.error('Network error:', error);
@@ -464,7 +537,7 @@ class CreateQuestion extends Component {
   };
 
   render() {
-    const { questionType, selectedOption, showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation } = this.state;
+    const { questionType, selectedOption, showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, validationErrors } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
 
     return (
@@ -526,12 +599,22 @@ class CreateQuestion extends Component {
                         </label>
                       </div>
                     </div>
+                    {validationErrors.questionType && (
+                      <div style={{ color: 'red', fontSize: 12 }}>
+                        {validationErrors.questionType}
+                      </div>
+                    )}
                   </div>
                   <div className="mb-3">
                     <label htmlFor="question" className="col-form-label">
                       Question:
                     </label>
                     <input type="text" className="form-control" id="question" value={this.state.question} onChange={this.handleInputChange} />
+                    {validationErrors.question && (
+                      <div style={{ color: 'red', fontSize: 12 }}>
+                        {validationErrors.question}
+                      </div>
+                    )}
                   </div>
                   <div className="mb-3">
                     <label htmlFor="optionsType" className="col-form-label">
@@ -550,9 +633,19 @@ class CreateQuestion extends Component {
                       <option value="multipleChoiceGrid">Multiple Choice Grid</option>
                       <option value="checkboxGrid">Checkbox Grid</option>
                     </select>
+                    {validationErrors.optionType && (
+                      <div style={{ color: 'red', fontSize: 12 }}>
+                        {validationErrors.optionType}
+                      </div>
+                    )}
                   </div>
                   <div className="mb-3" id="optionsArea">
                     {this.renderOptionsArea()}
+                    {validationErrors.options && (
+                      <div style={{ color: 'red', fontSize: 12 }}>
+                        {validationErrors.options}
+                      </div>
+                    )}
                   </div>
                   {showExplanation && (
                     <div className="mb-3">
@@ -560,6 +653,11 @@ class CreateQuestion extends Component {
                         {explanationLabel}:
                       </label>
                       <textarea className="form-control" id="explanation" value={this.state.explanation} onChange={this.handleInputChange}></textarea>
+                      {validationErrors.explanation && (
+                        <div style={{ color: 'red', fontSize: 12 }}>
+                          {validationErrors.explanation}
+                        </div>
+                      )}
                     </div>
                   )}
                   {!isLeadingQuestion && (
@@ -567,21 +665,14 @@ class CreateQuestion extends Component {
                       <label htmlFor="mark" className="col-form-label">
                         Marks:
                       </label>
-                      <input type="text" className="form-control" id="mark" value={this.state.marks} onChange={this.handleInputChange} />
+                      <input type="text" className="form-control" id="marks" value={this.state.marks} onChange={this.handleInputChange} />
+                      {validationErrors.marks && (
+                        <div style={{ color: 'red', fontSize: 12 }}>
+                          {validationErrors.marks}
+                        </div>
+                      )}
                     </div>
                   )}
-                  {/* {showCountry && (
-                    <div className="mb-3">
-                      <label htmlFor="country" className="col-form-label">
-                        Country:
-                      </label>
-                      <select className="form-select" aria-label="Country" id="country" value={selectedCountries} onChange={this.handleInputChange} size="5">
-                        {countries.map((country, index) => (
-                          <option key={index} value={country}>{country}</option>
-                        ))}
-                      </select>
-                    </div>
-                  )} */}
                   {showCountry && (
                     <div className="mb-3">
                       <label className="col-form-label">Country:</label>
@@ -602,7 +693,12 @@ class CreateQuestion extends Component {
                             </label>
                           </div>
                         ))}
-                      </div> 
+                      </div>
+                      {validationErrors.country && (
+                        <div style={{ color: 'red', fontSize: 12 }}>
+                          {validationErrors.country}
+                        </div>
+                      )} 
                     </div>
                   )}
                 </form>
