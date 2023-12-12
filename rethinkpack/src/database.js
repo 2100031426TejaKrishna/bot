@@ -10,8 +10,13 @@ app.use(bodyParser.json());
 const uri = "mongodb+srv://rethinkpack:RTfhUb5xVCI4QUhK@rtpdb.eswmapx.mongodb.net/?retryWrites=true&w=majority";
 
 mongoose.connect(uri, {
+  dbName: 'Questions',
   useNewUrlParser: true,
   useUnifiedTopology: true
+}).then(() => {
+  console.log('Connected to Questions database');
+}).catch(err => {
+  console.error(err);
 });
 
 const db = mongoose.connection;
@@ -25,7 +30,6 @@ db.once('open', async () => {
     databaseList.databases.forEach((db) => {
       console.log(db.name);
     });
-    insertQuestion();
 
     // db.close();
   } catch (error) {
@@ -45,41 +49,23 @@ const questionSchema = new mongoose.Schema({
     text: String,
     isCorrect: Boolean
   }],
+  linearScale: [{
+    scale: Number,
+    label: String
+  }],
   mark: Number,
   countries: [String],
   explanation: String,
   recommendation: String,
-  nextQuestion: String
+  nextQuestion: String,
+  date: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
-const insertQuestion = async () => {
-  const questionData = {
-    questionType: "Product Information",
-    question: "What is this question?",
-    optionType: "Multiple choice",
-    options: [
-      { text: "abc", isCorrect: false },
-      { text: "bcd", isCorrect: true },
-      { text: "cde", isCorrect: true },
-      { text: "def", isCorrect: false }
-    ],
-    mark: 2,
-    nextQuestion: "Question 2"
-  };
-
-  try {
-    const questionsDb = mongoose.connection.useDb('Questions');
-    const collection = questionsDb.collection('questions');
-
-    const result = await collection.insertOne(questionData);
-    console.log("Question inserted with ID:", result.insertedId);
-  } catch (error) {
-    console.error("Error inserting question:", error);
-  }
-};
-
-const questionsDb = mongoose.connection.useDb('Questions');
-const collection = questionsDb.collection('questions');
+const Questions = mongoose.model('questions', questionSchema);
+Questions.createIndexes();
 
 app.post('/insertQuestion', async (req, res) => {
   try {
@@ -95,14 +81,28 @@ app.post('/insertQuestion', async (req, res) => {
       delete questionData.countries;
     }
 
-    const result = await collection.insertOne(questionData);
-    console.log("Question inserted with ID:", result.insertedId);
+    if (questionData.optionType === 'linear') {
+      delete questionData.options;
+    } else {
+      delete questionData.linearScale;
+    }
+    
+    questionData.date = new Date();
+    console.log(questionData);
+
+    const question = new Questions(questionData);
+    let result = await question.save();
+    result = result.toObject();
+    console.log(result);
+
+    res.send(questionData);
   } catch (error) {
     console.error("Error inserting question:", error);
+    res.status(500).send("Something Went Wrong");
   }
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

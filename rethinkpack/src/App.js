@@ -439,7 +439,10 @@ class CreateQuestion extends Component {
   };
   
   validateOptions = () => {
-    const { options } = this.state;
+    const { options, selectedOption } = this.state;
+    if (selectedOption === 'linear') {
+      return true;
+    }
     return options.length >= 2;
   };
   
@@ -490,6 +493,8 @@ class CreateQuestion extends Component {
       question,
       selectedOption,
       options,
+      minScale,
+      maxScale,
       isLeadingQuestion,
       marks,
       showCountry,
@@ -503,10 +508,6 @@ class CreateQuestion extends Component {
       questionType,
       question,
       optionType: selectedOption,
-      options: options.map((option) => ({
-        label: option.label,
-        isCorrect: option.isCorrect || false, 
-      })),
       marks: isLeadingQuestion ? undefined : marks,
       countries: showCountry ? selectedCountries : undefined,
       explanation: showExplanation ? explanation : undefined,
@@ -514,6 +515,20 @@ class CreateQuestion extends Component {
       showCountry,
       nextQuestion: isLeadingQuestion ? undefined : nextQuestion,
     };
+
+    if (selectedOption === 'multipleChoice' || selectedOption === 'checkbox' || selectedOption === 'dropdown') {
+      dataToInsert.options = options.map((option) => ({
+        text: option.label,
+        isCorrect: option.isCorrect || false, 
+      }));
+    }
+  
+    if (selectedOption === 'linear') {
+      dataToInsert.linearScale = [
+        { scale: minScale, label: document.getElementById('scaleLabel' + minScale).value },
+        { scale: maxScale, label: document.getElementById('scaleLabel' + maxScale).value },
+      ];
+    }
 
     try {
       const response = await fetch('http://localhost:5000/insertQuestion', {
@@ -523,12 +538,12 @@ class CreateQuestion extends Component {
         },
         body: JSON.stringify(dataToInsert),
       });
-  
+
       if (response.ok) {
         console.log('Data submitted successfully');
       } else {
         console.error('Server responded with an error:', response.status, response.statusText);
-      const responseData = await response.json(); // If the server sends a JSON error response
+      const responseData = await response.json();
       console.error('Server error data:', responseData);
       }
     } catch (error) {
