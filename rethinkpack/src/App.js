@@ -170,16 +170,24 @@ class CreateQuestion extends Component {
     this.setState({ options: updatedOptions });
   };
 
-  handleOptionInputChange = (e, index) => {
-    this.handleOptionChange(index, e.target.value);
-  };
-
   handleGridRowChange = (rowIndex, value) => {
     const { gridOptions } = this.state;
     const updatedGridOptions = gridOptions.map((row, i) => (
       i === rowIndex ? { ...row, rowLabel: value } : row
     ));
     this.setState({ gridOptions: updatedGridOptions });
+  };
+
+  handleGridColumnChange = (rowIndex, colIndex, value) => {
+    this.setState(prevState => {
+      const updatedGridOptions = [...prevState.gridOptions];
+      if (updatedGridOptions[rowIndex]) {
+        const updatedColumnLabels = [...updatedGridOptions[rowIndex].columnLabels];
+        updatedColumnLabels[colIndex] = value;
+        updatedGridOptions[rowIndex] = { ...updatedGridOptions[rowIndex], columnLabels: updatedColumnLabels };
+      }
+      return { gridOptions: updatedGridOptions };
+    });
   };
 
   renderOptionsArea = () => {
@@ -335,6 +343,8 @@ class CreateQuestion extends Component {
                               <input
                                 type="text"
                                 className="form-control mx-2"
+                                value={col}
+                                onChange={(e) => this.handleGridColumnChange(rowIndex, colIndex, e.target.value)}
                                 placeholder={`Column ${rowIndex + 1}`}
                               />
                             </>
@@ -356,7 +366,7 @@ class CreateQuestion extends Component {
                             <button
                               className="btn btn-outline-secondary"
                               type="button"
-                              onClick={() => this.deleteGridRow(rowIndex)}
+                              onClick={() => this.deleteGridRow(rowIndex, colIndex)}
                             >
                               &times;
                             </button>
@@ -364,6 +374,17 @@ class CreateQuestion extends Component {
                         </div>
                       </td>
                     ))}
+                    {row.columnLabels.length === 0 && (
+                      <td>
+                        <button
+                          className="btn btn-outline-secondary"
+                          type="button"
+                          onClick={() => this.deleteGridRow(rowIndex)}
+                        >
+                          &times;
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))}
                 <tr>
@@ -440,9 +461,10 @@ class CreateQuestion extends Component {
   
   validateOptions = () => {
     const { options, selectedOption } = this.state;
-    if (selectedOption === 'linear') {
+    if (selectedOption === 'linear' || selectedOption === 'multipleChoiceGrid' || selectedOption === 'checkboxGrid') {
       return true;
     }
+
     return options.length >= 2;
   };
   
@@ -493,6 +515,7 @@ class CreateQuestion extends Component {
       question,
       selectedOption,
       options,
+      gridOptions,
       minScale,
       maxScale,
       isLeadingQuestion,
@@ -508,7 +531,7 @@ class CreateQuestion extends Component {
       questionType,
       question,
       optionType: selectedOption,
-      marks: isLeadingQuestion ? undefined : marks,
+      marks: isLeadingQuestion ? undefined : parseFloat(marks),
       countries: showCountry ? selectedCountries : undefined,
       explanation: showExplanation ? explanation : undefined,
       isLeadingQuestion,
@@ -528,6 +551,36 @@ class CreateQuestion extends Component {
         { scale: minScale, label: document.getElementById('scaleLabel' + minScale).value },
         { scale: maxScale, label: document.getElementById('scaleLabel' + maxScale).value },
       ];
+    }
+
+    if (selectedOption === 'multipleChoiceGrid' || selectedOption === 'checkboxGrid') {
+      const rows = gridOptions.map((row) => ({
+        text: row.rowLabel || '',
+        isCorrect: false,
+      }));
+    
+      const columns = gridOptions[0].columnLabels.map((colLabel) => ({
+        text: colLabel || '',
+        isCorrect: false, // You can set the default isCorrect value here
+      }));
+    
+      const gridData = {
+        rows,
+        columns: [], // Initialize an empty columns array
+      };
+    
+      gridOptions.forEach((row, rowIndex) => {
+        row.columnLabels.forEach((colLabel, colIndex) => {
+          if (!gridData.columns[colIndex]) {
+            gridData.columns[colIndex] = {
+              text: colLabel || '',
+              isCorrect: false, // You can set the default isCorrect value here
+            };
+          }
+        });
+      });
+    
+      dataToInsert.grid = gridData;
     }
 
     try {

@@ -53,7 +53,17 @@ const questionSchema = new mongoose.Schema({
     scale: Number,
     label: String
   }],
-  mark: Number,
+  grid: {
+    rows: [{
+        text: String,
+        isCorrect: Boolean
+    }],
+    columns: [{
+      text: String,
+      isCorrect: Boolean
+    }]
+  },  
+  marks: Number,
   countries: [String],
   explanation: String,
   recommendation: String,
@@ -78,13 +88,16 @@ app.post('/insertQuestion', async (req, res) => {
     }
 
     if (!questionData.showCountry) {
-      delete questionData.countries;
+      questionData.countries = undefined;
+      console.log("hello");
     }
 
     if (questionData.optionType === 'linear') {
-      delete questionData.options;
+      questionData.options = undefined;
+      console.log("delete options");
     } else {
-      delete questionData.linearScale;
+      questionData.linearScale = undefined;
+      console.log("delete linear")
     }
     
     questionData.date = new Date();
