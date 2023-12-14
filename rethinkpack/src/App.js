@@ -12,8 +12,8 @@ class CreateQuestion extends Component {
       nextQuestion: '',
       questionType: '',
       selectedOption: 'multipleChoice',
-      options: [{ label: 'Option 1', value: 'Option 1' }],
-      gridOptions: [{ rowLabel: '', columnLabels: [''] }],
+      options: [{ label: 'Option 1', value: 'Option 1', isCorrect: false }],
+      gridOptions: { row: [{ label: 'Row 1', value: 'Row 1' }], column: [{ label: 'Column A', value: 'Column A' }] },
       showCountry: false,
       countries: [
         "Afghanistan", "Albania", "Algeria", "Andorra", "Angola",
@@ -71,6 +71,7 @@ class CreateQuestion extends Component {
         country: '',
         explanation: '',
       },
+      requireResponse: false
     };
 
     this.initialState = { ...this.state };
@@ -95,7 +96,7 @@ class CreateQuestion extends Component {
     e.preventDefault();
     e.stopPropagation()
     this.setState((prevState) => ({
-      options: [...prevState.options, { label: `Option ${prevState.options.length + 1}`, value: `Option ${prevState.options.length + 1}` }],
+      options: [...prevState.options, { label: `Option ${prevState.options.length + 1}`, value: `Option ${prevState.options.length + 1}`, isCorrect: false }],
     }));
   };
 
@@ -107,18 +108,15 @@ class CreateQuestion extends Component {
   
   addGridRow = (e) => {
     e.preventDefault();
-    e.stopPropagation();
+    e.stopPropagation()
     this.setState(prevState => ({
-      gridOptions: [
-        ...prevState.gridOptions, 
-        { rowLabel: '', columnLabels: [] } 
-      ]
-    }));
-  };
-  
-  deleteGridRow = (rowIndex) => {
-    this.setState(prevState => ({
-      gridOptions: prevState.gridOptions.filter((_, i) => i !== rowIndex)
+      gridOptions: {
+        ...prevState.gridOptions,
+        row: [
+          ...prevState.gridOptions.row,
+          { label: `Row ${prevState.gridOptions.row.length + 1}`, value: `Row ${prevState.gridOptions.row.length + 1}` }
+        ]
+      }
     }));
   };
   
@@ -126,25 +124,34 @@ class CreateQuestion extends Component {
     e.preventDefault();
     e.stopPropagation();
     this.setState(prevState => {
-      const allRowsHaveColumns = prevState.gridOptions.every(row => row.columnLabels.length > 0);
-      if (allRowsHaveColumns) {
-        return {
-          gridOptions: [
-            ...prevState.gridOptions,
-            { rowLabel: '', columnLabels: [''] } 
+      return {
+        gridOptions: {
+          ...prevState.gridOptions,
+          column: [
+            ...prevState.gridOptions.column,
+            { label: `Column ${prevState.gridOptions.column.length + 1}`, value: `Column ${prevState.gridOptions.column.length + 1}` }
           ]
-        };
-      } else {
-        return {
-          gridOptions: prevState.gridOptions.map((row, index, array) => {
-            if (index === array.findIndex(r => r.columnLabels.length < array[0].columnLabels.length)) {
-                return { ...row, columnLabels: [...row.columnLabels, ''] };
-            }
-            return row;
-          })
-        };
-      }
+        }
+      };
     });
+  };
+  
+  deleteGridRow = (index) => {
+    this.setState(prevState => ({
+      gridOptions: {
+        ...prevState.gridOptions,
+        row: prevState.gridOptions.row.filter((_, idx) => idx !== index)
+      }
+    }));
+  };
+  
+  deleteGridColumn = (index) => {
+    this.setState(prevState => ({
+      gridOptions: {
+        ...prevState.gridOptions,
+        column: prevState.gridOptions.column.filter((_, idx) => idx !== index)
+      }
+    }));
   };
 
   handleInputChange = (e) => {
@@ -170,28 +177,66 @@ class CreateQuestion extends Component {
     this.setState({ options: updatedOptions });
   };
 
-  handleGridRowChange = (rowIndex, value) => {
-    const { gridOptions } = this.state;
-    const updatedGridOptions = gridOptions.map((row, i) => (
-      i === rowIndex ? { ...row, rowLabel: value } : row
-    ));
-    this.setState({ gridOptions: updatedGridOptions });
+  handleRowChange = (index, e) => {
+    const newValue = e.target.value;
+    this.setState(prevState => {
+      const updatedRow = prevState.gridOptions.row.map((option, i) => {
+        if (i === index) {
+          return { ...option, label: newValue, value: newValue };
+        }
+        return option;
+      });
+      return {
+        gridOptions: {
+          ...prevState.gridOptions,
+          row: updatedRow
+        }
+      };
+    });
   };
 
-  handleGridColumnChange = (rowIndex, colIndex, value) => {
+  handleColumnChange = (index, e) => {
+    const newValue = e.target.value;
     this.setState(prevState => {
-      const updatedGridOptions = [...prevState.gridOptions];
-      if (updatedGridOptions[rowIndex]) {
-        const updatedColumnLabels = [...updatedGridOptions[rowIndex].columnLabels];
-        updatedColumnLabels[colIndex] = value;
-        updatedGridOptions[rowIndex] = { ...updatedGridOptions[rowIndex], columnLabels: updatedColumnLabels };
-      }
-      return { gridOptions: updatedGridOptions };
+      const updatedColumn = prevState.gridOptions.column.map((option, i) => {
+        if (i === index) {
+          return { ...option, label: newValue, value: newValue };
+        }
+        return option;
+      });
+      return {
+        gridOptions: {
+          ...prevState.gridOptions,
+          column: updatedColumn
+        }
+      };
     });
   };
 
   renderOptionsArea = () => {
-    const { selectedOption, options, gridOptions } = this.state;
+    const { selectedOption, options, gridOptions, requireResponse, isLeadingQuestion } = this.state;
+    const clearSelections = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const clearedOptions = options.map((option) => ({
+        ...option,
+        isCorrect: false,
+      }));
+      this.setState({ options: clearedOptions });
+    };
+
+    const clearGridSelections = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const clearedGridOptions = {
+        ...gridOptions,
+        column: gridOptions.column.map((col) => ({
+          ...col,
+          isCorrect: false,
+        })),
+      };
+      this.setState({ gridOptions: clearedGridOptions });
+    };  
   
     switch (selectedOption) {
       case 'multipleChoice':
@@ -201,10 +246,11 @@ class CreateQuestion extends Component {
             {options.map((option, index) => (
               <div key={index} className="d-flex align-items-center mb-2">
                 <input
-                  type={selectedOption === 'multipleChoice' ? 'checkbox' : 'checkbox'}
+                  type={selectedOption === 'multipleChoice' ? 'radio' : 'checkbox'}
                   className="form-check-input"
                   checked={option.isCorrect}
-                  disabled={this.state.isLeadingQuestion}
+                  disabled={isLeadingQuestion}
+                  onChange={() => this.toggleCorrectAnswer(index)}
                 />
                 <input
                   type="text"
@@ -226,6 +272,11 @@ class CreateQuestion extends Component {
             <button className="btn btn-outline-dark" onClick={this.addOption}>
               Add option
             </button>
+            {options.length > 0 && (
+              <button className="btn btn-outline-danger ms-2" onClick={clearSelections}>
+                Clear
+              </button>
+            )}
           </>
         );
   
@@ -306,6 +357,8 @@ class CreateQuestion extends Component {
   
       case 'multipleChoiceGrid':
       case 'checkboxGrid':
+        const numberOfRows = Math.max(gridOptions.row.length, gridOptions.column.length);
+
         return (
           <>
             <table className="table">
@@ -316,75 +369,55 @@ class CreateQuestion extends Component {
                 </tr>
               </thead>
               <tbody>
-                {gridOptions.map((row, rowIndex) => (
-                  <tr key={rowIndex}>
+                {[...Array(numberOfRows)].map((_, index) => (
+                  <tr key={index}>
                     <td>
-                      <div className="d-flex align-items-center">
-                        <span className="mr-2">{rowIndex + 1}.</span>
-                        <input
-                          type="text"
-                          className="form-control mx-2"
-                          value={row.rowLabel}
-                          onChange={(e) => this.handleGridRowChange(rowIndex, e.target.value)}
-                          placeholder={`Row ${rowIndex + 1}`}
-                        />
-                      </div>
-                    </td>
-                    {row.columnLabels.map((col, colIndex) => (
-                      <td key={colIndex}>
+                      {gridOptions.row[index] && (
                         <div className="d-flex align-items-center">
-                          {selectedOption === 'multipleChoiceGrid' ? (
-                            <>
-                              <input
-                                type="radio"
-                                className="form-check-input"
-                                disabled
-                              />
-                              <input
-                                type="text"
-                                className="form-control mx-2"
-                                value={col}
-                                onChange={(e) => this.handleGridColumnChange(rowIndex, colIndex, e.target.value)}
-                                placeholder={`Column ${rowIndex + 1}`}
-                              />
-                            </>
-                          ) : (
-                            <>
-                              <input
-                                type="checkbox"
-                                className="form-check-input"
-                                disabled
-                              />
-                              <input
-                                type="text"
-                                className="form-control mx-2"
-                                placeholder={`Column ${rowIndex + 1}`}
-                              />
-                            </>
-                          )}
-                          {gridOptions.length > 1 && (
-                            <button
-                              className="btn btn-outline-secondary"
-                              type="button"
-                              onClick={() => this.deleteGridRow(rowIndex, colIndex)}
-                            >
-                              &times;
-                            </button>
-                          )}
+                          <span className="row-number">{index + 1}.</span>
+                          <input
+                            type="text"
+                            className="form-control mx-2"
+                            onChange={(e) => this.handleRowChange(index, e)}
+                            placeholder={`Row ${index + 1}`}
+                          />
+                          <button
+                            className="btn btn-outline-secondary"
+                            type="button"
+                            onClick={() => this.deleteGridRow(index)}
+                          >
+                            &times;
+                          </button>
                         </div>
-                      </td>
-                    ))}
-                    {row.columnLabels.length === 0 && (
-                      <td>
-                        <button
-                          className="btn btn-outline-secondary"
-                          type="button"
-                          onClick={() => this.deleteGridRow(rowIndex)}
-                        >
-                          &times;
-                        </button>
-                      </td>
-                    )}
+                      )}
+                    </td>
+                    <td>
+                      {gridOptions.column[index] && (
+                        <div className="d-flex align-items-center">
+                          <input
+                            type={selectedOption === 'multipleChoiceGrid' ? 'radio' : 'checkbox'}
+                            className="form-check-input"
+                            name={`column-${index}`}
+                            checked={gridOptions.column[index].isCorrect}
+                            onChange={() => this.toggleCorrectAnswer(index)}
+                            disabled={isLeadingQuestion}
+                          />
+                          <input
+                            type="text"
+                            className="form-control mx-2"
+                            onChange={(e) => this.handleColumnChange(index, e)}
+                            placeholder={`Column ${index + 1}`}
+                          />
+                          <button
+                            className="btn btn-outline-secondary"
+                            type="button"
+                            onClick={() => this.deleteGridColumn(index)}
+                          >
+                            &times;
+                          </button>
+                        </div>
+                      )}
+                    </td>
                   </tr>
                 ))}
                 <tr>
@@ -393,14 +426,31 @@ class CreateQuestion extends Component {
                       Add Row
                     </button>
                   </td>
-                  <td colSpan={gridOptions[0].columnLabels.length}>
+                  <td>
                     <button className="btn btn-outline-dark" onClick={this.addGridColumn}>
                       Add Column
                     </button>
+                    {options.length > 0 && (
+                      <button className="btn btn-outline-danger ms-2" onClick={clearGridSelections}>
+                        Clear
+                      </button>
+                    )}
                   </td>
                 </tr>
               </tbody>
             </table>
+            <div className="form-check form-switch">
+              <input
+                className="form-check-input"
+                type="checkbox"
+                id="requireResponseSwitch"
+                checked={requireResponse}
+                onChange={this.toggleRequireResponse}
+              />
+              <label className="form-check-label" htmlFor="requireResponseSwitch">
+                Require a response in each row
+              </label>
+            </div>
           </>
         );
   
@@ -425,6 +475,38 @@ class CreateQuestion extends Component {
     this.setState((prevState) => ({
       showExplanation: !prevState.showExplanation,
     }));
+  };
+
+  toggleRequireResponse = () => {
+    this.setState(prevState => ({
+      requireResponse: !prevState.requireResponse,
+    }));
+  };
+
+  toggleCorrectAnswer = (index) => {
+    const { selectedOption  } = this.state;
+    if (selectedOption === 'multipleChoice' || selectedOption === 'checkbox') {
+      this.setState(prevState => ({
+        options: prevState.options.map((option, i) => {
+          if (i === index) {
+            return { ...option, isCorrect: !option.isCorrect };
+          }
+          return option;
+        })
+      }));
+    } else if (selectedOption === 'multipleChoiceGrid' || selectedOption === 'checkboxGrid') {
+      this.setState((prevState) => ({
+        gridOptions: {
+          ...prevState.gridOptions,
+          column: prevState.gridOptions.column.map((col, i) => {
+            if (i === index) {
+              return { ...col, isCorrect: !col.isCorrect };
+            }
+            return col;
+          }),
+        },
+      }));
+    }
   };
 
   handleCountryChange = (event) => {
@@ -524,7 +606,8 @@ class CreateQuestion extends Component {
       selectedCountries,
       explanation,
       showExplanation,
-      nextQuestion,
+      requireResponse,
+      nextQuestion
     } = this.state;
 
     const dataToInsert = {
@@ -536,7 +619,8 @@ class CreateQuestion extends Component {
       explanation: showExplanation ? explanation : undefined,
       isLeadingQuestion,
       showCountry,
-      nextQuestion: isLeadingQuestion ? undefined : nextQuestion,
+      requireResponse,
+      nextQuestion: isLeadingQuestion ? undefined : nextQuestion
     };
 
     if (selectedOption === 'multipleChoice' || selectedOption === 'checkbox' || selectedOption === 'dropdown') {
@@ -554,33 +638,10 @@ class CreateQuestion extends Component {
     }
 
     if (selectedOption === 'multipleChoiceGrid' || selectedOption === 'checkboxGrid') {
-      const rows = gridOptions.map((row) => ({
-        text: row.rowLabel || '',
-        isCorrect: false,
-      }));
-    
-      const columns = gridOptions[0].columnLabels.map((colLabel) => ({
-        text: colLabel || '',
-        isCorrect: false, // You can set the default isCorrect value here
-      }));
-    
-      const gridData = {
-        rows,
-        columns: [], // Initialize an empty columns array
+      dataToInsert.grid = {
+        rows: gridOptions.row.map(row => ({ text: row.label })),
+        columns: gridOptions.column.map(column => ({ text: column.label, isCorrect: column.isCorrect || false }))
       };
-    
-      gridOptions.forEach((row, rowIndex) => {
-        row.columnLabels.forEach((colLabel, colIndex) => {
-          if (!gridData.columns[colIndex]) {
-            gridData.columns[colIndex] = {
-              text: colLabel || '',
-              isCorrect: false, // You can set the default isCorrect value here
-            };
-          }
-        });
-      });
-    
-      dataToInsert.grid = gridData;
     }
 
     try {

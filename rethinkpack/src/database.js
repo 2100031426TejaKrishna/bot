@@ -56,13 +56,13 @@ const questionSchema = new mongoose.Schema({
   grid: {
     rows: [{
         text: String,
-        isCorrect: Boolean
     }],
     columns: [{
       text: String,
       isCorrect: Boolean
     }]
-  },  
+  },
+  requireResponse: Boolean,  
   marks: Number,
   countries: [String],
   explanation: String,
@@ -88,16 +88,21 @@ app.post('/insertQuestion', async (req, res) => {
     }
 
     if (!questionData.showCountry) {
-      questionData.countries = undefined;
-      console.log("hello");
+      delete questionData.countries;
     }
 
     if (questionData.optionType === 'linear') {
-      questionData.options = undefined;
-      console.log("delete options");
+      delete questionData.options;
     } else {
-      questionData.linearScale = undefined;
-      console.log("delete linear")
+      delete questionData.linearScale;
+    }
+
+    if (questionData.optionType === 'multipleChoiceGrid' || questionData.optionType === 'checkboxGrid') {
+      delete questionData.options;
+      delete questionData.linearScale;
+    } else {
+      delete questionData.grid;
+      delete questionData.requireResponse;
     }
     
     questionData.date = new Date();
