@@ -1,0 +1,19 @@
+.questions-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+}
+
+.question-card {
+    width: 60%;
+    border: 1px solid #ccc;
+    padding: 15px;
+    margin: 10px 0;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.question-date {
+    margin-top: 10px;
+    font-style: italic;
+}
