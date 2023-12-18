@@ -24,8 +24,23 @@ All below commands are run at root directory `*/rethinkpack> command`. All comma
 2. Install the dependencies by navigate to the project directory and run.
    
         npm install
+
+3. Install the Concurrently as a development dependency
+
+        npm install concurrently --save-dev
+
+4. Configure scripts in package.json
+
+        "scripts": {
+            "start": "concurrently \"npm:server\" \"react-scripts start\"",
+            "server": "node ./src/database/server.js",
+            "react": "react-scripts start",
+            "build": "react-scripts build",
+            "test": "react-scripts test",
+            "eject": "react-scripts eject"
+          },
    
-3. Start the react js
+5. Start the react js
 
         npm start
 
