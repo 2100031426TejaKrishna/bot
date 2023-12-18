@@ -3,15 +3,18 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const connectToDatabase = require('./database');
 const insertQuestionRoute = require('./insertQuestion');
+const { router: displayQuestionRoute, fetchQuestions } = require('./displayQuestion');
 
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-connectToDatabase().then(() => {
+connectToDatabase().then(async () => {
   console.log("Database connected!");
 
   app.use('/api', insertQuestionRoute);
+  app.use('/api', displayQuestionRoute);
+  await fetchQuestions();
 
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
