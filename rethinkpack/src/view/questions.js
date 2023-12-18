@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import './questions.css';
+import EditQuestion from './editQuestion.js';
 // import axios from 'axios';
 
 const Questions = () => {
@@ -51,6 +52,7 @@ const Questions = () => {
                         ))
                     }
                     <p className="question-date">{formatDate(question.date)}</p>
+                    <EditQuestion />
                 </div>
             ))}
         </div>
