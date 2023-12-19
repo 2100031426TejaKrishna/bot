@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import './questions.css';
+import EditQuestion from './editQuestion';
 
 const Questions = () => {
     const [questions, setQuestions] = useState([]);
