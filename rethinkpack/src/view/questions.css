@@ -6,14 +6,66 @@
 }
 
 .question-card {
-    width: 60%;
+    width: 45%;
     border: 1px solid #ccc;
     padding: 15px;
     margin: 10px 0;
     box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
 }
 
 .question-date {
     margin-top: 10px;
     font-style: italic;
+}
+
+.option-container {
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+
+.option-container label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.option-container label input[type="radio"],
+.option-container label input[type="checkbox"] {
+    margin-right: 10px;
+}
+
+.form-select {
+    width: 40%;
+    padding: .375rem 1.75rem .375rem .75rem;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #212529;
+    background-color: #fff;
+    border: 1px solid #ced4da;
+    border-radius: .25rem;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    margin-bottom: 20px;
+}
+
+.form-select-sm {
+    padding-right: .75rem;
+    padding-left: .375rem;
+    font-size: .875rem;
+}
+
+.form-select option.correct-answer {
+    background-color: lightgreen;
+}
+
+.question-marks,
+.question-countries,
+.question-explanation {
+    margin-bottom: 3px;
+}
+
+.question-date {
+    margin-bottom: 10px; 
 }

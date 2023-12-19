@@ -1,57 +1,101 @@
 import React, { useEffect, useState } from 'react';
 import './questions.css';
-import EditQuestion from './editQuestion.js';
-// import axios from 'axios';
 
 const Questions = () => {
-    // const [questions, setQuestions] = useState([]);
-
-    // useEffect(() => {
-    //     const fetchQuestions = async () => {
-    //         try {
-    //             const response = await axios.get('/api/questions'); 
-    //             setQuestions(response.data);
-    //         } catch (error) {
-    //             console.error('Error fetching questions:', error);
-    //         }
-    //     };
-
-    //     fetchQuestions();
-    // }, []);
-
-    const questions = [
-        {
-            questionType: "productInfo",
-            question: "What is the colour for grass?",
-            optionType: "multipleChoice",
-            options: [
-                { text: "Black", isCorrect: false, _id: "657c16e257c07bab7da8397a" },
-                { text: "Green", isCorrect: true, _id: "657c16e257c07bab7da8397b" },
-                { text: "Purple", isCorrect: false, _id: "657c16e257c07bab7da8397c" }
-            ],
-            date: "2023-12-15T09:05:38.292+00:00"
-        }
-    ];
+    const [questions, setQuestions] = useState([]);
 
     const formatDate = (dateString) => {
-        const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: true };
+        const options = { year: 'numeric', month: '2-digit', day: '2-digit'};
         return new Date(dateString).toLocaleString('en-US', options);
     };
+
+    useEffect(() => {
+        const fetchQuestions = async () => {
+            try {
+                const response = await fetch('http://localhost:5000/api/displayQuestions');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                setQuestions(data);
+            } catch (error) {
+                console.error("Error fetching questions:", error);
+            }
+        };
+
+        fetchQuestions();
+    }, []);
 
     return (
         <div className="questions-container">
             {questions.map((question, index) => (
                 <div key={index} className="question-card">
-                    <h3>{question.question}</h3>
+                    <h6>
+                      {question.questionType === 'productInfo' ? 'Product Information' : 
+                       question.questionType === 'packagingInfo' ? 'Packaging Information' : ''}
+                    </h6>
+                    <h4>{question.question}</h4>
                     {question.optionType === 'multipleChoice' && 
-                        question.options.map((option, idx) => (
-                            <label key={option._id}>
-                                <input type="radio" name={question.question} value={option.text} defaultChecked={option.isCorrect} />
-                                {option.text}
-                            </label>
-                        ))
+                        <div className="option-container">
+                            {question.options.map((option) => (
+                                <label key={option._id}>
+                                    <input 
+                                        type="radio" 
+                                        name={question.question} 
+                                        value={option.text} 
+                                        defaultChecked={option.isCorrect}
+                                        disabled={true}  
+                                    />
+                                    {option.text}
+                                </label>
+                            ))}
+                        </div>
                     }
-                    <p className="question-date">{formatDate(question.date)}</p>
+                    {question.optionType === 'checkbox' && 
+                        <div className="option-container">
+                            {question.options.map((option) => (
+                                <label key={option._id}>
+                                    <input 
+                                        type="checkbox" 
+                                        name={question.question} 
+                                        value={option.text} 
+                                        defaultChecked={option.isCorrect}
+                                        disabled={true}  
+                                    />
+                                    {option.text}
+                                </label>
+                            ))}
+                        </div>
+                    }
+                    {question.optionType === 'dropdown' &&
+                        <select className="form-select form-select-sm" aria-label="Small select example" disabled>
+                            {question.options.map((option, index) => (
+                                <option 
+                                    key={option._id} 
+                                    value={option.text} 
+                                    selected={option.isCorrect}>
+                                    {option.text}
+                                </option>
+                            ))}
+                        </select>
+                    }
+                    {question.optionType === 'linear' &&
+                        <div className="linear-scale">
+                            <div className="scale-label">Good</div>
+                            <input type="radio" name={`linearScale-${question._id}`} value="1" />
+                            <input type="radio" name={`linearScale-${question._id}`} value="2" />
+                            <input type="radio" name={`linearScale-${question._id}`} value="3" />
+                            <input type="radio" name={`linearScale-${question._id}`} value="4" />
+                            <input type="radio" name={`linearScale-${question._id}`} value="5" />
+                            <div className="scale-label">Bad</div>
+                        </div>
+                    }
+                    {question.marks && <p className="question-marks">Marks: {question.marks}</p>}
+                    {question.countries && question.countries.length > 0 && (
+                    <p className="question-countries">Countries: {question.countries.join(', ')}</p>
+                    )}
+                    {question.explanation && <p className="question-explanation">Explanation: {question.explanation}</p>}
+                    <p className="question-date">Date created: {formatDate(question.date)}</p>
                     <EditQuestion />
                 </div>
             ))}
