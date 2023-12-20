@@ -2,23 +2,25 @@ import React, { useEffect, useState } from 'react';
 import './questions.css';
 import EditQuestion from './editQuestion';
 
-const Questions = () => {
+const Questions = ({ triggerRefresh }) => {
     const [questions, setQuestions] = useState([]);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedQuestion, setSelectedQuestion] = useState(null);
+    const [questionToDelete, setQuestionToDelete] = useState(null);
+    const [showToast, setShowToast] = useState(false);
 
-    const handleDeleteClick = (questionId) => {
-        setSelectedQuestion(questionId);
-        setIsModalOpen(true);
-    };
-
-    const handleConfirmDelete = async (questionId) => {
-        setIsModalOpen(false);
-        try {
-            await fetch(`http://localhost:5000/api/deleteQuestion/${questionId}`, { method: 'DELETE' });
-            setQuestions(questions.filter(question => question._id !== questionId));
-        } catch (error) {
-            console.error("Error deleting question:", error);
+    const handleDelete = async () => {
+        if (questionToDelete) {
+            try {
+                const response = await fetch(`http://localhost:5000/api/deleteQuestion/${questionToDelete}`, { method: 'DELETE' });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                setQuestions(questions.filter(question => question._id !== questionToDelete));
+                setQuestionToDelete(null);
+                setShowToast(true);
+                setTimeout(() => setShowToast(false), 5000);
+            } catch (error) {
+                console.error("Error deleting question:", error);
+            }
         }
     };
 
@@ -42,25 +44,22 @@ const Questions = () => {
         };
 
         fetchQuestions();
-    }, []);
-
-    const ConfirmModal = ({ isOpen, onClose, onConfirm, question }) => {
-        if (!isOpen) return null;
-      
-        return (
-          <div className="modal-backdrop">
-            <div className="modal">
-              <h4>Delete Question</h4>
-              <p>Are you sure you want to delete this question?</p>
-              <button onClick={onClose}>Cancel</button>
-              <button onClick={() => onConfirm(question)}>Confirm</button>
-            </div>
-          </div>
-        );
-      };
+    }, [triggerRefresh]);
 
     return (
         <div className="questions-container">
+            {showToast && (
+                <div className="toast-container position-fixed bottom-0 end-0 p-3">
+                    <div className="toast show bg-dark text-white">
+                        <div className="d-flex justify-content-between">
+                            <div className="toast-body">
+                                Question deleted successfully!
+                            </div>
+                            <button type="button" className="btn-close btn-close-white me-2 m-auto" onClick={() => setShowToast(false)}></button>
+                        </div>
+                    </div>
+                </div>
+            )}
             {questions.map((question, index) => (
                 <div key={index} className="question-card">
                     <h6>
@@ -198,19 +197,40 @@ const Questions = () => {
                     <div className="question-actions">
                         <EditQuestion />
                         <button 
-                            className="btn btn-dark" 
-                            onClick={() => handleDeleteClick(question._id)}>
+                            className="btn btn-danger" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#exampleModal"
+                            onClick={() => setQuestionToDelete(question._id)}
+                        >
                             Delete
                         </button>
-                        <ConfirmModal
-                            isOpen={isModalOpen}
-                            onClose={() => setIsModalOpen(false)}
-                            onConfirm={handleConfirmDelete}
-                            question={selectedQuestion}
-                        />
                     </div>
                 </div>
             ))}
+            <div className="modal fade" id="exampleModal" tabIndex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div className="modal-dialog">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <h1 className="modal-title fs-5" id="exampleModalLabel">Confirm Deletion</h1>
+                            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div className="modal-body">
+                            Are you sure you want to delete this question?
+                        </div>
+                        <div className="modal-footer">
+                            <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button 
+                                type="button" 
+                                className="btn btn-danger" 
+                                onClick={handleDelete}
+                                data-bs-dismiss="modal"
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 };

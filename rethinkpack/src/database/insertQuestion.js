@@ -19,8 +19,7 @@ const questionSchema = new mongoose.Schema({
             text: String,
         }],
         columns: [{
-        text: String,
-        isCorrect: Boolean
+        text: String
         }]
     },
     requireResponse: Boolean,  

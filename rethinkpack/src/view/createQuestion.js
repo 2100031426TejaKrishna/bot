@@ -84,7 +84,8 @@ class CreateQuestion extends Component {
   resetState() {
     this.setState({
       ...this.initialState,
-      showToast: this.state.showToast 
+      showToast: this.state.showToast,
+      options: [{ label: 'Option 1', value: 'Option 1', isCorrect: false }]
     });
   }
 
@@ -416,9 +417,7 @@ class CreateQuestion extends Component {
                             type={selectedOption === 'multipleChoiceGrid' ? 'radio' : 'checkbox'}
                             className="form-check-input"
                             name={`column-${index}`}
-                            checked={gridOptions.column[index].isCorrect}
-                            onChange={() => this.toggleCorrectAnswer(index)}
-                            disabled={isLeadingQuestion}
+                            disabled
                           />
                           <input
                             type="text"
@@ -518,18 +517,6 @@ class CreateQuestion extends Component {
           ...option,
           isCorrect: i === index,
         })),
-      }));
-    } else if (selectedOption === 'multipleChoiceGrid' || selectedOption === 'checkboxGrid') {
-      this.setState((prevState) => ({
-        gridOptions: {
-          ...prevState.gridOptions,
-          column: prevState.gridOptions.column.map((col, i) => {
-            if (i === index) {
-              return { ...col, isCorrect: !col.isCorrect };
-            }
-            return col;
-          }),
-        },
       }));
     }
   };
@@ -683,7 +670,7 @@ class CreateQuestion extends Component {
     if (selectedOption === 'multipleChoiceGrid' || selectedOption === 'checkboxGrid') {
       dataToInsert.grid = {
         rows: gridOptions.row.map(row => ({ text: row.label })),
-        columns: gridOptions.column.map(column => ({ text: column.label, isCorrect: column.isCorrect || false }))
+        columns: gridOptions.column.map(column => ({ text: column.label }))
       };
     }
 
@@ -698,45 +685,17 @@ class CreateQuestion extends Component {
 
       if (response.ok) {
         console.log('Data submitted successfully');
-        this.setState({
-          question: '',
-          marks: '',
-          explanation: '',
-          nextQuestion: '',
-          questionType: '',
-          selectedOption: 'multipleChoice',
-          options: [{ label: 'Option 1', value: 'Option 1', isCorrect: false }],
-          gridOptions: { row: [{ label: 'Row 1', value: 'Row 1' }], column: [{ label: 'Column A', value: 'Column A' }] },
-          showCountry: false,
-          selectedCountries: [],
-          isLeadingQuestion: false,
-          showExplanation: false,
-          minScale: 1,
-          maxScale: 5,
-          validationErrors: {
-            questionType: '',
-            question: '',
-            optionType: '',
-            options: '',
-            marks: '',
-            country: '',
-            explanation: '',
-          },
-          requireResponse: false,
-          showToast: true
-        });
-        const modalElement = this.createQuestionModalRef.current;
-        if (modalElement) {
-          const bootstrapModal = Modal.getInstance(modalElement);
-          bootstrapModal.hide();
-        }
-        document.body.classList.remove('modal-open');
-        const backdrop = document.querySelector('.modal-backdrop');
-        if (backdrop) {
-          backdrop.parentNode.removeChild(backdrop);
-        }
+        const modalInstance = Modal.getInstance(this.createQuestionModalRef.current);
+        modalInstance.hide();
+        this.createQuestionModalRef.current.addEventListener('hidden.bs.modal', () => {
+          document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+          document.body.style.overflow = '';
+          document.body.classList.remove('modal-open');
+          this.resetState();
+        }, { once: true });
+        this.props.onQuestionCreated();
         this.setState({ showToast: true });
-        setTimeout(() => this.setState({ showToast: false }), 10000);
+        setTimeout(() => this.setState({ showToast: false }), 5000);
       } else {
         console.error('Server responded with an error:', response.status, response.statusText);
         const responseData = await response.json();
