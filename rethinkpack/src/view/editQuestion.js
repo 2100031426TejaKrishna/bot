@@ -3,6 +3,26 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
 import { Modal } from 'bootstrap';
 
+// container to store data from MongoDb
+const [questions, setQuestions] = useState([]);
+
+useEffect(() => {
+  const fetchQuestionsToEdit = async () => {
+      try {
+          const response = await fetch('http://localhost:5000/api/editReadUpdate');
+          if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const data = await response.json();
+          setQuestions(data);
+      } catch (error) {
+          console.error("Error fetching questions:", error);
+      }
+  };
+
+  fetchQuestionsToEdit();
+}, []);
+
 class EditQuestion extends Component {
   constructor(props) {
     super(props);
@@ -752,12 +772,20 @@ class EditQuestion extends Component {
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
 
     return (
+      
       <div>
         
         <button className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editQuestion" >Edit</button>
 
         {this.renderToast()}
         <div className="modal fade" id="editQuestion" tabIndex="-1" aria-labelledby="editQuestionLabel" aria-hidden="true" ref={this.editQuestionModalRef}>
+        
+        {/* Trying to implement map to load questions data
+
+        {questions.map((question, index) => (
+        
+        */}
+        
           <div className="modal-dialog modal-dialog-scrollable modal-lg">
             <div className="modal-content">
               <div className="modal-header">
@@ -811,7 +839,12 @@ class EditQuestion extends Component {
                     <label htmlFor="question" className="col-form-label">
                       Question:
                     </label>
-                    <input type="text" className="form-control" id="question" value="test" onChange={this.handleInputChange} />
+                    <input 
+                      type="text" 
+                      className="form-control" 
+                      id="question" 
+                      value={question.question}
+                      onChange={this.handleInputChange} />
                     {validationErrors.question && (
                       <div style={{ color: 'red', fontSize: 12 }}>
                         {validationErrors.question}
@@ -906,6 +939,7 @@ class EditQuestion extends Component {
                     </div>
                   )}
                 </form>
+              
               </div>
               <div className="modal-footer">
                 <div className="d-flex justify-content-between w-100">
@@ -957,6 +991,7 @@ class EditQuestion extends Component {
               </div>
             </div>
           </div>
+        
         </div>
       </div>
     );

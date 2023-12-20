@@ -5,6 +5,7 @@ const connectToDatabase = require('./database');
 const insertQuestionRoute = require('./insertQuestion');
 const { router: displayQuestionRoute, fetchQuestions } = require('./displayQuestion');
 const deleteQuestionRouter = require('./deleteQuestion'); 
+const { router: editReadUpdateRoute, fetchQuestionsToEdit } = require('./editReadUpdate');
 
 const app = express();
 app.use(cors());
@@ -15,8 +16,10 @@ connectToDatabase().then(async () => {
 
   app.use('/api', insertQuestionRoute);
   app.use('/api', displayQuestionRoute);
+  app.use('/api', editReadUpdateRoute);
   await fetchQuestions();
   app.use('/api', deleteQuestionRouter);
+  await fetchQuestionsToEdit();
 
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
