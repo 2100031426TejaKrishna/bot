@@ -29,6 +29,20 @@ const Questions = ({ triggerRefresh }) => {
         return new Date(dateString).toLocaleString('en-US', options);
     };
 
+    const fetchQuestionById = async (id) => {
+        try {
+            const response = await fetch(`http://localhost:5000/api/question/${id}`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            return data.question; 
+        } catch (error) {
+            console.error("Error fetching specific question:", error);
+            return null;
+        }
+    };
+
     useEffect(() => {
         const fetchQuestions = async () => {
             try {
@@ -45,6 +59,19 @@ const Questions = ({ triggerRefresh }) => {
 
         fetchQuestions();
     }, [triggerRefresh]);
+
+    useEffect(() => {
+        questions.forEach(async (question) => {
+            if (question.nextQuestion) {
+                const nextQuestionTitle = await fetchQuestionById(question.nextQuestion);
+                setQuestions((prevQuestions) =>
+                    prevQuestions.map((q) => 
+                        q._id === question._id ? { ...q, nextQuestionTitle } : q
+                    )
+                );
+            }
+        });
+    }, [questions]);
 
     return (
         <div className="questions-container">
@@ -193,6 +220,7 @@ const Questions = ({ triggerRefresh }) => {
                     <p className="question-countries">Countries: {question.countries.join(', ')}</p>
                     )}
                     {question.explanation && <p className="question-explanation">Explanation: {question.explanation}</p>}
+                    {question.nextQuestionTitle && ( <p className="next-question">Next Question: {question.nextQuestionTitle}</p> )}
                     <p className="question-date">Date created: {formatDate(question.date)}</p>
                     <div className="question-actions">
                         <EditQuestion />

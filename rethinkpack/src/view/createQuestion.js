@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, useEffect, useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
 import { Modal } from 'bootstrap';
@@ -73,7 +73,8 @@ class CreateQuestion extends Component {
         country: '',
         explanation: '',
       },
-      requireResponse: false
+      requireResponse: false,
+      allQuestions: []
     };
 
     this.initialState = { ...this.state };
@@ -92,7 +93,18 @@ class CreateQuestion extends Component {
   componentDidMount() {
     const createQuestionModal = document.getElementById('createQuestion');
     createQuestionModal.addEventListener('hidden.bs.modal', this.resetState);
+    this.fetchQuestions();
   }
+
+  fetchQuestions = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/displayAllQuestions');
+      const questions = await response.json();
+      this.setState({ allQuestions: questions });
+    } catch (error) {
+      console.error('Error fetching questions:', error);
+    }
+  };
 
   componentWillUnmount() {
     const createQuestionModal = document.getElementById('createQuestion');
@@ -707,7 +719,7 @@ class CreateQuestion extends Component {
   };
 
   render() {
-    const { questionType, selectedOption, showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, validationErrors } = this.state;
+    const { questionType, selectedOption, showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, validationErrors, allQuestions, nextQuestion } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
 
     return (
@@ -870,6 +882,24 @@ class CreateQuestion extends Component {
                           {validationErrors.country}
                         </div>
                       )} 
+                    </div>
+                  )}
+                  {!isLeadingQuestion && (
+                    <div className="mb-3">
+                      <label htmlFor="nextQuestion" className="col-form-label">Next Question:</label>
+                      <select
+                        className="form-select"
+                        id="nextQuestion"
+                        value={nextQuestion}
+                        onChange={(e) => this.setState({ nextQuestion: e.target.value })}
+                      >
+                        <option value="">Select Next Question</option>
+                        {allQuestions.map((question) => (
+                          <option key={question._id} value={question._id}>
+                            {question.question}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   )}
                 </form>

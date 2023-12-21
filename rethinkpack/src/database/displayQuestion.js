@@ -24,4 +24,26 @@ router.get('/displayQuestions', async (req, res) => {
     }
 });
 
+router.get('/displayAllQuestions', async (req, res) => {
+    try {
+        const questions = await fetchQuestions();
+        res.json(questions.map(q => ({ _id: q._id, question: q.question })));
+    } catch (error) {
+        res.status(500).send("Unable to fetch questions");
+    }
+});
+
+router.get('/question/:id', async (req, res) => {
+    try {
+        const question = await Questions.findById(req.params.id);
+        if (!question) {
+            return res.status(404).send("Question not found");
+        }
+        res.json(question);
+    } catch (error) {
+        console.error("Error fetching specific question:", error);
+        res.status(500).send("Internal Server Error");
+    }
+});
+
 module.exports = { router, fetchQuestions };

@@ -45,6 +45,7 @@ router.post('/insertQuestion', async (req, res) => {
             questionData.recommendation = questionData.explanation;
             delete questionData.explanation;
             delete questionData.mark;
+            delete questionData.nextQuestion;s
         }
 
         if (!questionData.showCountry) {
