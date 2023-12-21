@@ -1,5 +1,3 @@
-
-
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
@@ -23,7 +21,7 @@ const fetchQuestionsToEdit = async () => {
 
 
         // Test run to fetch question field from first document of database
-        /*
+        
         const firstResultQuestion = await Questions.findOne();
     
         if (firstResultQuestion) {
@@ -32,20 +30,21 @@ const fetchQuestionsToEdit = async () => {
         } else {
             console.log(`No document found.`)
         }
-        */
+        
         
         // Test run loading ALL documents with question field
+        /*
         const questionsToEdit = await Questions.find({});
     
         if (questionsToEdit) {
             console.log(`Found a document: `);
-            console.log(`Question: ${questionsToEdit.question}`);
+            console.log(`Question: ${questionsToEdit}`);
             return questionsToEdit;
         } else {
             console.log(`No document found.`)
         }
+        */
 
-        
 
     } catch (error) {
         console.error("Error fetching questions:", error);

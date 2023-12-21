@@ -3,25 +3,6 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
 import { Modal } from 'bootstrap';
 
-// container to store data from MongoDb
-const [questions, setQuestions] = useState([]);
-
-useEffect(() => {
-  const fetchQuestionsToEdit = async () => {
-      try {
-          const response = await fetch('http://localhost:5000/api/editReadUpdate');
-          if (!response.ok) {
-              throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          const data = await response.json();
-          setQuestions(data);
-      } catch (error) {
-          console.error("Error fetching questions:", error);
-      }
-  };
-
-  fetchQuestionsToEdit();
-}, []);
 
 class EditQuestion extends Component {
   constructor(props) {
@@ -93,7 +74,10 @@ class EditQuestion extends Component {
         country: '',
         explanation: '',
       },
-      requireResponse: false
+      requireResponse: false,
+      //
+      testFirstQuestion: '',
+      allQuestions: []
     };
 
     this.initialState = { ...this.state };
@@ -112,6 +96,36 @@ class EditQuestion extends Component {
     const editQuestionModal = document.getElementById('editQuestion');
     editQuestionModal.addEventListener('hidden.bs.modal', this.resetState);
   }
+
+
+  /*--------------------------------*/
+
+  fetchTestQuestion = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/editReadUpdate');
+      const questions = await response.json();
+      this.setState({ testFirstQuestion: questions });
+    } catch (error) {
+      console.error('Error fetching questions:', error);
+    }
+  };
+
+/*
+  fetchQuestions = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/displayQuestion');
+      const questions = await response.json();
+      this.setState({ allQuestions: questions });
+    } catch (error) {
+      console.error('Error fetching questions:', error);
+    }
+  };
+  */
+  
+  /*--------------------------------*/
+
+
+
 
   componentWillUnmount() {
     const editQuestionModal = document.getElementById('editQuestion');
@@ -767,8 +781,16 @@ class EditQuestion extends Component {
     }
   };
 
+
+
+
+/* RENDER */
+
+
+
   render() {
-    const { questionType, selectedOption, showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, validationErrors } = this.state;
+    // add allQuestions to this.state
+    const { questionType, selectedOption, showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, validationErrors, testFirstQuestion, allQuestions } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
 
     return (
@@ -780,218 +802,227 @@ class EditQuestion extends Component {
         {this.renderToast()}
         <div className="modal fade" id="editQuestion" tabIndex="-1" aria-labelledby="editQuestionLabel" aria-hidden="true" ref={this.editQuestionModalRef}>
         
-        {/* Trying to implement map to load questions data
 
-        {questions.map((question, index) => (
+
+        {/* Trying to implement map to load questions data 
         
+        {allQuestions.map((question) => (
+
         */}
         
-          <div className="modal-dialog modal-dialog-scrollable modal-lg">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h1 className="modal-title fs-5" id="editQuestionLabel">
-                  Edit Question
-                </h1>
-                <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-              </div>
-              <div className="modal-body">
-                <form>
-                <div className="mb-3">
-                    <div className="d-flex">
-                      <div className="form-check form-check-inline">
-                        <input
-                          className="form-check-input"
-                          type="radio"
-                          name="questionType"
-                          id="productInfoRadio"
-                          value="productInfo"
-                          checked={questionType === 'productInfo'}
-                          onChange={() => this.setState({ questionType: 'productInfo' })}
-                        />
-                        <label className="form-check-label" htmlFor="productInfoRadio">
-                          Product Information
-                        </label>
-                      </div>
-                      <div className="form-check form-check-inline">
-                        <input
-                          className="form-check-input"
-                          type="radio"
-                          name="questionType"
-                          id="packagingInfoRadio"
-                          value="packagingInfo"
-                          checked={questionType === 'packagingInfo'}
-                          onChange={() => this.setState({ questionType: 'packagingInfo' })}
-                        />
-                        <label className="form-check-label" htmlFor="packagingInfoRadio">
-                          Packaging Information
-                        </label>
-                      </div>
-                    </div>
-                    {validationErrors.questionType && (
-                      <div style={{ color: 'red', fontSize: 12 }}>
-                        {validationErrors.questionType}
-                      </div>
-                    )}
-                  </div>
-                  
-                  
-                  <div className="mb-3">
-                    <label htmlFor="question" className="col-form-label">
-                      Question:
-                    </label>
-                    <input 
-                      type="text" 
-                      className="form-control" 
-                      id="question" 
-                      value={question.question}
-                      onChange={this.handleInputChange} />
-                    {validationErrors.question && (
-                      <div style={{ color: 'red', fontSize: 12 }}>
-                        {validationErrors.question}
-                      </div>
-                    )}
-                  </div>
+          <div className="question-selected">
 
-
+            {/* */}
+        
+            <div className="modal-dialog modal-dialog-scrollable modal-lg">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h1 className="modal-title fs-5" id="editQuestionLabel">
+                    Edit Question
+                  </h1>
+                  <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div className="modal-body">
+                  <form>
                   <div className="mb-3">
-                    <label htmlFor="optionsType" className="col-form-label">
-                      Options Types:
-                    </label>
-                    <select
-                      className="form-select"
-                      id="optionsType"
-                      value={selectedOption}
-                      onChange={(e) => this.setState({ selectedOption: e.target.value })}
-                    >
-                      <option value="multipleChoice">Multiple Choice</option>
-                      <option value="checkbox">Checkbox</option>
-                      <option value="dropdown">Dropdown</option>
-                      <option value="linear">Linear Scale</option>
-                      <option value="multipleChoiceGrid">Multiple Choice Grid</option>
-                      <option value="checkboxGrid">Checkbox Grid</option>
-                    </select>
-                    {validationErrors.optionType && (
-                      <div style={{ color: 'red', fontSize: 12 }}>
-                        {validationErrors.optionType}
+                      <div className="d-flex">
+                        <div className="form-check form-check-inline">
+                          <input
+                            className="form-check-input"
+                            type="radio"
+                            name="questionType"
+                            id="productInfoRadio"
+                            value="productInfo"
+                            checked={questionType === 'productInfo'}
+                            onChange={() => this.setState({ questionType: 'productInfo' })}
+                          />
+                          <label className="form-check-label" htmlFor="productInfoRadio">
+                            Product Information
+                          </label>
+                        </div>
+                        <div className="form-check form-check-inline">
+                          <input
+                            className="form-check-input"
+                            type="radio"
+                            name="questionType"
+                            id="packagingInfoRadio"
+                            value="packagingInfo"
+                            checked={questionType === 'packagingInfo'}
+                            onChange={() => this.setState({ questionType: 'packagingInfo' })}
+                          />
+                          <label className="form-check-label" htmlFor="packagingInfoRadio">
+                            Packaging Information
+                          </label>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                  <div className="mb-3" id="optionsArea">
-                    {this.renderOptionsArea()}
-                    {validationErrors.options && (
-                      <div style={{ color: 'red', fontSize: 12 }}>
-                        {validationErrors.options}
-                      </div>
-                    )}
-                  </div>
-                  {showExplanation && (
-                    <div className="mb-3">
-                      <label htmlFor="explanation" className="col-form-label">
-                        {explanationLabel}:
-                      </label>
-                      <textarea className="form-control" id="explanation" value={this.state.explanation} onChange={this.handleInputChange}></textarea>
-                      {validationErrors.explanation && (
+                      {validationErrors.questionType && (
                         <div style={{ color: 'red', fontSize: 12 }}>
-                          {validationErrors.explanation}
+                          {validationErrors.questionType}
                         </div>
                       )}
                     </div>
-                  )}
-                  {!isLeadingQuestion && (
+                    
+                    
+                    {/* Question label */}
                     <div className="mb-3">
-                      <label htmlFor="mark" className="col-form-label">
-                        Marks:
+                      <label htmlFor="question" className="col-form-label">
+                        Question:
                       </label>
-                      <input type="text" className="form-control" id="marks" value={this.state.marks} onChange={this.handleInputChange} />
-                      {validationErrors.marks && (
+                      <input 
+                        type="text" 
+                        className="form-control" 
+                        id="question" 
+                        value={testFirstQuestion}
+                        onChange={this.handleInputChange} />
+                      {validationErrors.question && (
                         <div style={{ color: 'red', fontSize: 12 }}>
-                          {validationErrors.marks}
+                          {validationErrors.question}
                         </div>
                       )}
                     </div>
-                  )}
-                  {showCountry && (
+
+
                     <div className="mb-3">
-                      <label className="col-form-label">Country:</label>
-                      <div style={{ maxHeight: '130px', overflowY: 'auto'}}>
-                        {countries.map((country, index) => (
-                          <div key={index} className="form-check">
-                            <input
-                              type="checkbox"
-                              id={country}
-                              value={country}
-                              checked={selectedCountries.includes(country)}
-                              onChange={this.handleCountryChange}
-                              className="form-check-input"
-                              size={5}
-                            />
-                            <label htmlFor={country} className="form-check-label">
-                              {country}
-                            </label>
+                      <label htmlFor="optionsType" className="col-form-label">
+                        Options Types:
+                      </label>
+                      <select
+                        className="form-select"
+                        id="optionsType"
+                        value={selectedOption}
+                        onChange={(e) => this.setState({ selectedOption: e.target.value })}
+                      >
+                        <option value="multipleChoice">Multiple Choice</option>
+                        <option value="checkbox">Checkbox</option>
+                        <option value="dropdown">Dropdown</option>
+                        <option value="linear">Linear Scale</option>
+                        <option value="multipleChoiceGrid">Multiple Choice Grid</option>
+                        <option value="checkboxGrid">Checkbox Grid</option>
+                      </select>
+                      {validationErrors.optionType && (
+                        <div style={{ color: 'red', fontSize: 12 }}>
+                          {validationErrors.optionType}
+                        </div>
+                      )}
+                    </div>
+                    <div className="mb-3" id="optionsArea">
+                      {this.renderOptionsArea()}
+                      {validationErrors.options && (
+                        <div style={{ color: 'red', fontSize: 12 }}>
+                          {validationErrors.options}
+                        </div>
+                      )}
+                    </div>
+                    {showExplanation && (
+                      <div className="mb-3">
+                        <label htmlFor="explanation" className="col-form-label">
+                          {explanationLabel}:
+                        </label>
+                        <textarea className="form-control" id="explanation" value={this.state.explanation} onChange={this.handleInputChange}></textarea>
+                        {validationErrors.explanation && (
+                          <div style={{ color: 'red', fontSize: 12 }}>
+                            {validationErrors.explanation}
                           </div>
-                        ))}
+                        )}
                       </div>
-                      {validationErrors.country && (
-                        <div style={{ color: 'red', fontSize: 12 }}>
-                          {validationErrors.country}
+                    )}
+                    {!isLeadingQuestion && (
+                      <div className="mb-3">
+                        <label htmlFor="mark" className="col-form-label">
+                          Marks:
+                        </label>
+                        <input type="text" className="form-control" id="marks" value={this.state.marks} onChange={this.handleInputChange} />
+                        {validationErrors.marks && (
+                          <div style={{ color: 'red', fontSize: 12 }}>
+                            {validationErrors.marks}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {showCountry && (
+                      <div className="mb-3">
+                        <label className="col-form-label">Country:</label>
+                        <div style={{ maxHeight: '130px', overflowY: 'auto'}}>
+                          {countries.map((country, index) => (
+                            <div key={index} className="form-check">
+                              <input
+                                type="checkbox"
+                                id={country}
+                                value={country}
+                                checked={selectedCountries.includes(country)}
+                                onChange={this.handleCountryChange}
+                                className="form-check-input"
+                                size={5}
+                              />
+                              <label htmlFor={country} className="form-check-label">
+                                {country}
+                              </label>
+                            </div>
+                          ))}
                         </div>
-                      )} 
+                        {validationErrors.country && (
+                          <div style={{ color: 'red', fontSize: 12 }}>
+                            {validationErrors.country}
+                          </div>
+                        )} 
+                      </div>
+                    )}
+                  </form>
+                
+                </div>
+                <div className="modal-footer">
+                  <div className="d-flex justify-content-between w-100">
+                    <div>
+                      <div className="form-check form-switch form-check-inline">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          role="switch"
+                          id="specific"
+                          checked={showCountry}
+                          onChange={this.toggleCountryDropdown}
+                        />
+                        <label className="form-check-label" htmlFor="specific">
+                          Specific Country
+                        </label>
+                      </div>
+                      <div className="form-check form-switch form-check-inline">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          role="switch"
+                          id="leading"
+                          checked={isLeadingQuestion}
+                          onChange={this.toggleLeadingQuestion}
+                        />
+                        <label className="form-check-label" htmlFor="leading">
+                          Leading Question
+                        </label>
+                      </div>
+                      <div className="form-check form-switch form-check-inline">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          role="switch"
+                          id="explanationCheck"
+                          checked={showExplanation}
+                          onChange={this.toggleExplanation}
+                        />
+                        <label className="form-check-label" htmlFor="explanationCheck">
+                          {explanationLabel}
+                        </label>
+                      </div>
                     </div>
-                  )}
-                </form>
-              
-              </div>
-              <div className="modal-footer">
-                <div className="d-flex justify-content-between w-100">
-                  <div>
-                    <div className="form-check form-switch form-check-inline">
-                      <input
-                        className="form-check-input"
-                        type="checkbox"
-                        role="switch"
-                        id="specific"
-                        checked={showCountry}
-                        onChange={this.toggleCountryDropdown}
-                      />
-                      <label className="form-check-label" htmlFor="specific">
-                        Specific Country
-                      </label>
-                    </div>
-                    <div className="form-check form-switch form-check-inline">
-                      <input
-                        className="form-check-input"
-                        type="checkbox"
-                        role="switch"
-                        id="leading"
-                        checked={isLeadingQuestion}
-                        onChange={this.toggleLeadingQuestion}
-                      />
-                      <label className="form-check-label" htmlFor="leading">
-                        Leading Question
-                      </label>
-                    </div>
-                    <div className="form-check form-switch form-check-inline">
-                      <input
-                        className="form-check-input"
-                        type="checkbox"
-                        role="switch"
-                        id="explanationCheck"
-                        checked={showExplanation}
-                        onChange={this.toggleExplanation}
-                      />
-                      <label className="form-check-label" htmlFor="explanationCheck">
-                        {explanationLabel}
-                      </label>
-                    </div>
+                    <button type="button" className="btn btn-dark" onClick={this.handleSubmit}>
+                      Submit
+                    </button>
                   </div>
-                  <button type="button" className="btn btn-dark" onClick={this.handleSubmit}>
-                    Submit
-                  </button>
                 </div>
               </div>
             </div>
+          
           </div>
-        
+        {/* ))} */}
         </div>
       </div>
     );
