@@ -98,7 +98,6 @@ class CreateQuestion extends Component {
 
   fetchQuestions = async () => {
     try {
-      console.log("test")
       const response = await fetch('http://localhost:5000/api/displayAllQuestions');
       const questions = await response.json();
       this.setState({ allQuestions: questions });
