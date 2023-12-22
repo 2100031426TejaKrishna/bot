@@ -104,12 +104,11 @@ class EditQuestion extends Component {
   
   fetchTestQuestion = async () => {
     try {
-      
-      console.log('Debug: fetchTestQuestion API call')
-
       const response = await fetch('http://localhost:5000/api/editReadUpdate');
       const questions = await response.json();
       this.setState({ testFirstQuestion: questions });
+
+      console.log(`Debug: fetchTestQuestion API call: ${questions}`)
 
     } catch (error) {
       console.error('Error fetching questions:', error);
@@ -881,11 +880,11 @@ class EditQuestion extends Component {
                     </div>
                     
                     
-<<<<<<< Updated upstream
-                    {/* Question label test... */}
-=======
-                    {/* Question label test */}
->>>>>>> Stashed changes
+                    {/* Question label */}
+                    {/* onChange={this.handleInputChange} */}
+
+
+
                     <div className="mb-3">
                       <label htmlFor="question" className="col-form-label">
                         Question:
@@ -895,7 +894,8 @@ class EditQuestion extends Component {
                         className="form-control" 
                         id="question" 
                         value={testFirstQuestion}
-                        onChange={this.handleInputChange} />
+                        onChange={(e) => this.setState({ testFirstQuestion: e.target.value })} 
+                      />
                       {validationErrors.question && (
                         <div style={{ color: 'red', fontSize: 12 }}>
                           {validationErrors.question}

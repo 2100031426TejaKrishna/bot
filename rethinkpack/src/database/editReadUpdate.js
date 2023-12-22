@@ -21,19 +21,20 @@ const fetchQuestionsToEdit = async () => {
 
 
         // Test run to fetch question field from first document of database
-        
         const firstResultQuestion = await Questions.findOne();
     
         if (firstResultQuestion) {
             console.log(`Found a document: `);
             console.log(`Question: ${firstResultQuestion.question}`);
+            
+            // return values
+            return firstResultQuestion.question;
         } else {
             console.log(`No document found.`)
         }
         
         
         // Test run loading ALL documents with question field
-        /*
         const questionsToEdit = await Questions.find({});
     
         if (questionsToEdit) {
@@ -43,7 +44,7 @@ const fetchQuestionsToEdit = async () => {
         } else {
             console.log(`No document found.`)
         }
-        */
+        
 
 
     } catch (error) {
@@ -52,9 +53,20 @@ const fetchQuestionsToEdit = async () => {
     }
 }
 
+// Trial: Fetch question field from first document of database
 router.get('/editReadUpdate', async (req, res) => {
     try {
         const questions = await fetchQuestionsToEdit();
+        res.json(questions);
+    } catch (error) {
+        res.status(500).send("Unable to fetch questions");
+    }
+});
+
+// Fetch ALL questions from database
+router.get('/editReadUpdateQuestions', async (req, res) => {
+    try {
+        const questions = await fetchQuestions();
         res.json(questions);
     } catch (error) {
         res.status(500).send("Unable to fetch questions");
