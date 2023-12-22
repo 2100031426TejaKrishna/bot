@@ -1,4 +1,4 @@
-import React, { Component, useEffect, useState } from 'react';
+import React, { Component } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
 import { Modal } from 'bootstrap';
@@ -233,7 +233,7 @@ class CreateQuestion extends Component {
   };
 
   renderOptionsArea = () => {
-    const { selectedOption, options, gridOptions, requireResponse, isLeadingQuestion } = this.state;
+    const { selectedOption, options, gridOptions, requireResponse, isLeadingQuestion, allQuestions } = this.state;
     const clearSelections = (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -271,12 +271,23 @@ class CreateQuestion extends Component {
                   disabled={isLeadingQuestion}
                   onChange={() => this.toggleCorrectAnswer(index)}
                 />
-                <input
-                  type="text"
-                  className="form-control mx-2"
-                  onChange={(e) => this.handleOptionChange(index, e.target.value)}
-                  placeholder={`Option ${index + 1}`}
-                />
+                <div className="d-flex flex-grow-1 mx-2">
+                  <input
+                    type="text"
+                    className="form-control mx-2"
+                    onChange={(e) => this.handleOptionChange(index, e.target.value)}
+                    placeholder={`Option ${index + 1}`}
+                    style={{ flex: '1' }}
+                  />
+                  <select className="form-select mx-2" style={{ flex: '1' }}>
+                    <option value="">Select Next Question</option>
+                    {allQuestions.map((question) => (
+                      <option key={question._id} value={question._id}>
+                        {question.question}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 {options.length > 1 && (
                   <button
                     className="btn btn-outline-secondary"
