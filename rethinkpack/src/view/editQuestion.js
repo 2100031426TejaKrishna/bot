@@ -100,15 +100,21 @@ class EditQuestion extends Component {
 
   /*--------------------------------*/
 
+  
   fetchTestQuestion = async () => {
     try {
+      
+      console.log('Debug: fetchTestQuestion API call')
+
       const response = await fetch('http://localhost:5000/api/editReadUpdate');
       const questions = await response.json();
       this.setState({ testFirstQuestion: questions });
+
     } catch (error) {
       console.error('Error fetching questions:', error);
     }
   };
+  
 
 /*
   fetchQuestions = async () => {
@@ -195,6 +201,11 @@ class EditQuestion extends Component {
   };
 
   handleInputChange = (e) => {
+    
+    //
+    this.setState({ testFirstQuestion: e.target.value });
+    
+    
     if (e.target.id === "country") {
       const options = e.target.options;
       const selectedCountries = [];
@@ -784,13 +795,23 @@ class EditQuestion extends Component {
 
 
 
+
+
+
+
+
 /* RENDER */
 
 
 
   render() {
+
+
+    // debug
+    //console.log('testFirstQuestion:', this.state.testFirstQuestion);
+
     // add allQuestions to this.state
-    const { questionType, selectedOption, showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, validationErrors, testFirstQuestion, allQuestions } = this.state;
+    const { questionType, selectedOption, showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, validationErrors, testFirstQuestion, allQuestions,  question } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
 
     return (
