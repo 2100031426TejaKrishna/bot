@@ -881,7 +881,11 @@ class EditQuestion extends Component {
                     </div>
                     
                     
+<<<<<<< Updated upstream
                     {/* Question label test... */}
+=======
+                    {/* Question label test */}
+>>>>>>> Stashed changes
                     <div className="mb-3">
                       <label htmlFor="question" className="col-form-label">
                         Question:
