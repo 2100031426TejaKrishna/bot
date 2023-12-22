@@ -881,7 +881,7 @@ class EditQuestion extends Component {
                     </div>
                     
                     
-                    {/* Question label test */}
+                    {/* Question label test... */}
                     <div className="mb-3">
                       <label htmlFor="question" className="col-form-label">
                         Question:
