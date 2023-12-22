@@ -95,6 +95,7 @@ class EditQuestion extends Component {
   componentDidMount() {
     const editQuestionModal = document.getElementById('editQuestion');
     editQuestionModal.addEventListener('hidden.bs.modal', this.resetState);
+    this.fetchTestQuestion();
   }
 
 
@@ -805,10 +806,6 @@ class EditQuestion extends Component {
 
 
   render() {
-
-
-    // debug
-    //console.log('testFirstQuestion:', this.state.testFirstQuestion);
 
     // add allQuestions to this.state
     const { questionType, selectedOption, showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, validationErrors, testFirstQuestion, allQuestions,  question } = this.state;
