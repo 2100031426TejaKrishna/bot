@@ -8,7 +8,8 @@ const questionSchema = new mongoose.Schema({
     optionType: String,
     options: [{
         text: String,
-        isCorrect: Boolean
+        isCorrect: Boolean,
+        optionsNextQuestion: String
     }],
     linearScale: [{
         scale: Number,
@@ -44,8 +45,13 @@ router.post('/insertQuestion', async (req, res) => {
         if (questionData.isLeadingQuestion) {
             questionData.recommendation = questionData.explanation;
             delete questionData.explanation;
-            delete questionData.mark;
-            delete questionData.nextQuestion;s
+            delete questionData.marks;
+            delete questionData.nextQuestion;
+        } else {
+            questionData.options = questionData.options.map(option => {
+                delete option.optionsNextQuestion;
+                return option;
+            });
         }
 
         if (!questionData.showCountry) {

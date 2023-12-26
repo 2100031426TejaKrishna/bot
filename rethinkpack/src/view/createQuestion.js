@@ -115,7 +115,7 @@ class CreateQuestion extends Component {
     e.preventDefault();
     e.stopPropagation()
     this.setState((prevState) => ({
-      options: [...prevState.options, { label: `Option ${prevState.options.length + 1}`, value: `Option ${prevState.options.length + 1}`, isCorrect: false }],
+      options: [...prevState.options, { label: `Option ${prevState.options.length + 1}`, value: `Option ${prevState.options.length + 1}`, isCorrect: false, nextQuestion: '' }],
     }));
   };
 
@@ -232,6 +232,19 @@ class CreateQuestion extends Component {
     });
   };
 
+  handleNextQuestionChange = (index, nextQuestionId) => {
+    this.setState(prevState => {
+      const updatedOptions = prevState.options.map((option, i) => {
+        if (i === index) {
+          return { ...option, nextQuestion: nextQuestionId };
+        }
+        return option;
+      });
+  
+      return { options: updatedOptions };
+    });
+  };
+
   renderOptionsArea = () => {
     const { selectedOption, options, gridOptions, requireResponse, isLeadingQuestion, allQuestions } = this.state;
     const clearSelections = (e) => {
@@ -279,14 +292,21 @@ class CreateQuestion extends Component {
                     placeholder={`Option ${index + 1}`}
                     style={{ flex: '1' }}
                   />
-                  <select className="form-select mx-2" style={{ flex: '1' }}>
-                    <option value="">Select Next Question</option>
-                    {allQuestions.map((question) => (
-                      <option key={question._id} value={question._id}>
-                        {question.question}
-                      </option>
-                    ))}
-                  </select>
+                  {isLeadingQuestion && (
+                    <select
+                      className="form-select mx-2"
+                      style={{ flex: '1' }}
+                      value={option.nextQuestion}
+                      onChange={(e) => this.handleNextQuestionChange(index, e.target.value)}
+                    >
+                      <option value="">Select Next Question</option>
+                      {allQuestions.map((question) => (
+                        <option key={question._id} value={question._id}>
+                          {question.question}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
                 {options.length > 1 && (
                   <button
@@ -679,7 +699,8 @@ class CreateQuestion extends Component {
     if (selectedOption === 'multipleChoice' || selectedOption === 'checkbox' || selectedOption === 'dropdown') {
       dataToInsert.options = options.map((option) => ({
         text: option.label,
-        isCorrect: option.isCorrect || false, 
+        isCorrect: option.isCorrect || false,
+        optionsNextQuestion: isLeadingQuestion ? option.nextQuestion : undefined
       }));
     }
   

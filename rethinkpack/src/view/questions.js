@@ -4,7 +4,8 @@ import EditQuestion from './editQuestion';
 
 const Questions = ({ triggerRefresh }) => {
     const [questions, setQuestions] = useState([]);
-    const [questionToDelete, setQuestionToDelete] = useState(null);
+    const [questionToDelete, setQuestionToDelete] = useState([]);
+    const [optionNextQuestions, setOptionNextQuestions] = useState({});
     const [showToast, setShowToast] = useState(false);
 
     const handleDelete = async () => {
@@ -43,6 +44,21 @@ const Questions = ({ triggerRefresh }) => {
         }
     };
 
+    const fetchOptionNextQuestionById = async (optionId) => {
+        try {
+            const response = await fetch(`http://localhost:5000/api/option/${optionId}`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            console.log("Hi");
+            const data = await response.json();
+            return data.question; 
+        } catch (error) {
+            console.error("Error fetching next question for option:", error);
+            return null;
+        }
+    };
+
     useEffect(() => {
         const fetchQuestions = async () => {
             try {
@@ -73,6 +89,25 @@ const Questions = ({ triggerRefresh }) => {
         });
     }, [questions]);
 
+    useEffect(() => {
+        const fetchAllOptionNextQuestions = async () => {
+            const newOptionNextQuestions = { ...optionNextQuestions };
+    
+            for (const question of questions) {
+                for (const option of question.options) {
+                    if (option.nextQuestion && !newOptionNextQuestions[option._id]) {
+                        const nextQuestionTitle = await fetchOptionNextQuestionById(option.nextQuestion);
+                        newOptionNextQuestions[option._id] = nextQuestionTitle;
+                    }
+                }
+            }
+    
+            setOptionNextQuestions(newOptionNextQuestions);
+        };
+    
+        fetchAllOptionNextQuestions();
+    }, [questions, optionNextQuestions]);
+
     return (
         <div className="questions-container">
             {showToast && (
@@ -97,16 +132,23 @@ const Questions = ({ triggerRefresh }) => {
                     {question.optionType === 'multipleChoice' && 
                         <div className="option-container">
                             {question.options.map((option) => (
-                                <label key={option._id}>
-                                    <input 
-                                        type="radio" 
-                                        name={question.question} 
-                                        value={option.text} 
-                                        defaultChecked={option.isCorrect}
-                                        disabled={true}  
-                                    />
-                                    {option.text}
-                                </label>
+                                <div key={option._id} className="option">
+                                    <label>
+                                        <input 
+                                            type="radio" 
+                                            name={question.question} 
+                                            value={option.text} 
+                                            defaultChecked={option.isCorrect}
+                                            disabled={true}  
+                                        />
+                                        {option.text}
+                                    </label>
+                                    {optionNextQuestions[option._id] && (
+                                        <span className="next-question-title">
+                                            Next: {optionNextQuestions[option._id]}
+                                        </span>
+                                    )}
+                                </div>
                             ))}
                         </div>
                     }
