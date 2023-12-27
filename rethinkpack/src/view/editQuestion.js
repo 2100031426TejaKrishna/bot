@@ -77,7 +77,8 @@ class EditQuestion extends Component {
       requireResponse: false,
       //
       testFirstQuestion: '',
-      questionId: props.questionsId
+      questionIndex: props.index,
+      questionId: props.questionId
     };
 
     this.initialState = { ...this.state };
@@ -97,10 +98,11 @@ class EditQuestion extends Component {
     editQuestionModal.addEventListener('hidden.bs.modal', this.resetState);
     // Add APIs below
     this.fetchTestQuestion();
+    console.log(`componentDidMount executed: questionIndex: ${this.props.index}`)
   }
 
 
-  /*--------------------------------*/
+  /*-------------------------------*/
 
   
   fetchTestQuestion = async () => {
@@ -696,7 +698,9 @@ class EditQuestion extends Component {
       explanation,
       showExplanation,
       requireResponse,
-      nextQuestion
+      nextQuestion,
+      //
+      questionIndex
     } = this.state;
 
     const dataToInsert = {
@@ -769,7 +773,9 @@ class EditQuestion extends Component {
             explanation: '',
           },
           requireResponse: false,
-          showToast: true
+          showToast: true,
+          //
+          questionIndex
         });
         const modalElement = this.editQuestionModalRef.current;
         if (modalElement) {
@@ -807,8 +813,7 @@ class EditQuestion extends Component {
 
   render() {
 
-    // add allQuestions to this.state
-    const { questionType, selectedOption, showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, validationErrors, testFirstQuestion, allQuestions,  question } = this.state;
+    const { questionType, selectedOption, showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, validationErrors, testFirstQuestion, questionIndex, questionId } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
 
     return (
@@ -819,7 +824,7 @@ class EditQuestion extends Component {
           className="btn btn-primary" 
           data-bs-toggle="modal" 
           data-bs-target="#editQuestion">
-            Edit
+            {questionIndex} Edit
         </button>
 
         {this.renderToast()}

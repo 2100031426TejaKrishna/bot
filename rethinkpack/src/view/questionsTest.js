@@ -49,7 +49,7 @@ const Questions = ({ triggerRefresh }) => {
         //setSelectedQuestion(question);
         // Open the modal here (you may need to add code for your modal library).
 
-        <EditQuestion />
+        
       };
     
     useEffect(() => {
@@ -232,17 +232,12 @@ const Questions = ({ triggerRefresh }) => {
                     {question.nextQuestionTitle && ( <p className="next-question">Next Question: {question.nextQuestionTitle}</p> )}
                     <p className="question-date">Date created: {formatDate(question.date)}</p>
                     <div className="question-actions">
-                    
-                    {/* ... */}
-                    {/* implement onClickHandler functionality */}
-                        <button 
-                            className="btn btn-primary" 
-                            data-bs-toggle="modal" 
-                            data-bs-target="#editQuestion">
-                            Edit
-                        </button>
-                        
-                        
+                
+                        <EditQuestion 
+                            index = {index}
+                            questionId = {question._id} 
+                        />
+ 
                         <button 
                             className="btn btn-danger" 
                             data-bs-toggle="modal" 
