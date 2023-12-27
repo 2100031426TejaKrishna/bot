@@ -78,7 +78,8 @@ class EditQuestion extends Component {
       //
       testFirstQuestion: '',
       questionIndex: props.index,
-      questionId: props.questionId
+      questionId: props.questionId,
+      questionList:''
     };
 
     this.initialState = { ...this.state };
@@ -97,14 +98,17 @@ class EditQuestion extends Component {
     const editQuestionModal = document.getElementById('editQuestion');
     editQuestionModal.addEventListener('hidden.bs.modal', this.resetState);
     // Add APIs below
-    this.fetchTestQuestion();
+    //this.fetchTestQuestion();
+    this.fetchQuestion(this.props.questionId);
     console.log(`componentDidMount executed: questionIndex: ${this.props.index}`)
+    console.log(`componentDidMount executed: questionId: ${this.props.questionId}`)
   }
 
 
   /*-------------------------------*/
 
-  
+  // Trial
+  /*
   fetchTestQuestion = async () => {
     try {
       const response = await fetch('http://localhost:5000/api/editReadUpdate');
@@ -117,20 +121,22 @@ class EditQuestion extends Component {
       console.error('Error fetching questions:', error);
     }
   };
-  
+  */
 
-/*
-  fetchQuestions = async () => {
+  fetchQuestion = async (questionId) => {
     try {
-      const response = await fetch('http://localhost:5000/api/displayQuestion');
-      const questions = await response.json();
-      this.setState({ allQuestions: questions });
+      const response = await fetch(`http://localhost:5000/api/editReadUpdateQuestions/${questionId}`);
+      const data = await response.json();
+      this.setState({ questionList: data });
+      console.log(`Debug: fetchQuestion API call: ${data.question}`)
+      return data.question
+
     } catch (error) {
       console.error('Error fetching questions:', error);
     }
   };
-  */
   
+
   /*--------------------------------*/
 
 
@@ -813,7 +819,7 @@ class EditQuestion extends Component {
 
   render() {
 
-    const { questionType, selectedOption, showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, validationErrors, testFirstQuestion, questionIndex, questionId } = this.state;
+    const { questionType, selectedOption, showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, validationErrors, testFirstQuestion, questionIndex, questionId, questionList } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
 
     return (
@@ -904,7 +910,7 @@ class EditQuestion extends Component {
                         type="text" 
                         className="form-control" 
                         id="question" 
-                        value={testFirstQuestion}
+                        value={questionList.question}
                         onChange={(e) => this.setState({ testFirstQuestion: e.target.value })} 
                       />
                       {validationErrors.question && (

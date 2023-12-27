@@ -7,19 +7,7 @@ const Questions = mongoose.model('questions');
 const fetchQuestionsToEdit = async () => {
     try {
         
-        // Test run to fetch first document of database
-        /* 
-        const firstResult = await Questions.findOne();
-    
-        if (firstResult) {
-            console.log(`Found a document: `);
-            console.log(firstResult);
-        } else {
-            console.log(`No document found.`)
-        }
-        */
-
-
+        /*
         // Test run to fetch question field from first document of database
         const firstResultQuestion = await Questions.findOne();
     
@@ -32,20 +20,19 @@ const fetchQuestionsToEdit = async () => {
         } else {
             console.log(`No document found.`)
         }
+        */
         
         
-        // Test run loading ALL documents with question field
         const questionsToEdit = await Questions.find({});
     
         if (questionsToEdit) {
-            console.log(`Found a document: `);
+            console.log(`Found list: `);
             console.log(`Question: ${questionsToEdit}`);
             return questionsToEdit;
         } else {
             console.log(`No document found.`)
         }
-        
-
+    
 
     } catch (error) {
         console.error("Error fetching questions:", error);
@@ -64,9 +51,9 @@ router.get('/editReadUpdate', async (req, res) => {
 });
 
 // Fetch ALL questions from database
-router.get('/editReadUpdateQuestions', async (req, res) => {
+router.get('/editReadUpdateQuestions/:id', async (req, res) => {
     try {
-        const questions = await fetchQuestions();
+        const questions = await Questions.findById(req.params.id);
         res.json(questions);
     } catch (error) {
         res.status(500).send("Unable to fetch questions");
