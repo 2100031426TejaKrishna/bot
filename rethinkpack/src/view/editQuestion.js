@@ -77,7 +77,7 @@ class EditQuestion extends Component {
       requireResponse: false,
       //
       testFirstQuestion: '',
-      allQuestions: []
+      questionId: props.questionsId
     };
 
     this.initialState = { ...this.state };
@@ -95,6 +95,7 @@ class EditQuestion extends Component {
   componentDidMount() {
     const editQuestionModal = document.getElementById('editQuestion');
     editQuestionModal.addEventListener('hidden.bs.modal', this.resetState);
+    // Add APIs below
     this.fetchTestQuestion();
   }
 
@@ -814,7 +815,12 @@ class EditQuestion extends Component {
       
       <div>
         
-        <button className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editQuestion" >Edit</button>
+        <button 
+          className="btn btn-primary" 
+          data-bs-toggle="modal" 
+          data-bs-target="#editQuestion">
+            Edit
+        </button>
 
         {this.renderToast()}
         <div className="modal fade" id="editQuestion" tabIndex="-1" aria-labelledby="editQuestionLabel" aria-hidden="true" ref={this.editQuestionModalRef}>
