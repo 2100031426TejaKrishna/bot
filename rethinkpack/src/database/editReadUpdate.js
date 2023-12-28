@@ -51,7 +51,7 @@ router.get('/editReadUpdate', async (req, res) => {
 });
 
 // Fetch ALL questions from database
-router.get('/editReadUpdateQuestions/:id', async (req, res) => {
+router.get('/editReadUpdate/:id', async (req, res) => {
     try {
         const questions = await Questions.findById(req.params.id);
         res.json(questions);

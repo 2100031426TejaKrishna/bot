@@ -125,12 +125,10 @@ class EditQuestion extends Component {
 
   fetchQuestion = async (questionId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/editReadUpdateQuestions/${questionId}`);
+      const response = await fetch(`http://localhost:5000/api/editReadUpdate/${questionId}`);
       const data = await response.json();
       this.setState({ questionList: data });
       console.log(`Debug: fetchQuestion API call: ${data.question}`)
-      return data.question
-
     } catch (error) {
       console.error('Error fetching questions:', error);
     }
@@ -840,7 +838,7 @@ class EditQuestion extends Component {
 
         {/* Trying to implement map to load questions data 
         
-        {allQuestions.map((question) => (
+        {questionList.map((questionCard) => (
 
         */}
         
@@ -911,7 +909,6 @@ class EditQuestion extends Component {
                         className="form-control" 
                         id="question" 
                         value={questionList.question}
-                        onChange={(e) => this.setState({ testFirstQuestion: e.target.value })} 
                       />
                       {validationErrors.question && (
                         <div style={{ color: 'red', fontSize: 12 }}>
