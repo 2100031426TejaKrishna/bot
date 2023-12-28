@@ -78,7 +78,10 @@ class EditQuestion extends Component {
       // Additional variables
       questionIndex: props.index,
       questionId: props.questionId,
-      questionList:[],
+      questionList: {
+        question: '', // Set default value for the question property
+        // Add other properties with default values if needed
+      },
     };
 
     this.initialState = { ...this.state };
@@ -101,7 +104,10 @@ class EditQuestion extends Component {
       const response = await fetch(`http://localhost:5000/api/editReadUpdate/${questionId}`);
       const data = await response.json();
       this.setState({ questionList: data });
-      console.log(`Debug: fetchQuestion API call: ${data.question}`)
+      //this.setState({ ...data });
+      //console.log(`Debug: fetchQuestion API call: ${data.question}`)
+      console.log(`Debug: Edit button fetchQuestion API call: ${questionId}`)
+      console.log(`Debug: Edit button fetchQuestion API call: ${data.question}`)
     } catch (error) {
       console.error('Error fetching questions:', error);
     }
@@ -114,7 +120,7 @@ class EditQuestion extends Component {
     editQuestionModal.addEventListener('hidden.bs.modal', this.resetState);
     // Add APIs below
     //this.fetchTestQuestion();
-    this.fetchQuestion(this.props.questionId);
+    //this.fetchQuestion(this.props.questionId);
     console.log(`componentDidMount executed: questionIndex: ${this.props.index}`)
     console.log(`componentDidMount executed: questionId: ${this.props.questionId}`)
   }
@@ -796,7 +802,8 @@ class EditQuestion extends Component {
         <button 
           className="btn btn-primary" 
           data-bs-toggle="modal" 
-          data-bs-target="#editQuestion">
+          data-bs-target="#editQuestion"
+          onClick={() => this.fetchQuestion(questionId)}>
             {questionIndex} Edit
         </button>
 
@@ -877,7 +884,9 @@ class EditQuestion extends Component {
                         type="text" 
                         className="form-control" 
                         id="question" 
-                        value={questionList.question}
+                        value={this.state.questionList.question}
+                        onChange={(e) => { this.setState({ questionList: { ...this.state.questionList, question: e.target.value } }) }}
+
                       />
                       {validationErrors.question && (
                         <div style={{ color: 'red', fontSize: 12 }}>
