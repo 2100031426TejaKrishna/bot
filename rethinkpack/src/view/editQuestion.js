@@ -83,6 +83,7 @@ class EditQuestion extends Component {
 
     this.initialState = { ...this.state };
     this.resetState = this.resetState.bind(this);
+    // Modal ref
     this.editQuestionModalRef = React.createRef();
   }
 
@@ -109,7 +110,7 @@ class EditQuestion extends Component {
 /*-------------MODAL----------------*/
 
   componentDidMount() {
-    const editQuestionModal = document.getElementById('editQuestion');
+    const editQuestionModal = document.getElementById("editQuestion");
     editQuestionModal.addEventListener('hidden.bs.modal', this.resetState);
     // Add APIs below
     //this.fetchTestQuestion();
@@ -119,7 +120,7 @@ class EditQuestion extends Component {
   }
 
   componentWillUnmount() {
-    const editQuestionModal = document.getElementById('editQuestion');
+    const editQuestionModal = document.getElementById("editQuestion");
     editQuestionModal.removeEventListener('hidden.bs.modal', this.resetState);
   }
 
@@ -800,7 +801,15 @@ class EditQuestion extends Component {
         </button>
 
         {this.renderToast()}
-        <div className="modal fade" id="editQuestion" tabIndex="-1" aria-labelledby="editQuestionLabel" aria-hidden="true" ref={this.editQuestionModalRef}>
+
+        <div 
+          className="modal fade" 
+          id="editQuestion"
+          tabIndex="-1" 
+          aria-labelledby="editQuestionLabel" 
+          aria-hidden="true" 
+          ref={this.editQuestionModalRef}
+        >
         
         {/* Trying to implement map to load questions data 
         
