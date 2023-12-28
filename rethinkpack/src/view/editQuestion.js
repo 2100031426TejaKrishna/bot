@@ -75,11 +75,10 @@ class EditQuestion extends Component {
         explanation: '',
       },
       requireResponse: false,
-      //
-      testFirstQuestion: '',
+      // Additional variables
       questionIndex: props.index,
       questionId: props.questionId,
-      questionList:''
+      questionList:[],
     };
 
     this.initialState = { ...this.state };
@@ -94,34 +93,7 @@ class EditQuestion extends Component {
     });
   }
 
-  componentDidMount() {
-    const editQuestionModal = document.getElementById('editQuestion');
-    editQuestionModal.addEventListener('hidden.bs.modal', this.resetState);
-    // Add APIs below
-    //this.fetchTestQuestion();
-    this.fetchQuestion(this.props.questionId);
-    console.log(`componentDidMount executed: questionIndex: ${this.props.index}`)
-    console.log(`componentDidMount executed: questionId: ${this.props.questionId}`)
-  }
-
-
-  /*-------------------------------*/
-
-  // Trial
-  /*
-  fetchTestQuestion = async () => {
-    try {
-      const response = await fetch('http://localhost:5000/api/editReadUpdate');
-      const questions = await response.json();
-      this.setState({ testFirstQuestion: questions });
-
-      console.log(`Debug: fetchTestQuestion API call: ${questions}`)
-
-    } catch (error) {
-      console.error('Error fetching questions:', error);
-    }
-  };
-  */
+/*--------------API-----------------*/
 
   fetchQuestion = async (questionId) => {
     try {
@@ -133,17 +105,25 @@ class EditQuestion extends Component {
       console.error('Error fetching questions:', error);
     }
   };
-  
 
-  /*--------------------------------*/
+/*-------------MODAL----------------*/
 
-
-
+  componentDidMount() {
+    const editQuestionModal = document.getElementById('editQuestion');
+    editQuestionModal.addEventListener('hidden.bs.modal', this.resetState);
+    // Add APIs below
+    //this.fetchTestQuestion();
+    this.fetchQuestion(this.props.questionId);
+    console.log(`componentDidMount executed: questionIndex: ${this.props.index}`)
+    console.log(`componentDidMount executed: questionId: ${this.props.questionId}`)
+  }
 
   componentWillUnmount() {
     const editQuestionModal = document.getElementById('editQuestion');
     editQuestionModal.removeEventListener('hidden.bs.modal', this.resetState);
   }
+
+/*---------------------------------*/
 
   addOption = (e) => {
     e.preventDefault();
@@ -703,8 +683,6 @@ class EditQuestion extends Component {
       showExplanation,
       requireResponse,
       nextQuestion,
-      //
-      questionIndex
     } = this.state;
 
     const dataToInsert = {
@@ -778,9 +756,9 @@ class EditQuestion extends Component {
           },
           requireResponse: false,
           showToast: true,
-          //
-          questionIndex
         });
+
+/*-----------MODAL ELEMENTS----------------*/
         const modalElement = this.editQuestionModalRef.current;
         if (modalElement) {
           const bootstrapModal = Modal.getInstance(modalElement);
@@ -803,21 +781,11 @@ class EditQuestion extends Component {
     }
   };
 
-
-
-
-
-
-
-
-
-/* RENDER */
-
-
+/*---------------------RENDER----------------------------------*/
 
   render() {
 
-    const { questionType, selectedOption, showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, validationErrors, testFirstQuestion, questionIndex, questionId, questionList } = this.state;
+    const { questionType, selectedOption, showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, validationErrors, questionIndex, questionId, questionList } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
 
     return (
@@ -834,18 +802,13 @@ class EditQuestion extends Component {
         {this.renderToast()}
         <div className="modal fade" id="editQuestion" tabIndex="-1" aria-labelledby="editQuestionLabel" aria-hidden="true" ref={this.editQuestionModalRef}>
         
-
-
         {/* Trying to implement map to load questions data 
         
-        {questionList.map((questionCard) => (
+        {questionList.map((questionId) => (
 
         */}
         
           <div className="question-selected">
-
-            {/* */}
-        
             <div className="modal-dialog modal-dialog-scrollable modal-lg">
               <div className="modal-content">
                 <div className="modal-header">
@@ -897,9 +860,6 @@ class EditQuestion extends Component {
                     
                     {/* Question label */}
                     {/* onChange={this.handleInputChange} */}
-
-
-
                     <div className="mb-3">
                       <label htmlFor="question" className="col-form-label">
                         Question:
