@@ -98,7 +98,7 @@ class CreateQuestion extends Component {
 
   fetchQuestions = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/displayAllQuestions');
+      const response = await fetch('http://rtp.dusky.bond:5000/api/displayAllQuestions');
       const questions = await response.json();
       this.setState({ allQuestions: questions });
     } catch (error) {
@@ -719,7 +719,7 @@ class CreateQuestion extends Component {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/insertQuestion', {
+      const response = await fetch('http://rtp.dusky.bond:5000/api/insertQuestion', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

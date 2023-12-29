@@ -7,8 +7,15 @@ const { router: displayQuestionRoute, fetchQuestions } = require('./displayQuest
 const { router: editReadUpdateRoute, fetchQuestionsToEdit } = require('./editReadUpdate');
 const deleteQuestionRouter = require('./deleteQuestion'); 
 
+const corsOptions = {
+  origin: ['http://rtp.dusky.bond'],
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  credentials: true,
+  optionsSuccessStatus: 204
+};
+
 const app = express();
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(bodyParser.json());
 
 connectToDatabase().then(async () => {
@@ -21,10 +28,20 @@ connectToDatabase().then(async () => {
   await fetchQuestions();
   await fetchQuestionsToEdit();
 
-  const PORT = process.env.PORT || 5000;
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+  // const PORT = 5000;
+  // const HOST = 'rtp.dusky.bond';
+
+  // app.listen(PORT, HOST, () => {
+  //   console.log(`Server running on http://${HOST}:${PORT}`);
+  // });
+
+  const PORT = 5000;
+
+  // Use '0.0.0.0' as the host to listen on all network interfaces
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on http://0.0.0.0:${PORT}`);
   });
+
 
 }).catch(error => {
   console.error("Failed to connect to the database:", error);

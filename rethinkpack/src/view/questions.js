@@ -7,11 +7,12 @@ const Questions = ({ triggerRefresh }) => {
     const [questionToDelete, setQuestionToDelete] = useState([]);
     const [optionNextQuestions, setOptionNextQuestions] = useState({});
     const [showToast, setShowToast] = useState(false);
+    const [error, setError] = useState(null);
 
     const handleDelete = async () => {
         if (questionToDelete) {
             try {
-                const response = await fetch(`http://localhost:5000/api/deleteQuestion/${questionToDelete}`, { method: 'DELETE' });
+                const response = await fetch(`http://rtp.dusky.bond:5000/api/deleteQuestion/${questionToDelete}`, { method: 'DELETE' });
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
@@ -32,7 +33,7 @@ const Questions = ({ triggerRefresh }) => {
 
     const fetchQuestionById = async (id) => {
         try {
-            const response = await fetch(`http://localhost:5000/api/question/${id}`);
+            const response = await fetch(`http://rtp.dusky.bond:5000/api/question/${id}`);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -40,13 +41,14 @@ const Questions = ({ triggerRefresh }) => {
             return data.question; 
         } catch (error) {
             console.error("Error fetching specific question:", error);
+            setError(error);
             return null;
         }
     };
 
     const fetchOptionNextQuestionById = async (optionId) => {
         try {
-            const response = await fetch(`http://localhost:5000/api/option/${optionId}`);
+            const response = await fetch(`http://rtp.dusky.bond:5000/api/option/${optionId}`);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -62,7 +64,7 @@ const Questions = ({ triggerRefresh }) => {
     useEffect(() => {
         const fetchQuestions = async () => {
             try {
-                const response = await fetch('http://localhost:5000/api/displayQuestions');
+                const response = await fetch('http://rtp.dusky.bond:5000/api/displayQuestions');
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
@@ -77,36 +79,46 @@ const Questions = ({ triggerRefresh }) => {
     }, [triggerRefresh]);
 
     useEffect(() => {
-        questions.forEach(async (question) => {
-            if (question.nextQuestion) {
-                const nextQuestionTitle = await fetchQuestionById(question.nextQuestion);
-                setQuestions((prevQuestions) =>
-                    prevQuestions.map((q) => 
-                        q._id === question._id ? { ...q, nextQuestionTitle } : q
-                    )
-                );
-            }
-        });
+        if (questions.length === 0) return;
+
+        const updateQuestionsWithNextTitles = async () => {
+            const updatedQuestions = await Promise.all(questions.map(async (question) => {
+                if (question.nextQuestion) {
+                    const nextQuestionTitle = await fetchQuestionById(question.nextQuestion);
+                    return { ...question, nextQuestionTitle };
+                }
+                return question;
+            }));
+
+            setQuestions(updatedQuestions);
+        };
+
+        updateQuestionsWithNextTitles();
     }, [questions]);
 
     useEffect(() => {
         const fetchAllOptionNextQuestions = async () => {
-            const newOptionNextQuestions = { ...optionNextQuestions };
-    
-            for (const question of questions) {
-                for (const option of question.options) {
-                    if (option.nextQuestion && !newOptionNextQuestions[option._id]) {
-                        const nextQuestionTitle = await fetchOptionNextQuestionById(option.nextQuestion);
-                        newOptionNextQuestions[option._id] = nextQuestionTitle;
+            const newQuestions = await Promise.all(questions.map(async (question) => {
+                const options = await Promise.all(question.options.map(async (option) => {
+                    if (option.optionsNextQuestion) {
+                        const nextQuestion = await fetchOptionNextQuestionById(option.optionsNextQuestion);
+                        return { ...option, nextQuestionTitle: nextQuestion.question };
                     }
-                }
-            }
-    
-            setOptionNextQuestions(newOptionNextQuestions);
+                    return option;
+                }));
+                return { ...question, options };
+            }));
+            setQuestions(newQuestions);
         };
     
-        fetchAllOptionNextQuestions();
-    }, [questions, optionNextQuestions]);
+        if (questions.length > 0) {
+            fetchAllOptionNextQuestions();
+        }
+    }, [questions]);
+
+    if (error) {
+        return <div>Error: {error.message}</div>;
+    }
 
     return (
         <div className="questions-container">
@@ -143,9 +155,9 @@ const Questions = ({ triggerRefresh }) => {
                                         />
                                         {option.text}
                                     </label>
-                                    {optionNextQuestions[option._id] && (
+                                    {option.nextQuestionTitle && (
                                         <span className="next-question-title">
-                                            Next: {optionNextQuestions[option._id]}
+                                            Next Question: {option.nextQuestionTitle}
                                         </span>
                                     )}
                                 </div>
