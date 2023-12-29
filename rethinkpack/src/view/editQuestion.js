@@ -116,8 +116,6 @@ class EditQuestion extends Component {
         ()=>{console.log(`Debug: stateQuestionId: ${this.state.stateQuestionId}`)}
         )
 
-      // This console method returns null if using setState
-      console.log(`Debug: state: ${this.state.questionList.question}`)
       console.log(`Debug: Edit button fetchQuestion API call: ${questionId}`)
       console.log(`Debug: Edit button fetchQuestion API call: ${data.question}`)
     } catch (error) {
@@ -130,19 +128,15 @@ class EditQuestion extends Component {
   componentDidMount() {
     const editQuestionModal = document.getElementById("editQuestion");
     editQuestionModal.addEventListener('hidden.bs.modal', this.resetState);
-    // Add APIs below
-    //this.fetchTestQuestion();
-    //this.fetchQuestion(this.props.questionId);
+    
     console.log(`componentDidMount executed: questionIndex: ${this.props.index}`)
     console.log(`componentDidMount executed: questionId: ${this.props.questionId}`)
 
+    // Add APIs below
     //this.fetchQuestion(this.state.stateQuestionId);
     this.onEditClickHandler = (id) => {
       this.fetchQuestion(id);
     }
-
-    
-
   }
 
   componentWillUnmount() {
