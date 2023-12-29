@@ -82,6 +82,7 @@ class EditQuestion extends Component {
         question: '', // Set default value for the question property
         // Add other properties with default values if needed
       },
+      stateQuestionId: ''
     };
 
     this.initialState = { ...this.state };
@@ -103,24 +104,20 @@ class EditQuestion extends Component {
     try {
       const response = await fetch(`http://localhost:5000/api/editReadUpdate/${questionId}`);
       const data = await response.json();
-      
-      // This returns null
-      //this.setState({ questionList: data });
-      
-      // This returns the correct values, however need to use setState
-      //this.state.questionList = data;
-
+     
       // Due to asynchronous behavior, of setState, need to console log within setState codeblock
       this.setState(
         { questionList: data },
         ()=>{console.log(`Debug: async state: ${this.state.questionList.question}`)}
       );
 
+      this.setState(
+        { stateQuestionId: questionId },
+        ()=>{console.log(`Debug: stateQuestionId: ${this.state.stateQuestionId}`)}
+        )
+
       // This console method returns null if using setState
       console.log(`Debug: state: ${this.state.questionList.question}`)
-      
-      //this.setState({ ...data });
-      //console.log(`Debug: fetchQuestion API call: ${data.question}`)
       console.log(`Debug: Edit button fetchQuestion API call: ${questionId}`)
       console.log(`Debug: Edit button fetchQuestion API call: ${data.question}`)
     } catch (error) {
@@ -138,6 +135,14 @@ class EditQuestion extends Component {
     //this.fetchQuestion(this.props.questionId);
     console.log(`componentDidMount executed: questionIndex: ${this.props.index}`)
     console.log(`componentDidMount executed: questionId: ${this.props.questionId}`)
+
+    //this.fetchQuestion(this.state.stateQuestionId);
+    this.onEditClickHandler = (id) => {
+      this.fetchQuestion(id);
+    }
+
+    
+
   }
 
   componentWillUnmount() {
@@ -818,7 +823,7 @@ class EditQuestion extends Component {
           className="btn btn-primary" 
           data-bs-toggle="modal" 
           data-bs-target="#editQuestion"
-          onClick={() => this.fetchQuestion(questionId)}>
+          onClick={() => this.onEditClickHandler(questionId)}>
             {questionIndex} Edit
         </button>
 
@@ -899,9 +904,8 @@ class EditQuestion extends Component {
                         type="text" 
                         className="form-control" 
                         id="question" 
-                        value={this.state.questionList.question}
+                        value={(this.state.questionList && this.state.questionList.question) || 'null'}
                         onChange={(e) => { this.setState({ questionList: { ...this.state.questionList, question: e.target.value } }) }}
-
                       />
                       {validationErrors.question && (
                         <div style={{ color: 'red', fontSize: 12 }}>
