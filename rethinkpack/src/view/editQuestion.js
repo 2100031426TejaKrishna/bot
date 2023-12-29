@@ -103,7 +103,22 @@ class EditQuestion extends Component {
     try {
       const response = await fetch(`http://localhost:5000/api/editReadUpdate/${questionId}`);
       const data = await response.json();
-      this.setState({ questionList: data });
+      
+      // This returns null
+      //this.setState({ questionList: data });
+      
+      // This returns the correct values, however need to use setState
+      //this.state.questionList = data;
+
+      // Due to asynchronous behavior, of setState, need to console log within setState codeblock
+      this.setState(
+        { questionList: data },
+        ()=>{console.log(`Debug: async state: ${this.state.questionList.question}`)}
+      );
+
+      // This console method returns null if using setState
+      console.log(`Debug: state: ${this.state.questionList.question}`)
+      
       //this.setState({ ...data });
       //console.log(`Debug: fetchQuestion API call: ${data.question}`)
       console.log(`Debug: Edit button fetchQuestion API call: ${questionId}`)
