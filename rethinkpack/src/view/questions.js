@@ -98,36 +98,6 @@ const Questions = ({ triggerRefresh }) => {
 
     useEffect(() => {
         if (questions.length === 0) return;
-
-        const fetchAllOptionNextQuestions = async () => {
-            const fetchAndUpdateQuestion = async (question) => {
-                const options = await Promise.all(question.options.map(async (option) => {
-                    if (option.optionsNextQuestion) {
-                        const nextQuestion = await fetchQuestionById(option.optionsNextQuestion);
-
-                        if (nextQuestion && Array.isArray(nextQuestion.options)) {
-                            const nextOption = nextQuestion.options.find(opt => opt._id === option._id);
-                            return { ...option, nextQuestionTitle: nextOption ? nextOption.text : 'No title available' };
-                        } else {
-                            console.warn('Invalid structure for nextQuestion:', nextQuestion);
-                            return { ...option };
-                        }
-                    }
-                    return option;
-                }));
-    
-                return { ...question, options };
-            };
-    
-            const newQuestions = await Promise.all(questions.map(fetchAndUpdateQuestion));
-            setQuestions(newQuestions);
-        };
-
-        fetchAllOptionNextQuestions();
-    }, [questions]);
-
-    useEffect(() => {
-        if (questions.length === 0) return;
     
         const updateOptionsWithNextQuestionText = async () => {
             const updatedQuestions = await Promise.all(questions.map(async (question) => {
