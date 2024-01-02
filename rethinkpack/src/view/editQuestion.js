@@ -105,7 +105,7 @@ class EditQuestion extends Component {
 
   fetchQuestion = async (questionId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/editReadUpdate/${questionId}`);
+      const response = await fetch(`http://rtp.dusky.bond:5000/api/editReadUpdate/${questionId}`);
       const data = await response.json();
       return data
     } catch (error) {
@@ -128,8 +128,7 @@ class EditQuestion extends Component {
     const editQuestionModal = document.getElementById("editQuestion");
     editQuestionModal.addEventListener('hidden.bs.modal', this.resetState);
     
-    console.log(`componentDidMount executed: questionIndex: ${this.props.index}`)
-    console.log(`componentDidMount executed: questionId: ${this.props.questionId}`)
+    console.log(`componentDidMount render executed`)
 
     // Add APIs below
     //this.fetchQuestion(this.state.stateQuestionId);
@@ -814,7 +813,7 @@ class EditQuestion extends Component {
           data-bs-toggle="modal" 
           data-bs-target="#editQuestion"
           onClick={() => this.onEditClickHandler(questionId)}>
-            {questionIndex} Edit
+            Edit
         </button>
 
         {this.renderToast()}
