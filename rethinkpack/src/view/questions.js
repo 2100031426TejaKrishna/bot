@@ -97,23 +97,33 @@ const Questions = ({ triggerRefresh }) => {
     }, [questions]);
 
     useEffect(() => {
+        if (questions.length === 0) return;
+
         const fetchAllOptionNextQuestions = async () => {
-            const newQuestions = await Promise.all(questions.map(async (question) => {
+            const fetchAndUpdateQuestion = async (question) => {
                 const options = await Promise.all(question.options.map(async (option) => {
                     if (option.optionsNextQuestion) {
-                        const nextQuestion = await fetchOptionNextQuestionById(option.optionsNextQuestion);
-                        return { ...option, nextQuestionTitle: nextQuestion.question };
+                        const nextQuestion = await fetchQuestionById(option.optionsNextQuestion);
+
+                        if (nextQuestion && Array.isArray(nextQuestion.options)) {
+                            const nextOption = nextQuestion.options.find(opt => opt._id === option._id);
+                            return { ...option, nextQuestionTitle: nextOption ? nextOption.text : 'No title available' };
+                        } else {
+                            console.warn('Invalid structure for nextQuestion:', nextQuestion);
+                            return { ...option };
+                        }
                     }
                     return option;
                 }));
+    
                 return { ...question, options };
-            }));
+            };
+    
+            const newQuestions = await Promise.all(questions.map(fetchAndUpdateQuestion));
             setQuestions(newQuestions);
         };
-    
-        if (questions.length > 0) {
-            fetchAllOptionNextQuestions();
-        }
+
+        fetchAllOptionNextQuestions();
     }, [questions]);
 
     if (error) {
