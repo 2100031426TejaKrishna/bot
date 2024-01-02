@@ -122,7 +122,7 @@ class EditQuestion extends Component {
     );
   }
 
-/*-------------MODAL----------------*/
+/*-------------MODAL-----------------*/
 
   componentDidMount() {
     const editQuestionModal = document.getElementById("editQuestion");
