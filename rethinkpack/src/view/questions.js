@@ -126,6 +126,28 @@ const Questions = ({ triggerRefresh }) => {
         fetchAllOptionNextQuestions();
     }, [questions]);
 
+    useEffect(() => {
+        if (questions.length === 0) return;
+    
+        const updateOptionsWithNextQuestionText = async () => {
+            const updatedQuestions = await Promise.all(questions.map(async (question) => {
+                const updatedOptions = await Promise.all(question.options.map(async (option) => {
+                    if (option.optionsNextQuestion) {
+                        const nextQuestionText = await fetchOptionNextQuestionById(option.optionsNextQuestion);
+                        return { ...option, nextQuestionText };
+                    }
+                    return option;
+                }));
+    
+                return { ...question, options: updatedOptions };
+            }));
+    
+            setQuestions(updatedQuestions);
+        };
+    
+        updateOptionsWithNextQuestionText();
+    }, [questions]);
+
     if (error) {
         return <div>Error: {error.message}</div>;
     }
@@ -165,9 +187,9 @@ const Questions = ({ triggerRefresh }) => {
                                         />
                                         {option.text}
                                     </label>
-                                    {option.nextQuestionTitle && (
-                                        <span className="next-question-title">
-                                            Next Question: {option.nextQuestionTitle}
+                                    {option.nextQuestionText && (
+                                        <span className="next-question-text">
+                                            Next Question: {option.nextQuestionText}
                                         </span>
                                     )}
                                 </div>
