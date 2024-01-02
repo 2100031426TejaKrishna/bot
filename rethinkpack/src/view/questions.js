@@ -5,9 +5,10 @@ import EditQuestion from './editQuestion';
 const Questions = ({ triggerRefresh }) => {
     const [questions, setQuestions] = useState([]);
     const [questionToDelete, setQuestionToDelete] = useState([]);
-    const [optionNextQuestions, setOptionNextQuestions] = useState({});
     const [showToast, setShowToast] = useState(false);
     const [error, setError] = useState(null);
+    const [questionsUpdated, setQuestionsUpdated] = useState(false);
+    const [optionsUpdated, setOptionsUpdated] = useState(false);
 
     const handleDelete = async () => {
         if (questionToDelete) {
@@ -46,13 +47,12 @@ const Questions = ({ triggerRefresh }) => {
         }
     };
 
-    const fetchOptionNextQuestionById = async (optionId) => {
+    const fetchOptionNextQuestionById = async (questionId, optionId) => {
         try {
-            const response = await fetch(`http://rtp.dusky.bond:5000/api/option/${optionId}`);
+            const response = await fetch(`http://rtp.dusky.bond:5000/api/option/${questionId}/${optionId}`);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            console.log("Hi");
             const data = await response.json();
             return data.question; 
         } catch (error) {
@@ -79,7 +79,7 @@ const Questions = ({ triggerRefresh }) => {
     }, [triggerRefresh]);
 
     useEffect(() => {
-        if (questions.length === 0) return;
+        if (questions.length === 0 || questionsUpdated) return;
 
         const updateQuestionsWithNextTitles = async () => {
             const updatedQuestions = await Promise.all(questions.map(async (question) => {
@@ -94,29 +94,32 @@ const Questions = ({ triggerRefresh }) => {
         };
 
         updateQuestionsWithNextTitles();
-    }, [questions]);
+        setQuestionsUpdated(true);
+    }, [questions, questionsUpdated]);
 
     useEffect(() => {
-        if (questions.length === 0) return;
-    
-        const updateOptionsWithNextQuestionText = async () => {
+        if (questions.length === 0 || optionsUpdated) return;
+
+        const updateOptionsWithNextQuestion = async () => {
             const updatedQuestions = await Promise.all(questions.map(async (question) => {
                 const updatedOptions = await Promise.all(question.options.map(async (option) => {
                     if (option.optionsNextQuestion) {
-                        const nextQuestionText = await fetchOptionNextQuestionById(option.optionsNextQuestion);
+                        const nextQuestionText = await fetchOptionNextQuestionById(question._id, option.optionsNextQuestion);
+                        console.log(`Next question for option ${option._id}:`, nextQuestionText);
                         return { ...option, nextQuestionText };
                     }
                     return option;
                 }));
-    
+        
                 return { ...question, options: updatedOptions };
             }));
-    
+        
             setQuestions(updatedQuestions);
         };
     
-        updateOptionsWithNextQuestionText();
-    }, [questions]);
+        updateOptionsWithNextQuestion();
+        setOptionsUpdated(true);
+    }, [questions, optionsUpdated]);
 
     if (error) {
         return <div>Error: {error.message}</div>;
@@ -156,12 +159,12 @@ const Questions = ({ triggerRefresh }) => {
                                             disabled={true}  
                                         />
                                         {option.text}
+                                        {option.nextQuestionText && (
+                                            <span className="next-question-text">
+                                                Next Question: {option.nextQuestionText}
+                                            </span>
+                                        )}
                                     </label>
-                                    {option.nextQuestionText && (
-                                        <span className="next-question-text">
-                                            Next Question: {option.nextQuestionText}
-                                        </span>
-                                    )}
                                 </div>
                             ))}
                         </div>
@@ -178,6 +181,11 @@ const Questions = ({ triggerRefresh }) => {
                                         disabled={true}  
                                     />
                                     {option.text}
+                                    {option.nextQuestionText && (
+                                        <span className="next-question-text">
+                                            Next Question: {option.nextQuestionText}
+                                        </span>
+                                    )}
                                 </label>
                             ))}
                         </div>
@@ -279,7 +287,10 @@ const Questions = ({ triggerRefresh }) => {
                     {question.nextQuestionTitle && ( <p className="next-question">Next Question: {question.nextQuestionTitle}</p> )}
                     <p className="question-date">Date created: {formatDate(question.date)}</p>
                     <div className="question-actions">
-                        <EditQuestion />
+                        <EditQuestion 
+                            index = {index}
+                            questionId = {question._id} 
+                        />
                         <button 
                             className="btn btn-danger" 
                             data-bs-toggle="modal" 
