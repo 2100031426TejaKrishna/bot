@@ -89,6 +89,9 @@ class EditQuestion extends Component {
     this.resetState = this.resetState.bind(this);
     // Modal ref
     this.editQuestionModalRef = React.createRef();
+    // bind API?
+    this.fetchQuestion = this.fetchQuestion.bind(this);
+    this.onEditClickHandler = this.onEditClickHandler.bind(this);
   }
 
   resetState() {
@@ -104,24 +107,20 @@ class EditQuestion extends Component {
     try {
       const response = await fetch(`http://localhost:5000/api/editReadUpdate/${questionId}`);
       const data = await response.json();
-     
-      // Due to asynchronous behavior, of setState, need to console log within setState codeblock
-      this.setState(
-        { questionList: data },
-        ()=>{console.log(`Debug: async state: ${this.state.questionList.question}`)}
-      );
-
-      this.setState(
-        { stateQuestionId: questionId },
-        ()=>{console.log(`Debug: stateQuestionId: ${this.state.stateQuestionId}`)}
-        )
-
-      console.log(`Debug: Edit button fetchQuestion API call: ${questionId}`)
-      console.log(`Debug: Edit button fetchQuestion API call: ${data.question}`)
+      return data
     } catch (error) {
       console.error('Error fetching questions:', error);
     }
   };
+
+  onEditClickHandler = (id) => {
+    this.fetchQuestion(id).then( data => {
+      this.setState(
+        { questionList: data },
+        ()=>{console.log(`onclick: ${this.state.questionList.question}`)}
+      )}
+    );
+  }
 
 /*-------------MODAL----------------*/
 
@@ -134,9 +133,6 @@ class EditQuestion extends Component {
 
     // Add APIs below
     //this.fetchQuestion(this.state.stateQuestionId);
-    this.onEditClickHandler = (id) => {
-      this.fetchQuestion(id);
-    }
   }
 
   componentWillUnmount() {
