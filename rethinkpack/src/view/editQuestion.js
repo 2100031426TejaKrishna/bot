@@ -117,7 +117,12 @@ class EditQuestion extends Component {
     this.fetchQuestion(id).then( data => {
       this.setState(
         { questionList: data },
-        ()=>{console.log(`onclick: ${this.state.questionList.question}`)}
+        // Callback function
+        () => 
+          { 
+            localStorage.setItem("formData", this.state.questionList.question)
+            console.log(`onclick: ${this.state.questionList.question}`) 
+          }
       )}
     );
   }
@@ -128,11 +133,26 @@ class EditQuestion extends Component {
     const editQuestionModal = document.getElementById("editQuestion");
     editQuestionModal.addEventListener('hidden.bs.modal', this.resetState);
     
-    console.log(`componentDidMount render executed`)
+    console.log(`componentDidMount executed`)
 
     // Add APIs below
     //this.fetchQuestion(this.state.stateQuestionId);
   }
+
+  // 240103
+  componentDidUpdate(prevState) {
+    
+    if (this.state.questionList !== null && this.state.questionList !== prevState.questionList) {
+      // Do something when the value state changes
+      //localStorage.setItem("formData", JSON.stringify(this.state.questionList))
+      //localStorage.setItem("formData", JSON.stringify(this.state.questionList.question))
+
+      //console.log(`componentDidUpdate: ${this.state.questionList.question}`)
+      console.log(`componentDidUpdate executed`)
+    }
+  }
+  //
+
 
   componentWillUnmount() {
     const editQuestionModal = document.getElementById("editQuestion");
@@ -207,7 +227,7 @@ class EditQuestion extends Component {
     
     //
     this.setState({ testFirstQuestion: e.target.value });
-    
+    this.setState({ questionList: { ...this.state.questionList.question, question: e.target.value } });
     
     if (e.target.id === "country") {
       const options = e.target.options;
@@ -801,7 +821,7 @@ class EditQuestion extends Component {
 
   render() {
 
-    const { questionType, selectedOption, showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, validationErrors, questionIndex, questionId, questionList } = this.state;
+    const { questionType, selectedOption, showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, validationErrors, questionId, questionList } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
 
     return (
@@ -893,8 +913,8 @@ class EditQuestion extends Component {
                         type="text" 
                         className="form-control" 
                         id="question" 
-                        value={(this.state.questionList && this.state.questionList.question) || 'null'}
-                        onChange={(e) => { this.setState({ questionList: { ...this.state.questionList, question: e.target.value } }) }}
+                        value={localStorage.getItem('formData') || 'null'}
+                        onChange={(e) => { this.setState({ questionList: { ...this.state.questionList.question, question: e.target.value } }) }}
                       />
                       {validationErrors.question && (
                         <div style={{ color: 'red', fontSize: 12 }}>
