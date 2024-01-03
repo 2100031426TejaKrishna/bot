@@ -46,21 +46,4 @@ router.get('/question/:id', async (req, res) => {
     }
 });
 
-router.get('/option/:questionId/:optionId', async (req, res) => {
-    try {
-        const question = await Questions.findById(req.params.questionId);
-        if (!question) {
-            return res.status(404).send("Question not found");
-        }
-        const option = question.options.find(opt => opt._id.toString() === req.params.optionId);
-        if (!option) {
-            return res.status(404).send("Option not found");
-        }
-        res.json(option);
-    } catch (error) {
-        console.error("Error fetching specific option:", error);
-        res.status(500).send("Internal Server Error");
-    }
-});
-
 module.exports = { router, fetchQuestions };

@@ -118,10 +118,14 @@ class EditQuestion extends Component {
       this.setState(
         { questionList: data },
         // Callback function
-        () => 
-          { 
-            localStorage.setItem("formData", this.state.questionList.question)
-            console.log(`onclick: ${this.state.questionList.question}`) 
+        () => { 
+            localStorage.setItem("formData", this.state.questionList)
+            document.getElementById("formQuestion").value = this.state.questionList.question
+            document.getElementById("formOptionsType").value = this.state.questionList.optionType
+            document.getElementById("formMarks").value = this.state.questionList.marks
+            console.log(`onclick Q: ${this.state.questionList.question}`) 
+            console.log(`onclick O: ${this.state.questionList.optionType}`) 
+            console.log(`onclick M: ${this.state.questionList.marks}`) 
           }
       )}
     );
@@ -224,11 +228,6 @@ class EditQuestion extends Component {
   };
 
   handleInputChange = (e) => {
-    
-    //
-    this.setState({ testFirstQuestion: e.target.value });
-    this.setState({ questionList: { ...this.state.questionList.question, question: e.target.value } });
-    
     if (e.target.id === "country") {
       const options = e.target.options;
       const selectedCountries = [];
@@ -821,7 +820,7 @@ class EditQuestion extends Component {
 
   render() {
 
-    const { questionType, selectedOption, showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, validationErrors, questionId, questionList } = this.state;
+    const { questionType, selectedOption, showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, validationErrors, questionId } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
 
     return (
@@ -912,9 +911,9 @@ class EditQuestion extends Component {
                       <input 
                         type="text" 
                         className="form-control" 
-                        id="question" 
-                        value={localStorage.getItem('formData') || 'null'}
-                        onChange={(e) => { this.setState({ questionList: { ...this.state.questionList.question, question: e.target.value } }) }}
+                        id="formQuestion" 
+                        value=""
+                        //onChange={(e) => { this.setState({ questionList: { ...this.state.questionList.question, question: e.target.value } }) }}
                       />
                       {validationErrors.question && (
                         <div style={{ color: 'red', fontSize: 12 }}>
@@ -923,15 +922,15 @@ class EditQuestion extends Component {
                       )}
                     </div>
 
-
+                    {/* Options Type */}
                     <div className="mb-3">
                       <label htmlFor="optionsType" className="col-form-label">
                         Options Types:
                       </label>
                       <select
                         className="form-select"
-                        id="optionsType"
-                        value={selectedOption}
+                        id="formOptionsType"
+                        value=""
                         onChange={(e) => this.setState({ selectedOption: e.target.value })}
                       >
                         <option value="multipleChoice">Multiple Choice</option>
@@ -968,12 +967,20 @@ class EditQuestion extends Component {
                         )}
                       </div>
                     )}
+
+                    {/* Marks */}
                     {!isLeadingQuestion && (
                       <div className="mb-3">
                         <label htmlFor="mark" className="col-form-label">
                           Marks:
                         </label>
-                        <input type="text" className="form-control" id="marks" value={this.state.marks} onChange={this.handleInputChange} />
+                        <input 
+                          type="text" 
+                          className="form-control" 
+                          id="formMarks" 
+                          value=""
+                          onChange={this.handleInputChange} 
+                        />
                         {validationErrors.marks && (
                           <div style={{ color: 'red', fontSize: 12 }}>
                             {validationErrors.marks}
