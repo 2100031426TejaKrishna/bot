@@ -105,7 +105,9 @@ class EditQuestion extends Component {
 
   fetchQuestion = async (questionId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/editReadUpdate/${questionId}`);
+      //localhost:5000
+      //rtp.dusky.bond:5000
+      const response = await fetch(`http://rtp.dusky.bond:5000/api/editReadUpdate/${questionId}`);
       const data = await response.json();
       return data
     } catch (error) {
@@ -799,7 +801,9 @@ class EditQuestion extends Component {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/insertQuestion', {
+      //localhost:5000
+      //rtp.dusky.bond:5000
+      const response = await fetch('http://rtp.dusky.bond:5000/api/insertQuestion', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
