@@ -138,7 +138,20 @@ class EditQuestion extends Component {
             
             // optionType
             document.getElementById("formOptionsType").value = this.state.questionList.optionType
+              // update state of drop down list
+              this.setState({selectedOption: this.state.questionList.optionType}, console.log(`selectedOption: ${this.state.selectedOption}`))
 
+            // object
+            for (let i = 0; i < (this.state.questionList.options).length; i++) {
+              //document.getElementById(`formOptions-${i}`).value = (this.state.questionList.options)[i].text
+              this.editAddOption(i)
+              console.log(`index: ${i}`)
+              
+            }
+            document.getElementById(`formOptions-${0}`).value = (this.state.questionList.options)[0].text
+            
+            console.log(`option array: ${(this.state.questionList.options)[0].text}`)
+            
             // marks
             if (this.state.questionList.marks) {
               document.getElementById("formMarks").value = this.state.questionList.marks
@@ -192,6 +205,13 @@ class EditQuestion extends Component {
     this.setState((prevState) => ({
       options: [...prevState.options, { label: `Option ${prevState.options.length + 1}`, value: `Option ${prevState.options.length + 1}`, isCorrect: false }],
     }));
+  };
+
+  editAddOption = (i) => {
+    this.setState((prevState) => ({
+      options: [...prevState.options, { label: `Option ${prevState.options.length + 1}`, value: `Option ${prevState.options.length + 1}`, isCorrect: false }],
+    }));
+    console.log(`editAddOption ${i}`)
   };
 
   deleteOption = (index) => {
@@ -248,6 +268,7 @@ class EditQuestion extends Component {
     }));
   };
 
+  /*
   handleInputChange = (e) => {
     if (e.target.id === "country") {
       const options = e.target.options;
@@ -262,6 +283,7 @@ class EditQuestion extends Component {
       this.setState({ [e.target.id]: e.target.value });
     }
   };
+  */
 
   handleOptionChange = (index, value) => {
     const { options } = this.state;
@@ -348,6 +370,7 @@ class EditQuestion extends Component {
                 />
                 <input
                   type="text"
+                  id={`formOptions-${index}`}
                   className="form-control mx-2"
                   onChange={(e) => this.handleOptionChange(index, e.target.value)}
                   placeholder={`Option ${index + 1}`}
