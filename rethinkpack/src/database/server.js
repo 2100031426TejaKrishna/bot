@@ -28,20 +28,16 @@ connectToDatabase().then(async () => {
   await fetchQuestions();
   await fetchQuestionsToEdit();
 
-  // const PORT = 5000;
-  // const HOST = 'rtp.dusky.bond';
-
-  // app.listen(PORT, HOST, () => {
-  //   console.log(`Server running on http://${HOST}:${PORT}`);
-  // });
-
   const PORT = 5000;
 
-  // Use '0.0.0.0' as the host to listen on all network interfaces
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on http://0.0.0.0:${PORT}`);
-  });
+  // // Use '0.0.0.0' as the host to listen on all network interfaces
+  // app.listen(PORT, '0.0.0.0', () => {
+  //   console.log(`Server running on http://0.0.0.0:${PORT}`);
+  // });
 
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  })
 
 }).catch(error => {
   console.error("Failed to connect to the database:", error);
