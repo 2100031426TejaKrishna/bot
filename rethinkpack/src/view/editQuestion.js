@@ -1,4 +1,3 @@
-// test push assement-tool branch development
 import React, { Component } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
@@ -106,7 +105,7 @@ class EditQuestion extends Component {
 
   fetchQuestion = async (questionId) => {
     try {
-      const response = await fetch(`http://rtp.dusky.bond:5000/api/editReadUpdate/${questionId}`);
+      const response = await fetch(`http://localhost:5000/api/editReadUpdate/${questionId}`);
       const data = await response.json();
       return data
     } catch (error) {
@@ -121,12 +120,33 @@ class EditQuestion extends Component {
         // Callback function
         () => { 
             localStorage.setItem("formData", this.state.questionList)
+            
+            // questionType
+            if (this.state.questionList.questionType === "productInfo") {
+              // check radio box
+              document.getElementById("formProductInfoRadio").checked = true
+              //console.log(`questionType: productInfo`)
+            } else if (this.state.questionList.questionType === "packagingInfo") {
+              document.getElementById("formPackagingInfoRadio").checked = true
+              //console.log(`questionType: packagingInfo`)
+            } else {
+              //console.log(`questionType: null`)
+            }
+
+            // question
             document.getElementById("formQuestion").value = this.state.questionList.question
+            
+            // optionType
             document.getElementById("formOptionsType").value = this.state.questionList.optionType
-            document.getElementById("formMarks").value = this.state.questionList.marks
+
+            // marks
+            if (this.state.questionList.marks) {
+              document.getElementById("formMarks").value = this.state.questionList.marks
+            }
+
             console.log(`onclick Q: ${this.state.questionList.question}`) 
-            console.log(`onclick O: ${this.state.questionList.optionType}`) 
-            console.log(`onclick M: ${this.state.questionList.marks}`) 
+            //console.log(`onclick O: ${this.state.questionList.optionType}`) 
+            //console.log(`onclick M: ${this.state.questionList.marks}`) 
           }
       )}
     );
@@ -871,7 +891,7 @@ class EditQuestion extends Component {
                             className="form-check-input"
                             type="radio"
                             name="questionType"
-                            id="productInfoRadio"
+                            id="formProductInfoRadio"
                             value="productInfo"
                             checked={questionType === 'productInfo'}
                             onChange={() => this.setState({ questionType: 'productInfo' })}
@@ -885,7 +905,7 @@ class EditQuestion extends Component {
                             className="form-check-input"
                             type="radio"
                             name="questionType"
-                            id="packagingInfoRadio"
+                            id="formPackagingInfoRadio"
                             value="packagingInfo"
                             checked={questionType === 'packagingInfo'}
                             onChange={() => this.setState({ questionType: 'packagingInfo' })}
