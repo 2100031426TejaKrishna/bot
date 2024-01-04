@@ -15,6 +15,7 @@ const corsOptions = {
 };
 
 const app = express();
+// app.use(cors());
 app.use(cors(corsOptions));
 app.use(bodyParser.json());
 
@@ -39,7 +40,6 @@ connectToDatabase().then(async () => {
   // app.listen(PORT, () => {
   //   console.log(`Server running on port ${PORT}`);
   // });
-
 
 }).catch(error => {
   console.error("Failed to connect to the database:", error);
