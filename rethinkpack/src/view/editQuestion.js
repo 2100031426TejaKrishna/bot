@@ -107,7 +107,7 @@ class EditQuestion extends Component {
     try {
       //localhost:5000
       //rtp.dusky.bond:5000
-      const response = await fetch(`http://rtp.dusky.bond:5000/api/editReadUpdate/${questionId}`);
+      const response = await fetch(`http://localhost:5000/api/editReadUpdate/${questionId}`);
       const data = await response.json();
       return data
     } catch (error) {
@@ -144,16 +144,22 @@ class EditQuestion extends Component {
               this.setState({selectedOption: this.state.questionList.optionType}, console.log(`selectedOption: ${this.state.selectedOption}`))
 
             // object
-            for (let i = 0; i < (this.state.questionList.options).length; i++) {
-              //document.getElementById(`formOptions-${i}`).value = (this.state.questionList.options)[i].text
-              this.editAddOption(i)
-              console.log(`index: ${i}`)
+            // check if size of array is empty
+            if (this.state.questionList.options.length > 0) {
+              for (let i = 0; i < (this.state.questionList.options).length; i++) {
+                //document.getElementById(`formOptions-${i}`).value = (this.state.questionList.options)[i].text
+                this.editAddOption(i)
+                console.log(`index: ${i}`)
+                
+              }
+              document.getElementById(`formOptions-${0}`).value = (this.state.questionList.options)[0].text
               
+              console.log(`options array: ${(this.state.questionList.options)[0].text}`)
+
+            } else {
+              console.log(`options array: empty array`)
             }
-            document.getElementById(`formOptions-${0}`).value = (this.state.questionList.options)[0].text
-            
-            console.log(`option array: ${(this.state.questionList.options)[0].text}`)
-            
+
             // marks
             if (this.state.questionList.marks) {
               document.getElementById("formMarks").value = this.state.questionList.marks
@@ -803,7 +809,7 @@ class EditQuestion extends Component {
     try {
       //localhost:5000
       //rtp.dusky.bond:5000
-      const response = await fetch('http://rtp.dusky.bond:5000/api/insertQuestion', {
+      const response = await fetch('http://localhost:5000/api/insertQuestion', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -961,7 +967,12 @@ class EditQuestion extends Component {
                         className="form-control" 
                         id="formQuestion" 
                         value=""
-                        //onChange={(e) => { this.setState({ questionList: { ...this.state.questionList.question, question: e.target.value } }) }}
+                        /*
+                        onChange={(e) => { this.setState({ questionList: { ...this.state.questionList.question, question: e.target.value } }, 
+                          // callback  
+                          console.log(`question onChange callback: ${this.state.questionList.question}`)
+                          ) }}
+                          */
                       />
                       {validationErrors.question && (
                         <div style={{ color: 'red', fontSize: 12 }}>
