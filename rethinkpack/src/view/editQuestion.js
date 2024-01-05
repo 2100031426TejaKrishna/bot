@@ -102,22 +102,7 @@ class EditQuestion extends Component {
     });
   }
 
-/*--------------API-----------------*/
-
-  fetchQuestion = async (questionId) => {
-    try {
-      //localhost:5000
-      //rtp.dusky.bond:5000
-      const response = await fetch(`http://localhost:5000/api/editReadUpdate/${questionId}`);
-      const data = await response.json();
-      if (data) {
-        this.setState( {isLoading: false } )
-      }
-      return data
-    } catch (error) {
-      console.error('Error fetching questions:', error);
-    }
-  };
+/*--------------onClick-----------------*/
 
   onEditClickHandler = (id) => {
     this.fetchQuestion(id).then( data => {
@@ -133,36 +118,52 @@ class EditQuestion extends Component {
     );
   }
 
+/*--------------API-----------------*/
+
+/*
+  fetchSize = async () => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/editReadUpdate/length`)
+      const count = await response
+      return count
+    } catch (error) {
+      console.error('Error fetching questions:', error);
+    }
+  }
+  */
+
+  fetchQuestion = async (questionId) => {
+    try {
+      //localhost:5000
+      //rtp.dusky.bond:5000
+      const response = await fetch(`http://rtp.dusky.bond:5000/api/editReadUpdate/${questionId}`);
+      const data = await response.json();
+      if (data) {
+        this.setState( {isLoading: false } )
+      }
+      return data
+    } catch (error) {
+      console.error('Error fetching questions:', error);
+    }
+  };
+
 /*-------------MODAL-----------------*/
 
   componentDidMount() {
-    
-    //this.timer = setTimeout( () => {
-    //}, 1000);
-
     const editQuestionModal = document.getElementById("editQuestion");
     editQuestionModal.addEventListener('hidden.bs.modal', this.resetState);
-    console.log(`componentDidMount executed`)
 
-    // Add APIs below
-    //this.fetchQuestion(this.state.stateQuestionId);
-  }
 
-  // 240103
-  componentDidUpdate(prevState) {
+    // fetch to acquire number of documents
     
-    if (this.state.isLoading === true && this.state.questionList !== null && this.state.questionList !== prevState.questionList) {
-      // Do something when the value state changes
-      //localStorage.setItem("formData", JSON.stringify(this.state.questionList))
-      //localStorage.setItem("formData", JSON.stringify(this.state.questionList.question))
-
-      //console.log(`componentDidUpdate: ${this.state.questionList.question}`)
-      
-      console.log(`componentDidUpdate executed`)
-    }
+    // loop for number of documents in DB
+    //for (let i=0; i) {
+      //const editQuestionModal = document.getElementById("editQuestion");
+      //editQuestionModal.addEventListener('hidden.bs.modal', this.resetState);
+    //}
+    
+    console.log(`componentDidMount executed`)
   }
-  //
-
 
   componentWillUnmount() {
     const editQuestionModal = document.getElementById("editQuestion");
@@ -240,7 +241,6 @@ class EditQuestion extends Component {
     }));
   };
 
-  /*
   handleInputChange = (e) => {
     if (e.target.id === "country") {
       const options = e.target.options;
@@ -255,8 +255,7 @@ class EditQuestion extends Component {
       this.setState({ [e.target.id]: e.target.value });
     }
   };
-  */
-
+  
   handleOptionChange = (index, value) => {
     const { options } = this.state;
     const updatedOptions = options.map((option, i) => (
@@ -773,7 +772,7 @@ class EditQuestion extends Component {
     try {
       //localhost:5000
       //rtp.dusky.bond:5000
-      const response = await fetch('http://localhost:5000/api/insertQuestion', {
+      const response = await fetch('http://rtp.dusky.bond:5000/api/insertQuestion', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -838,13 +837,13 @@ class EditQuestion extends Component {
 
   render() {
 
-    const { questionType, selectedOption, showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, validationErrors, questionId } = this.state;
+    const { questionType, selectedOption, showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, validationErrors, questionId, questionIndex } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
 
 
     // console log
-    console.log(`render questionList.question: ${this.state.questionList.question}`)
-    console.log(`isLoading: ${this.state.isLoading}`)
+    //console.log(`render questionList.question: ${this.state.questionList.question}`)
+    //console.log(`isLoading: ${this.state.isLoading}`)
 
     return (
       
@@ -852,8 +851,10 @@ class EditQuestion extends Component {
         
         <button 
           className="btn btn-primary" 
+          id={`btEdit-${questionIndex}`}
           data-bs-toggle="modal" 
-          data-bs-target="#editQuestion"
+          data-bs-target={`#editQuestion`}
+          //data-bs-target={`#editQuestionModal-${questionIndex}`}
           onClick={() => this.onEditClickHandler(questionId)}>
             Edit
         </button>
@@ -862,7 +863,8 @@ class EditQuestion extends Component {
 
         <div 
           className="modal fade" 
-          id="editQuestion"
+          id={`editQuestion`}
+          //id={`editQuestionModal-${questionIndex}`}
           tabIndex="-1" 
           aria-labelledby="editQuestionLabel" 
           aria-hidden="true" 
@@ -925,7 +927,8 @@ class EditQuestion extends Component {
                     </div>
                     
                     
-                    {/* Question label */}                   
+                    {/* Question label */}
+                    
                     {console.log(`RETURN questionList.question: ${this.state.questionList.question}`)}
                     {console.log(`RETURN isLoading: ${this.state.isLoading}`)}
                     <div className="mb-3">
