@@ -79,10 +79,11 @@ class EditQuestion extends Component {
       questionIndex: props.index,
       questionId: props.questionId,
       questionList: {
-        question: '', // Set default value for the question property
+        question: 'empty', // Set default value for the question property
         // Add other properties with default values if needed
       },
-      stateQuestionId: ''
+      stateQuestionId: '',
+      isLoading: true
     };
 
     this.initialState = { ...this.state };
@@ -109,6 +110,9 @@ class EditQuestion extends Component {
       //rtp.dusky.bond:5000
       const response = await fetch(`http://localhost:5000/api/editReadUpdate/${questionId}`);
       const data = await response.json();
+      if (data) {
+        this.setState( {isLoading: false } )
+      }
       return data
     } catch (error) {
       console.error('Error fetching questions:', error);
@@ -118,57 +122,13 @@ class EditQuestion extends Component {
   onEditClickHandler = (id) => {
     this.fetchQuestion(id).then( data => {
       this.setState(
-        { questionList: data },
+        { 
+          questionList: data, 
+        },
         // Callback function
         () => { 
-            localStorage.setItem("formData", this.state.questionList)
-            
-            // questionType
-            if (this.state.questionList.questionType === "productInfo") {
-              // check radio box
-              document.getElementById("formProductInfoRadio").checked = true
-              //console.log(`questionType: productInfo`)
-            } else if (this.state.questionList.questionType === "packagingInfo") {
-              document.getElementById("formPackagingInfoRadio").checked = true
-              //console.log(`questionType: packagingInfo`)
-            } else {
-              //console.log(`questionType: null`)
-            }
-
-            // question
-            document.getElementById("formQuestion").value = this.state.questionList.question
-            
-            // optionType
-            document.getElementById("formOptionsType").value = this.state.questionList.optionType
-              // update state of drop down list
-              this.setState({selectedOption: this.state.questionList.optionType}, console.log(`selectedOption: ${this.state.selectedOption}`))
-
-            // object
-            // check if size of array is empty
-            if (this.state.questionList.options.length > 0) {
-              for (let i = 0; i < (this.state.questionList.options).length; i++) {
-                //document.getElementById(`formOptions-${i}`).value = (this.state.questionList.options)[i].text
-                this.editAddOption(i)
-                console.log(`index: ${i}`)
-                
-              }
-              document.getElementById(`formOptions-${0}`).value = (this.state.questionList.options)[0].text
-              
-              console.log(`options array: ${(this.state.questionList.options)[0].text}`)
-
-            } else {
-              console.log(`options array: empty array`)
-            }
-
-            // marks
-            if (this.state.questionList.marks) {
-              document.getElementById("formMarks").value = this.state.questionList.marks
-            }
-
-            console.log(`onclick Q: ${this.state.questionList.question}`) 
-            //console.log(`onclick O: ${this.state.questionList.optionType}`) 
-            //console.log(`onclick M: ${this.state.questionList.marks}`) 
-          }
+          localStorage.setItem("formData", this.state.questionList)
+        }
       )}
     );
   }
@@ -176,9 +136,12 @@ class EditQuestion extends Component {
 /*-------------MODAL-----------------*/
 
   componentDidMount() {
+    
+    //this.timer = setTimeout( () => {
+    //}, 1000);
+
     const editQuestionModal = document.getElementById("editQuestion");
     editQuestionModal.addEventListener('hidden.bs.modal', this.resetState);
-    
     console.log(`componentDidMount executed`)
 
     // Add APIs below
@@ -188,12 +151,13 @@ class EditQuestion extends Component {
   // 240103
   componentDidUpdate(prevState) {
     
-    if (this.state.questionList !== null && this.state.questionList !== prevState.questionList) {
+    if (this.state.isLoading === true && this.state.questionList !== null && this.state.questionList !== prevState.questionList) {
       // Do something when the value state changes
       //localStorage.setItem("formData", JSON.stringify(this.state.questionList))
       //localStorage.setItem("formData", JSON.stringify(this.state.questionList.question))
 
       //console.log(`componentDidUpdate: ${this.state.questionList.question}`)
+      
       console.log(`componentDidUpdate executed`)
     }
   }
@@ -877,6 +841,11 @@ class EditQuestion extends Component {
     const { questionType, selectedOption, showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, validationErrors, questionId } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
 
+
+    // console log
+    console.log(`render questionList.question: ${this.state.questionList.question}`)
+    console.log(`isLoading: ${this.state.isLoading}`)
+
     return (
       
       <div>
@@ -956,24 +925,38 @@ class EditQuestion extends Component {
                     </div>
                     
                     
-                    {/* Question label */}
-                    {/* onChange={this.handleInputChange} */}
+                    {/* Question label */}                   
+                    {console.log(`RETURN questionList.question: ${this.state.questionList.question}`)}
+                    {console.log(`RETURN isLoading: ${this.state.isLoading}`)}
                     <div className="mb-3">
                       <label htmlFor="question" className="col-form-label">
                         Question:
                       </label>
-                      <input 
-                        type="text" 
-                        className="form-control" 
-                        id="formQuestion" 
-                        value=""
-                        /*
-                        onChange={(e) => { this.setState({ questionList: { ...this.state.questionList.question, question: e.target.value } }, 
-                          // callback  
-                          console.log(`question onChange callback: ${this.state.questionList.question}`)
-                          ) }}
-                          */
-                      />
+                      <div>
+                        {this.isLoading ? (
+                          // isLoading is true
+                          <input 
+                          type="text" 
+                          className="form-control" 
+                          id="formQuestion" 
+                          value="Loading..."
+                        />
+                        ): (
+                          // isLoading is false
+                          <input 
+                            type="text" 
+                            className="form-control" 
+                            id="formQuestion" 
+                            value={this.state.questionList.question}
+                            /*
+                            onChange={(e) => { this.setState({ questionList: { ...this.state.questionList.question, question: e.target.value } }, 
+                              // callback  
+                              console.log(`question onChange callback: ${this.state.questionList.question}`)
+                              ) }}
+                              */
+                          />
+                        )}
+                      </div>
                       {validationErrors.question && (
                         <div style={{ color: 'red', fontSize: 12 }}>
                           {validationErrors.question}
