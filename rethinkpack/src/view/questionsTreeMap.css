@@ -6,3 +6,13 @@
     align-items: center;
     overflow: auto; 
 }
+
+.node-container {
+    width: 200px;
+    height: 150px;
+    border: 1px solid #ccc;
+    background-color: white;
+    text-align: center;
+    padding: 10px;
+    overflow: auto;
+}

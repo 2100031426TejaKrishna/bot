@@ -38,6 +38,17 @@ const QuestionsTreeMap = () => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
+    const renderCustomNode = ({ nodeDatum, toggleNode }) => {
+        return (
+            <foreignObject width={200} height={150} x={-100} y={-75} onClick={() => toggleNode()}>
+                <div className="node-container">
+                    <h4>{nodeDatum.name}</h4>
+                    {/* Add other details and interactive elements */}
+                </div>
+            </foreignObject>
+        );
+    };
+
     const organizeQuestions = (questions) => {
         const questionMap = {};
         questions.forEach(question => {
@@ -78,7 +89,7 @@ const QuestionsTreeMap = () => {
         }    
 
         return (
-            <Tree data={root} orientation="vertical" translate={translate} />
+            <Tree data={root} orientation="vertical" translate={translate} nodeSize={{ x: 200, y: 200 }} separation={{ siblings: 1, nonSiblings: 1.5 }} renderCustomNodeElement={renderCustomNode} />
         );
     };
 
