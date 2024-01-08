@@ -849,19 +849,23 @@ class EditQuestion extends Component {
         <Modal
           show={this.state.isLoading === false}
           onHide={() => this.setState({ isLoading: true })}
+          backdrop="static"
           ref={this.editQuestionModalRef}
         >
           {/* Modal content */}
+          <Modal.Header closeButton>
+            <Modal.Title>
+              <div className="modal-header">
+                <h1 className="modal-title fs-5" id="editQuestionLabel">
+                  Edit Question
+                </h1>
+              </div>
+            </Modal.Title>
+          </Modal.Header>
           <Modal.Body>
             <div className="question-selected">
               <div className="modal-dialog modal-dialog-scrollable modal-lg">
                 <div className="modal-content">
-                  <div className="modal-header">
-                    <h1 className="modal-title fs-5" id="editQuestionLabel">
-                      Edit Question
-                    </h1>
-                    <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                  </div>
                   <div className="modal-body">
                     <form>
                     <div className="mb-3">
@@ -874,7 +878,7 @@ class EditQuestion extends Component {
                               id="formProductInfoRadio"
                               value={this.state.questionList.questionType}
                               checked={this.state.questionList.questionType === 'productInfo'}
-                              onChange={() => this.setState({ questionType: 'productInfo' })}
+                              onChange={(e) => this.setState({ questionList: { ...this.state.questionList.questionType, questionType: 'packagingInfo' } })}
                             />
                             <label className="form-check-label" htmlFor="productInfoRadio">
                               Product Information
@@ -888,7 +892,7 @@ class EditQuestion extends Component {
                               id="formPackagingInfoRadio"
                               value={this.state.questionList.questionType}
                               checked={this.state.questionList.questionType === 'packagingInfo'}
-                              onChange={() => this.setState({ questionType: 'packagingInfo' })}
+                              onChange={(e) => this.setState({ questionList: { ...this.state.questionList.questionType, questionType: 'productInfo' } })}
                             />
                             <label className="form-check-label" htmlFor="packagingInfoRadio">
                               Packaging Information
@@ -999,7 +1003,7 @@ class EditQuestion extends Component {
                             type="text" 
                             className="form-control" 
                             id="formMarks" 
-                            value=""
+                            value={this.state.questionList.marks}
                             onChange={this.handleInputChange} 
                           />
                           {validationErrors.marks && (
@@ -1083,18 +1087,19 @@ class EditQuestion extends Component {
                         </label>
                       </div>
                     </div>
-                    <button type="button" className="btn btn-dark" onClick={this.handleSubmit}>
-                      Submit
-                    </button>
                   </div>
                 </div>
               </div>
             </div>
-          
           </div>
 
-
         </Modal.Body>
+        
+        <Modal.Footer>
+          <button type="button" className="btn btn-dark" onClick={this.handleSubmit}>
+            Submit
+          </button>
+        </Modal.Footer>
 
         </Modal>
 
