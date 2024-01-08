@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
-import { Modal } from 'bootstrap';
+//import { Modal } from 'bootstrap';
+import Modal from 'react-bootstrap/Modal';
 
 
 class EditQuestion extends Component {
@@ -79,7 +80,7 @@ class EditQuestion extends Component {
       questionIndex: props.index,
       questionId: props.questionId,
       questionList: {
-        question: 'empty', // Set default value for the question property
+        question: null, // Set default value for the question property
         // Add other properties with default values if needed
       },
       stateQuestionId: '',
@@ -863,7 +864,6 @@ class EditQuestion extends Component {
 
     const { questionType, selectedOption, showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, validationErrors, questionId, questionIndex } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
-    const myData = this.state.allQuestions
 
     // console log
     //console.log(`render questionList.question: ${this.state.questionList.question}`)
@@ -876,12 +876,22 @@ class EditQuestion extends Component {
         <button 
           className="btn btn-primary" 
           id={`btEdit-${questionIndex}`}
-          data-bs-toggle="modal" 
-          data-bs-target={`#editQuestion`}
+          //data-bs-toggle="modal" 
+          //data-bs-target={`#editQuestion`}
           //data-bs-target={`#editQuestionModal-${questionIndex}`}
           onClick={() => this.onEditClickHandler(questionId)}>
             Edit
         </button>
+
+        <Modal
+          show={this.state.isLoading === false}
+          onHide={() => this.setState({ isLoading: true })}
+          ref={this.editQuestionModalRef}
+        >
+          {/* Modal content */}
+        </Modal>
+
+
 
         {this.renderToast()}
 
