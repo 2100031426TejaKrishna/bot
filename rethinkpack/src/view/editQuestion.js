@@ -83,7 +83,10 @@ class EditQuestion extends Component {
         // Add other properties with default values if needed
       },
       stateQuestionId: '',
-      isLoading: true
+      isLoading: true,
+      databaseSize: 0,
+      allQuestions:[],
+      openModalIds: []
     };
 
     this.initialState = { ...this.state };
@@ -108,7 +111,7 @@ class EditQuestion extends Component {
     this.fetchQuestion(id).then( data => {
       this.setState(
         { 
-          questionList: data, 
+          // questionList: data, 
         },
         // Callback function
         () => { 
@@ -120,28 +123,36 @@ class EditQuestion extends Component {
 
 /*--------------API-----------------*/
 
-/*
-  fetchSize = async () => {
+  fetchAll = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/editReadUpdate/length`)
-      const count = await response
-      return count
+        //localhost:5000
+        //rtp.dusky.bond:5000
+        const response = await fetch(`http://localhost:5000/api/displayQuestions`);
+        const data = await response.json();
+        this.setState( 
+          {
+            allQuestions: data,
+            databaseSize: data.length
+          }, 
+          // console.log(`fetchSize state: ${this.state.databaseSize}`) 
+        )
     } catch (error) {
-      console.error('Error fetching questions:', error);
+        console.error("Error fetching questions:", error);
     }
-  }
-  */
+  };
 
   fetchQuestion = async (questionId) => {
     try {
       //localhost:5000
       //rtp.dusky.bond:5000
-      const response = await fetch(`http://rtp.dusky.bond:5000/api/editReadUpdate/${questionId}`);
+      const response = await fetch(`http://localhost:5000/api/editReadUpdate/${questionId}`);
       const data = await response.json();
       if (data) {
-        this.setState( {isLoading: false } )
+        this.setState({
+          isLoading: false, 
+          questionList: data
+        })
       }
-      return data
     } catch (error) {
       console.error('Error fetching questions:', error);
     }
@@ -150,24 +161,37 @@ class EditQuestion extends Component {
 /*-------------MODAL-----------------*/
 
   componentDidMount() {
+    
+    // Fetch all questions to set modal IDs
+    this.fetchAll()
+    
+    // reset
     const editQuestionModal = document.getElementById("editQuestion");
     editQuestionModal.addEventListener('hidden.bs.modal', this.resetState);
 
-
     // fetch to acquire number of documents
-    
-    // loop for number of documents in DB
-    //for (let i=0; i) {
-      //const editQuestionModal = document.getElementById("editQuestion");
-      //editQuestionModal.addEventListener('hidden.bs.modal', this.resetState);
-    //}
-    
+    // const length = this.state.databaseSize
+
+    // try {
+    //   this.fetchAll().then(
+    //     () => {
+          
+    //       console.log(`length: ${length}`)
+    //     }
+    //   )
+    // } catch {
+    //   console.error(`fetchSize results unsuccesful`)
+    // }
+
     console.log(`componentDidMount executed`)
   }
 
   componentWillUnmount() {
+    // reset
     const editQuestionModal = document.getElementById("editQuestion");
     editQuestionModal.removeEventListener('hidden.bs.modal', this.resetState);
+
+
   }
 
 /*---------------------------------*/
@@ -772,7 +796,7 @@ class EditQuestion extends Component {
     try {
       //localhost:5000
       //rtp.dusky.bond:5000
-      const response = await fetch('http://rtp.dusky.bond:5000/api/insertQuestion', {
+      const response = await fetch('http://localhost:5000/api/insertQuestion', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -839,7 +863,7 @@ class EditQuestion extends Component {
 
     const { questionType, selectedOption, showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, validationErrors, questionId, questionIndex } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
-
+    const myData = this.state.allQuestions
 
     // console log
     //console.log(`render questionList.question: ${this.state.questionList.question}`)
@@ -930,7 +954,7 @@ class EditQuestion extends Component {
                     {/* Question label */}
                     
                     {console.log(`RETURN questionList.question: ${this.state.questionList.question}`)}
-                    {console.log(`RETURN isLoading: ${this.state.isLoading}`)}
+                    {/*console.log(`RETURN isLoading: ${this.state.isLoading}`)*/}
                     <div className="mb-3">
                       <label htmlFor="question" className="col-form-label">
                         Question:
