@@ -245,6 +245,15 @@ class CreateQuestion extends Component {
     });
   };
 
+  clearNextQuestionSelection = () => {
+    this.setState(prevState => ({
+      options: prevState.options.map(option => ({
+        ...option,
+        nextQuestion: ''
+      }))
+    }));
+  };
+
   renderOptionsArea = () => {
     const { selectedOption, options, gridOptions, requireResponse, isLeadingQuestion, allQuestions } = this.state;
     const clearSelections = (e) => {
@@ -319,14 +328,21 @@ class CreateQuestion extends Component {
                 )}
               </div>
             ))}
-            <button className="btn btn-outline-dark" onClick={this.addOption}>
-              Add option
-            </button>
-            {options.length > 0 && (
-              <button className="btn btn-outline-danger ms-2" onClick={clearSelections}>
-                Clear
+            <div className="d-flex align-items-center">
+              <button className="btn btn-outline-dark" onClick={this.addOption}>
+                Add option
               </button>
-            )}
+              {options.length > 0 && (
+                <button className="btn btn-outline-danger ms-2" onClick={clearSelections}>
+                  Clear
+                </button>
+              )}
+              {isLeadingQuestion && (
+                <button className="btn btn-outline-danger ms-2" onClick={this.clearNextQuestionSelection}>
+                  Clear Next Question
+                </button>
+              )}
+            </div>
           </>
         );
   
@@ -389,12 +405,30 @@ class CreateQuestion extends Component {
                   onChange={() => this.toggleCorrectAnswer(index)}
                 />
                 <span className="mr-2">{index + 1}.</span>
-                <input
-                  type="text"
-                  className="form-control mx-2"
-                  onChange={(e) => this.handleOptionChange(index, e.target.value)}
-                  placeholder={`Option ${index + 1}`}
-                />
+                <div className="d-flex flex-grow-1 mx-2">
+                  <input
+                    type="text"
+                    className="form-control mx-2"
+                    onChange={(e) => this.handleOptionChange(index, e.target.value)}
+                    placeholder={`Option ${index + 1}`}
+                    style={{ flex: '1' }}
+                  />
+                  {isLeadingQuestion && (
+                    <select
+                      className="form-select mx-2"
+                      style={{ flex: '1' }}
+                      value={option.nextQuestion}
+                      onChange={(e) => this.handleNextQuestionChange(index, e.target.value)}
+                    >
+                      <option value="">Select Next Question</option>
+                      {allQuestions.map((question) => (
+                        <option key={question._id} value={question._id}>
+                          {question.question}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
                 {options.length > 1 && (
                   <button
                     className="btn btn-outline-secondary"
@@ -406,16 +440,23 @@ class CreateQuestion extends Component {
                 )}
               </div>
             ))}
-            <button className="btn btn-outline-dark" onClick={this.addOption}>
-              Add Option
-            </button>
-            {options.length > 0 && (
-              <button className="btn btn-outline-danger ms-2" onClick={clearSelections}>
-                Clear
+            <div className="d-flex align-items-center">
+              <button className="btn btn-outline-dark" onClick={this.addOption}>
+                Add option
               </button>
-            )}
+              {options.length > 0 && (
+                <button className="btn btn-outline-danger ms-2" onClick={clearSelections}>
+                  Clear
+                </button>
+              )}
+              {isLeadingQuestion && (
+                <button className="btn btn-outline-danger ms-2" onClick={this.clearNextQuestionSelection}>
+                  Clear Next Question
+                </button>
+              )}
+            </div>
           </>
-        );
+        );        
   
       case 'multipleChoiceGrid':
       case 'checkboxGrid':
