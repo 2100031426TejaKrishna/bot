@@ -80,7 +80,9 @@ class EditQuestion extends Component {
       questionId: props.questionId,
       questionList: {
         question: null, 
-        questionType: null// Set default value for the question property
+        questionType: null,
+        options: [{ label: 'Option 1', value: 'Option 1', isCorrect: false }]
+        // Set default value for the question property
         // Add other properties with default values if needed
       },
       stateQuestionId: '',
@@ -166,7 +168,13 @@ class EditQuestion extends Component {
     e.preventDefault();
     e.stopPropagation()
     this.setState((prevState) => ({
-      options: [...prevState.options, { label: `Option ${prevState.options.length + 1}`, value: `Option ${prevState.options.length + 1}`, isCorrect: false }],
+      questionList: {
+        ...prevState.questionList,
+        options: [
+          ...prevState.questionList.options,
+          { label: `Option ${prevState.questionList.options.length + 1}`, value: `Option ${prevState.questionList.options.length + 1}`, isCorrect: false }
+        ]
+      }
     }));
   };
 
@@ -179,7 +187,7 @@ class EditQuestion extends Component {
 
   deleteOption = (index) => {
     this.setState(prevState => ({
-      options: prevState.options.filter((_, i) => i !== index)
+      questionList: { ...prevState.questionList, options: prevState.questionList.options.filter((_, i) => i !== index) }
     }));
   };
   
@@ -290,8 +298,9 @@ class EditQuestion extends Component {
     });
   };
 
+//------------------ OPTIONS ----------------------------------  
   renderOptionsArea = () => {
-    const { selectedOption, options, gridOptions, requireResponse, isLeadingQuestion } = this.state;
+    const { selectedOption, options, gridOptions, requireResponse, isLeadingQuestion, questionList } = this.state;
     const clearSelections = (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -315,28 +324,31 @@ class EditQuestion extends Component {
       this.setState({ gridOptions: clearedGridOptions });
     };  
   
+    // Loading of Options
     switch (selectedOption) {
       case 'multipleChoice':
       case 'checkbox':
         return (
           <>
-            {options.map((option, index) => (
+            {/* Options label */}
+            {questionList.options.map((option, index) => (
               <div key={index} className="d-flex align-items-center mb-2">
                 <input
                   type={selectedOption === 'multipleChoice' ? 'radio' : 'checkbox'}
                   className="form-check-input"
                   checked={option.isCorrect}
                   disabled={isLeadingQuestion}
-                  onChange={() => this.toggleCorrectAnswer(index)}
+                  //onChange={() => this.toggleCorrectAnswer(index)}
                 />
                 <input
                   type="text"
                   id={`formOptions-${index}`}
                   className="form-control mx-2"
-                  onChange={(e) => this.handleOptionChange(index, e.target.value)}
+                  value={questionList.options[index].text}
+                  //onChange={(e) => this.handleOptionChange(index, e.target.value)}
                   placeholder={`Option ${index + 1}`}
                 />
-                {options.length > 1 && (
+                {questionList.options.length > 1 && (
                   <button
                     className="btn btn-outline-secondary"
                     type="button"
@@ -347,6 +359,8 @@ class EditQuestion extends Component {
                 )}
               </div>
             ))}
+            {/*  */}
+
             <button className="btn btn-outline-dark" onClick={this.addOption}>
               Add option
             </button>
@@ -830,10 +844,6 @@ class EditQuestion extends Component {
     const { selectedOption, showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, validationErrors, questionId, questionIndex } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
 
-    // console log
-    //console.log(`render questionList.question: ${this.state.questionList.question}`)
-    //console.log(`isLoading: ${this.state.isLoading}`)
-
     return (
       
       <div>
@@ -878,7 +888,6 @@ class EditQuestion extends Component {
                       name="questionType"
                       id="formProductInfoRadio"
                       value="productInfo"
-                      //value={this.state.questionList.questionType}
                       checked={this.state.questionList.questionType === 'productInfo'}
                       onChange={this.handleQuestionTypeRadio}
                     />
@@ -893,7 +902,6 @@ class EditQuestion extends Component {
                       name="questionType"
                       id="formPackagingInfoRadio"
                       value="packagingInfo"
-                      //value={this.state.questionList.questionType}
                       checked={this.state.questionList.questionType === 'packagingInfo'}
                       onChange={this.handleQuestionTypeRadio}
                     />
@@ -909,11 +917,7 @@ class EditQuestion extends Component {
                 )}
               </div>
               
-              
               {/* Question label */}
-              
-              {console.log(`RETURN questionList.question: ${this.state.questionList.question}`)}
-              {/*console.log(`RETURN isLoading: ${this.state.isLoading}`)*/}
               <div className="mb-3">
                 <label htmlFor="question" className="col-form-label">
                   Question:
@@ -933,7 +937,7 @@ class EditQuestion extends Component {
                       type="text" 
                       className="form-control" 
                       id="formQuestion" 
-                      value={this.state.questionList.question}
+                      defaultValue={this.state.questionList.question}
                       /*
                       onChange={(e) => { this.setState({ questionList: { ...this.state.questionList.question, question: e.target.value } }, 
                         // callback  
@@ -974,6 +978,8 @@ class EditQuestion extends Component {
                   </div>
                 )}
               </div>
+              
+              {/* Options */}
               <div className="mb-3" id="optionsArea">
                 {this.renderOptionsArea()}
                 {validationErrors.options && (
