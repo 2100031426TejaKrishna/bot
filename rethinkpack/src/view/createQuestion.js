@@ -460,7 +460,8 @@ class CreateQuestion extends Component {
   
       case 'multipleChoiceGrid':
       case 'checkboxGrid':
-        const numberOfRows = Math.max(gridOptions.row.length, gridOptions.column.length);
+        const { gridOptions } = this.state;
+        const columnStyle = gridOptions.column.length > 1 ? { display: 'flex', overflowX: 'auto' } : {};
 
         return (
           <>
@@ -468,56 +469,58 @@ class CreateQuestion extends Component {
               <thead>
                 <tr>
                   <th>Rows</th>
-                  <th>Columns</th>
+                  <th style={columnStyle}>
+                    Columns
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {[...Array(numberOfRows)].map((_, index) => (
-                  <tr key={index}>
+                {gridOptions.row.map((row, rowIndex) => (
+                  <tr key={rowIndex}>
                     <td>
-                      {gridOptions.row[index] && (
+                      {gridOptions.row[rowIndex] && (
                         <div className="d-flex align-items-center">
-                          <span className="row-number">{index + 1}.</span>
+                          <span className="row-number">{rowIndex + 1}.</span>
                           <input
                             type="text"
                             className="form-control mx-2"
-                            onChange={(e) => this.handleRowChange(index, e)}
-                            placeholder={`Row ${index + 1}`}
+                            onChange={(e) => this.handleRowChange(rowIndex, e)}
+                            placeholder={`Row ${rowIndex + 1}`}
                           />
                           <button
                             className="btn btn-outline-secondary"
                             type="button"
-                            onClick={() => this.deleteGridRow(index)}
+                            onClick={() => this.deleteGridRow(rowIndex)}
                           >
                             &times;
                           </button>
                         </div>
                       )}
                     </td>
-                    <td>
-                      {gridOptions.column[index] && (
-                        <div className="d-flex align-items-center">
+                    <td style={columnStyle}>
+                      {gridOptions.column.map((col, colIndex) => (
+                        <div key={colIndex} className="d-flex align-items-center">
                           <input
                             type={selectedOption === 'multipleChoiceGrid' ? 'radio' : 'checkbox'}
                             className="form-check-input"
-                            name={`column-${index}`}
+                            name={`column-${colIndex}`}
                             disabled
                           />
                           <input
                             type="text"
                             className="form-control mx-2"
-                            onChange={(e) => this.handleColumnChange(index, e)}
-                            placeholder={`Column ${index + 1}`}
+                            onChange={(e) => this.handleColumnChange(colIndex, e)}
+                            placeholder={`Column ${colIndex + 1}`}
                           />
                           <button
                             className="btn btn-outline-secondary"
                             type="button"
-                            onClick={() => this.deleteGridColumn(index)}
+                            onClick={() => this.deleteGridColumn(colIndex)}
                           >
                             &times;
                           </button>
                         </div>
-                      )}
+                      ))}
                     </td>
                   </tr>
                 ))}
