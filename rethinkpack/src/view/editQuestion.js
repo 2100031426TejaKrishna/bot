@@ -79,7 +79,8 @@ class EditQuestion extends Component {
       questionIndex: props.index,
       questionId: props.questionId,
       questionList: {
-        question: null, // Set default value for the question property
+        question: null, 
+        questionType: null// Set default value for the question property
         // Add other properties with default values if needed
       },
       stateQuestionId: '',
@@ -154,6 +155,12 @@ class EditQuestion extends Component {
   }
 
 /*---------------------------------*/
+
+  handleQuestionTypeRadio = (e) => {
+    this.setState( () => ({
+      questionList: { ...this.state.questionList.questionType, questionType: e.target.value }
+    }))
+  }
 
   addOption = (e) => {
     e.preventDefault();
@@ -870,9 +877,10 @@ class EditQuestion extends Component {
                       type="radio"
                       name="questionType"
                       id="formProductInfoRadio"
-                      value={this.state.questionList.questionType}
+                      value="productInfo"
+                      //value={this.state.questionList.questionType}
                       checked={this.state.questionList.questionType === 'productInfo'}
-                      onChange={(e) => this.setState({ questionList: { ...this.state.questionList.questionType, questionType: 'packagingInfo' } })}
+                      onChange={this.handleQuestionTypeRadio}
                     />
                     <label className="form-check-label" htmlFor="productInfoRadio">
                       Product Information
@@ -884,9 +892,10 @@ class EditQuestion extends Component {
                       type="radio"
                       name="questionType"
                       id="formPackagingInfoRadio"
-                      value={this.state.questionList.questionType}
+                      value="packagingInfo"
+                      //value={this.state.questionList.questionType}
                       checked={this.state.questionList.questionType === 'packagingInfo'}
-                      onChange={(e) => this.setState({ questionList: { ...this.state.questionList.questionType, questionType: 'productInfo' } })}
+                      onChange={this.handleQuestionTypeRadio}
                     />
                     <label className="form-check-label" htmlFor="packagingInfoRadio">
                       Packaging Information
