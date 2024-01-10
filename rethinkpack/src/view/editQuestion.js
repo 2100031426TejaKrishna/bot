@@ -171,7 +171,7 @@ class EditQuestion extends Component {
         ...prevState.questionList,
         options: [
           ...prevState.questionList.options,
-          { label: `Option ${prevState.questionList.options.length + 1}`, value: `Option ${prevState.questionList.options.length + 1}`, isCorrect: false }
+          { text: "" , value: `Option ${prevState.questionList.options.length + 1}`, isCorrect: false }
         ]
       }
     }));
@@ -187,7 +187,13 @@ class EditQuestion extends Component {
   deleteOption = (index) => {
     this.setState(prevState => ({
       questionList: { ...prevState.questionList, options: prevState.questionList.options.filter((_, i) => i !== index) }
-    }));
+    }),
+      () => {
+        for (let i = 0; i<this.state.questionList.options.length; i++) {
+          console.log(`deleteOption: ${this.state.questionList.options[i].text}`)
+        }
+      }
+    );
   };
   
   addGridRow = (e) => {
