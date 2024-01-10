@@ -303,11 +303,12 @@ class EditQuestion extends Component {
     const clearSelections = (e) => {
       e.preventDefault();
       e.stopPropagation();
-      const clearedOptions = options.map((option) => ({
+      const clearedOptions = questionList.options.map((option) => ({
         ...option,
+        text: '',
         isCorrect: false,
       }));
-      this.setState({ options: clearedOptions });
+      this.setState({ questionList: {...this.state.questionList, options: clearedOptions} });
     };
 
     const clearGridSelections = (e) => {
@@ -325,7 +326,58 @@ class EditQuestion extends Component {
   
     // Loading of Options
     switch (selectedOption) {
+      //----------------------------- multiple choice
       case 'multipleChoice':
+        return (
+          <>
+            {/* Options label */}
+            {questionList.options.map((option, index) => (
+              <div key={index} className="d-flex align-items-center mb-2">
+                <input
+                  type="radio"
+                  name="options"
+                  className="form-check-input"
+                  id={`form-${option}Radio`}
+                  value={`${option}`}
+                  // Don't specify `checked` parameter
+                  // issue with state change conflicting with 
+                  // questionType radio button
+                  // checked={option.isCorrect}
+                  disabled={isLeadingQuestion}
+                  onChange={() => this.toggleCorrectAnswerRadio(index, !option.isCorrect)}
+                />
+                <input
+                  type="text"
+                  id={`formOptions-${index}`}
+                  className="form-control mx-2"
+                  value={questionList.options[index].text}
+                  //onChange={(e) => this.handleOptionChange(index, e.target.value)}
+                  placeholder={`Option ${index + 1}`}
+                />
+                {questionList.options.length > 1 && (
+                  <button
+                    className="btn btn-outline-secondary"
+                    type="button"
+                    onClick={() => this.deleteOption(index)}
+                  >
+                    &times;
+                  </button>
+                )}
+              </div>
+            ))}
+            {/*  */}
+
+            <button className="btn btn-outline-dark" onClick={this.addOption}>
+              Add option
+            </button>
+            {options.length > 0 && (
+              <button className="btn btn-outline-danger ms-2" onClick={clearSelections}>
+                Clear
+              </button>
+            )}
+          </>
+        );
+      
       case 'checkbox':
         return (
           <>
@@ -337,7 +389,7 @@ class EditQuestion extends Component {
                   className="form-check-input"
                   checked={option.isCorrect}
                   disabled={isLeadingQuestion}
-                  //onChange={() => this.toggleCorrectAnswer(index)}
+                  onChange={() => this.toggleCorrectAnswer(index)}
                 />
                 <input
                   type="text"
@@ -586,16 +638,31 @@ class EditQuestion extends Component {
     }));
   };
 
+  toggleCorrectAnswerRadio = (index, value) => {
+    this.setState((prevState) => ({
+      questionList: {
+        ...prevState.questionList,
+        options: prevState.questionList.options.map((option, i) =>
+          i === index ? { ...option, isCorrect: value } : option
+        ),
+      },
+    }));
+  }
+
   toggleCorrectAnswer = (index) => {
-    const { selectedOption  } = this.state;
-    if (selectedOption === 'multipleChoice' || selectedOption === 'checkbox') {
+    const { selectedOption } = this.state;
+  
+    if (selectedOption === 'checkbox') {
       this.setState(prevState => ({
-        options: prevState.options.map((option, i) => {
-          if (i === index) {
-            return { ...option, isCorrect: !option.isCorrect };
-          }
-          return option;
-        })
+        questionList: {
+          ...prevState.questionList,
+          options: prevState.questionList.options.map((option, i) => {
+            if (i === index) {
+              return { ...option, isCorrect: !option.isCorrect };
+            }
+            return option;
+          })
+        }
       }));
     } else if (selectedOption === 'dropdown') {
       this.setState(prevState => ({
@@ -1118,15 +1185,6 @@ class EditQuestion extends Component {
           aria-hidden="true" 
           ref={this.editQuestionModalRef}
         >
-        
-        {/* Trying to implement map to load questions data 
-        
-        {questionList.map((questionId) => (
-
-        */}
-        
-          
-        {/* ))} */}
         </div>
       </div>
     );
