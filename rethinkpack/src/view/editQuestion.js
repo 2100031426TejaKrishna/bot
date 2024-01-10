@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
-//import { Modal } from 'bootstrap';
 import Modal from 'react-bootstrap/Modal';
 
 class EditQuestion extends Component {
@@ -80,7 +79,7 @@ class EditQuestion extends Component {
       questionId: props.questionId,
       questionList: {
         question: null, 
-        questionType: null,
+        questionType: '',
         options: [{ label: 'Option 1', value: 'Option 1', isCorrect: false }]
         // Set default value for the question property
         // Add other properties with default values if needed
@@ -159,8 +158,8 @@ class EditQuestion extends Component {
 /*---------------------------------*/
 
   handleQuestionTypeRadio = (e) => {
-    this.setState( () => ({
-      questionList: { ...this.state.questionList.questionType, questionType: e.target.value }
+    this.setState( (prevState) => ({
+      questionList: { ...prevState.questionList, questionType: e.target.value }
     }))
   }
 
