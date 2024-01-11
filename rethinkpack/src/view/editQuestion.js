@@ -80,6 +80,7 @@ class EditQuestion extends Component {
       questionList: {
         question: null, 
         questionType: '',
+        optionType: 'multipleChoice',
         options: [{ label: 'Option 1', value: 'Option 1', isCorrect: false }]
         // Set default value for the question property
         // Add other properties with default values if needed
@@ -126,7 +127,7 @@ class EditQuestion extends Component {
     try {
       //localhost:5000
       //rtp.dusky.bond:5000
-      const response = await fetch(`http://rtp.dusky.bond:5000/api/editReadUpdate/${questionId}`);
+      const response = await fetch(`http://localhost:5000/api/editReadUpdate/${questionId}`);
       const data = await response.json();
       if (data) {
         this.setState({
@@ -169,6 +170,12 @@ class EditQuestion extends Component {
     }))
   }
 
+  handleQuestionOptionType = (e) => {
+    this.setState( (prevState) => ({
+      questionList: { ...prevState.questionList, optionType: e.target.value }
+    }))
+  }
+
   handleQuestionMarks = (e) => {
     this.setState( (prevState) => ({
       questionList: { ...prevState.questionList, marks: e.target.value }
@@ -202,6 +209,7 @@ class EditQuestion extends Component {
     }),
       () => {
         console.log(`question: ${this.state.questionList.question}`)
+        console.log(`optionType: ${this.state.questionList.optionType}`)
         console.log(`marks: ${this.state.questionList.marks}`)
         for (let i = 0; i<this.state.questionList.options.length; i++) {
           console.log(`options text: ${this.state.questionList.options[i].text}`)
@@ -356,9 +364,9 @@ class EditQuestion extends Component {
     };  
   
     // Loading of Options
-    switch (selectedOption) {
+    switch (questionList.optionType) {
 //----------------------------- multiple choice ----------------------------
-      case 'multipleChoice':
+      case "multipleChoice":
         return (
           <>
             {/* Options label */}
@@ -404,14 +412,14 @@ class EditQuestion extends Component {
           </>
         );
 //----------------------------- checkbox ----------------------------      
-      case 'checkbox':
+      case "checkbox":
         return (
           <>
             {/* Options label */}
             {questionList.options.map((option, index) => (
               <div key={index} className="d-flex align-items-center mb-2">
                 <input
-                  type={selectedOption === 'multipleChoice' ? 'radio' : 'checkbox'}
+                  type={'checkbox'}
                   className="form-check-input"
                   checked={option.isCorrect}
                   disabled={isLeadingQuestion}
@@ -675,9 +683,9 @@ class EditQuestion extends Component {
   }
 
   toggleCorrectAnswer = (index) => {
-    const { selectedOption } = this.state;
+    const { questionList } = this.state;
   
-    if (selectedOption === 'checkbox') {
+    if (questionList.optionType === 'checkbox') {
       this.setState(prevState => ({
         questionList: {
           ...prevState.questionList,
@@ -689,14 +697,14 @@ class EditQuestion extends Component {
           })
         }
       }));
-    } else if (selectedOption === 'dropdown') {
+    } else if (questionList.optionType === 'dropdown') {
       this.setState(prevState => ({
         options: prevState.options.map((option, i) => ({
           ...option,
           isCorrect: i === index,
         })),
       }));
-    } else if (selectedOption === 'multipleChoiceGrid' || selectedOption === 'checkboxGrid') {
+    } else if (questionList.optionType === 'multipleChoiceGrid' || questionList.optionType === 'checkboxGrid') {
       this.setState((prevState) => ({
         gridOptions: {
           ...prevState.gridOptions,
@@ -739,13 +747,13 @@ class EditQuestion extends Component {
   };
   
   validateOptionType = () => {
-    const { selectedOption } = this.state;
-    return selectedOption !== '';
+    const { questionList } = this.state;
+    return questionList.optionType !== '';
   };
   
   validateOptions = () => {
-    const { options, selectedOption } = this.state;
-    if (selectedOption === 'linear' || selectedOption === 'multipleChoiceGrid' || selectedOption === 'checkboxGrid') {
+    const { options, questionList } = this.state;
+    if (questionList.optionType === 'linear' || questionList.optionType === 'multipleChoiceGrid' || questionList.optionType === 'checkboxGrid') {
       return true;
     }
 
@@ -828,12 +836,13 @@ class EditQuestion extends Component {
       showExplanation,
       requireResponse,
       nextQuestion,
+      questionList
     } = this.state;
 
-    const dataToInsert = {
-      questionType,
-      question,
-      optionType: selectedOption,
+    const dataToUpdate = {
+      questionType: this.state.questionList.questionType,
+      question: this.state.questionList.question,
+      optionType: this.state.questionList.optionType,
       marks: isLeadingQuestion ? undefined : parseFloat(marks),
       countries: showCountry ? selectedCountries : undefined,
       explanation: showExplanation ? explanation : undefined,
@@ -842,23 +851,23 @@ class EditQuestion extends Component {
       requireResponse,
       nextQuestion: isLeadingQuestion ? undefined : nextQuestion
     };
-
-    if (selectedOption === 'multipleChoice' || selectedOption === 'checkbox' || selectedOption === 'dropdown') {
-      dataToInsert.options = options.map((option) => ({
+    // Case: multiple choce / checkbox / dropdown
+    if (questionList.optionType === 'multipleChoice' || questionList.optionType === 'checkbox' || questionList.optionType === 'dropdown') {
+      dataToUpdate.options = options.map((option) => ({
         text: option.label,
         isCorrect: option.isCorrect || false, 
       }));
     }
   
-    if (selectedOption === 'linear') {
-      dataToInsert.linearScale = [
+    if (questionList.optionType === 'linear') {
+      dataToUpdate.linearScale = [
         { scale: minScale, label: document.getElementById('scaleLabel' + minScale).value },
         { scale: maxScale, label: document.getElementById('scaleLabel' + maxScale).value },
       ];
     }
 
-    if (selectedOption === 'multipleChoiceGrid' || selectedOption === 'checkboxGrid') {
-      dataToInsert.grid = {
+    if (questionList.optionType === 'multipleChoiceGrid' || questionList.optionType === 'checkboxGrid') {
+      dataToUpdate.grid = {
         rows: gridOptions.row.map(row => ({ text: row.label })),
         columns: gridOptions.column.map(column => ({ text: column.label, isCorrect: column.isCorrect || false }))
       };
@@ -867,12 +876,12 @@ class EditQuestion extends Component {
     try {
       //localhost:5000
       //rtp.dusky.bond:5000
-      const response = await fetch('http://rtp.dusky.bond:5000/api/insertQuestion', {
+      const response = await fetch('http://localhost:5000/api/insertQuestion', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(dataToInsert),
+        body: JSON.stringify(dataToUpdate),
       });
 
       if (response.ok) {
@@ -903,6 +912,12 @@ class EditQuestion extends Component {
           },
           requireResponse: false,
           showToast: true,
+          questionList: {
+            question: null, 
+            questionType: '',
+            optionType: 'multipleChoice',
+            options: [{ label: 'Option 1', value: 'Option 1', isCorrect: false }]
+          },
         });
 
 /*-----------MODAL ELEMENTS----------------*/
@@ -1048,8 +1063,8 @@ class EditQuestion extends Component {
                 <select
                   className="form-select"
                   id="formOptionsType"
-                  value={selectedOption}
-                  onChange={(e) => this.setState({ selectedOption: e.target.value })}
+                  value={this.state.questionList.optionType}
+                  onChange={this.handleQuestionOptionType}
                 >
                   <option value="multipleChoice">Multiple Choice</option>
                   <option value="checkbox">Checkbox</option>
