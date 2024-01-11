@@ -191,6 +191,7 @@ class EditQuestion extends Component {
       () => {
         for (let i = 0; i<this.state.questionList.options.length; i++) {
           console.log(`deleteOption: ${this.state.questionList.options[i].text}`)
+          console.log(`deleteOption: ${this.state.questionList.options[i].isCorrect}`)
         }
       }
     );
@@ -332,7 +333,7 @@ class EditQuestion extends Component {
   
     // Loading of Options
     switch (selectedOption) {
-      //----------------------------- multiple choice
+//----------------------------- multiple choice -----------------------------------
       case 'multipleChoice':
         return (
           <>
@@ -345,12 +346,9 @@ class EditQuestion extends Component {
                   className="form-check-input"
                   id={`form-${option}Radio`}
                   value={`${option}`}
-                  // Don't specify `checked` parameter
-                  // issue with state change conflicting with 
-                  // questionType radio button
-                  // checked={option.isCorrect}
+                  checked={option.isCorrect}
                   disabled={isLeadingQuestion}
-                  onChange={() => this.toggleCorrectAnswerRadio(index, !option.isCorrect)}
+                  onChange={() => this.selectMultipleChoiceRadio(index, !option.isCorrect)}
                 />
                 <input
                   type="text"
@@ -644,12 +642,12 @@ class EditQuestion extends Component {
     }));
   };
 
-  toggleCorrectAnswerRadio = (index, value) => {
+  selectMultipleChoiceRadio = (index, value) => {
     this.setState((prevState) => ({
       questionList: {
         ...prevState.questionList,
         options: prevState.questionList.options.map((option, i) =>
-          i === index ? { ...option, isCorrect: value } : option
+          i === index ? { ...option, isCorrect: value } : {...option, isCorrect: false}
         ),
       },
     }));
