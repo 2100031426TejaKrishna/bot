@@ -127,7 +127,7 @@ class EditQuestion extends Component {
     try {
       //localhost:5000
       //rtp.dusky.bond:5000
-      const response = await fetch(`http://localhost:5000/api/editReadUpdate/${questionId}`);
+      const response = await fetch(`http://rtp.dusky.bond:5000/api/editReadUpdate/${questionId}`);
       const data = await response.json();
       if (data) {
         this.setState({
@@ -367,8 +367,31 @@ class EditQuestion extends Component {
     switch (questionList.optionType) {
 //----------------------------- multiple choice ----------------------------
       case "multipleChoice":
+        // check for more than one isCorrect truths, should only have one isCorrect truth for radio buttons
+        let countIsCorrect = 0;
+        
+        for(let i=0; i<questionList.options.length; i++) {    
+          if(questionList.options[i].isCorrect === true) {
+            countIsCorrect ++
+          }
+        }
+
+        if(countIsCorrect>1) {
+          console.log(`countIsCorrect greater than 1`)
+          this.setState((prevState) => ({
+            questionList: {
+              ...prevState.questionList,
+              options: prevState.questionList.options.map((option) => ({
+                ...option,
+                isCorrect: false, // Set isCorrect to false for each option
+              })),
+            },
+          }));
+        }
+        
         return (
           <>
+            
             {/* Options label */}
             {questionList.options.map((option, index) => (
               <div key={index} className="d-flex align-items-center mb-2">
@@ -876,7 +899,7 @@ class EditQuestion extends Component {
     try {
       //localhost:5000
       //rtp.dusky.bond:5000
-      const response = await fetch('http://localhost:5000/api/insertQuestion', {
+      const response = await fetch('http://rtp.dusky.bond:5000/api/insertQuestion', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -941,6 +964,10 @@ class EditQuestion extends Component {
     } catch (error) {
         console.error('Network error:', error);
     }
+
+    console.log(`questionList: ${questionList} `)
+
+
   };
 
 /*---------------------RENDER----------------------------------*/
