@@ -190,8 +190,8 @@ class EditQuestion extends Component {
     }),
       () => {
         for (let i = 0; i<this.state.questionList.options.length; i++) {
-          console.log(`deleteOption: ${this.state.questionList.options[i].text}`)
-          console.log(`deleteOption: ${this.state.questionList.options[i].isCorrect}`)
+          console.log(`options text: ${this.state.questionList.options[i].text}`)
+          console.log(`options isCorrect: ${this.state.questionList.options[i].isCorrect}`)
         }
       }
     );
@@ -263,9 +263,33 @@ class EditQuestion extends Component {
   handleOptionChange = (index, value) => {
     const { options } = this.state;
     const updatedOptions = options.map((option, i) => (
-      i === index ? { ...option, label: value, value: value } : option
+      i === index ? { ...option, text: value } : option
     ));
     this.setState({ options: updatedOptions });
+  };
+
+  // selectMultipleChoiceRadio = (index, value) => {
+  //   this.setState((prevState) => ({
+  //     questionList: {
+  //       ...prevState.questionList,
+  //       options: prevState.questionList.options.map((option, i) =>
+  //         i === index ? { ...option, isCorrect: value } : {...option, isCorrect: false}
+  //       ),
+  //     },
+  //   }));
+  // }
+
+  handleOptionChangeText = (index, value) => {
+    const { questionList } = this.state;
+    // const updatedOptions = questionList.options.map((option, i) => (
+    //   i === index ? { ...option, text: value } : option
+    // ));
+    this.setState({ questionList: {
+      ...questionList,
+      options: questionList.options.map((option, i) =>
+      i === index ? { ...option, text: value } : option
+      ),
+    }}) 
   };
 
   handleRowChange = (index, e) => {
@@ -333,7 +357,7 @@ class EditQuestion extends Component {
   
     // Loading of Options
     switch (selectedOption) {
-//----------------------------- multiple choice -----------------------------------
+//----------------------------- multiple choice ----------------------------
       case 'multipleChoice':
         return (
           <>
@@ -355,7 +379,7 @@ class EditQuestion extends Component {
                   id={`formOptions-${index}`}
                   className="form-control mx-2"
                   value={questionList.options[index].text}
-                  //onChange={(e) => this.handleOptionChange(index, e.target.value)}
+                  onChange={(e) => this.handleOptionChangeText(index, e.target.value)}
                   placeholder={`Option ${index + 1}`}
                 />
                 {questionList.options.length > 1 && (
@@ -369,8 +393,6 @@ class EditQuestion extends Component {
                 )}
               </div>
             ))}
-            {/*  */}
-
             <button className="btn btn-outline-dark" onClick={this.addOption}>
               Add option
             </button>
@@ -381,7 +403,7 @@ class EditQuestion extends Component {
             )}
           </>
         );
-      
+//----------------------------- checkbox ----------------------------      
       case 'checkbox':
         return (
           <>
@@ -400,7 +422,7 @@ class EditQuestion extends Component {
                   id={`formOptions-${index}`}
                   className="form-control mx-2"
                   value={questionList.options[index].text}
-                  //onChange={(e) => this.handleOptionChange(index, e.target.value)}
+                  onChange={(e) => this.handleOptionChangeText(index, e.target.value)}
                   placeholder={`Option ${index + 1}`}
                 />
                 {questionList.options.length > 1 && (
