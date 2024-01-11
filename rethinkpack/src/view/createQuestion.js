@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
 import { Modal } from 'bootstrap';
+import './createQuestion.css';
 
 class CreateQuestion extends Component {
   constructor(props) {
@@ -14,7 +15,7 @@ class CreateQuestion extends Component {
       questionType: '',
       selectedOption: 'multipleChoice',
       options: [{ label: 'Option 1', value: 'Option 1', isCorrect: false }],
-      gridOptions: { row: [{ label: 'Row 1', value: 'Row 1' }], column: [{ label: 'Column A', value: 'Column A' }] },
+      gridOptions: { row: [{ label: 'Row 1', value: 'Row 1' }], column: [{ label: 'Column 1', value: 'Column 1' }] },
       showCountry: false,
       countries: [
         "Afghanistan", "Albania", "Algeria", "Andorra", "Angola",
@@ -460,101 +461,89 @@ class CreateQuestion extends Component {
   
       case 'multipleChoiceGrid':
       case 'checkboxGrid':
-        const { gridOptions } = this.state;
-        const columnStyle = gridOptions.column.length > 1 ? { display: 'flex', overflowX: 'auto' } : {};
-
         return (
           <>
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Rows</th>
-                  <th style={columnStyle}>
-                    Columns
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {gridOptions.row.map((row, rowIndex) => (
-                  <tr key={rowIndex}>
-                    <td>
-                      {gridOptions.row[rowIndex] && (
-                        <div className="d-flex align-items-center">
-                          <span className="row-number">{rowIndex + 1}.</span>
-                          <input
-                            type="text"
-                            className="form-control mx-2"
-                            onChange={(e) => this.handleRowChange(rowIndex, e)}
-                            placeholder={`Row ${rowIndex + 1}`}
-                          />
-                          <button
-                            className="btn btn-outline-secondary"
-                            type="button"
-                            onClick={() => this.deleteGridRow(rowIndex)}
-                          >
-                            &times;
-                          </button>
-                        </div>
-                      )}
-                    </td>
-                    <td style={columnStyle}>
-                      {gridOptions.column.map((col, colIndex) => (
-                        <div key={colIndex} className="d-flex align-items-center">
-                          <input
-                            type={selectedOption === 'multipleChoiceGrid' ? 'radio' : 'checkbox'}
-                            className="form-check-input"
-                            name={`column-${colIndex}`}
-                            disabled
-                          />
-                          <input
-                            type="text"
-                            className="form-control mx-2"
-                            onChange={(e) => this.handleColumnChange(colIndex, e)}
-                            placeholder={`Column ${colIndex + 1}`}
-                          />
-                          <button
-                            className="btn btn-outline-secondary"
+            <div className="scrollable-table-container">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Row/Column</th>
+                    {gridOptions.column.map((col, colIndex) => (
+                      <th key={colIndex} className="text-center">
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={col.label}
+                          onChange={(e) => this.handleColumnChange(colIndex, e)}
+                        />
+                        {gridOptions.column.length > 1 && (
+                          <button 
+                            className="btn btn-outline-secondary btn-sm ms-2"
                             type="button"
                             onClick={() => this.deleteGridColumn(colIndex)}
                           >
                             &times;
                           </button>
-                        </div>
-                      ))}
-                    </td>
+                        )}
+                      </th>
+                    ))}
+                    <th></th> {/* Empty header for delete row buttons */}
                   </tr>
-                ))}
-                <tr>
-                  <td>
-                    <button className="btn btn-outline-dark" onClick={this.addGridRow}>
-                      Add Row
-                    </button>
-                  </td>
-                  <td>
-                    <button className="btn btn-outline-dark" onClick={this.addGridColumn}>
-                      Add Column
-                    </button>
-                    {options.length > 0 && (
-                      <button className="btn btn-outline-danger ms-2" onClick={clearGridSelections}>
-                        Clear
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-            <div className="form-check form-switch">
-              <input
-                className="form-check-input"
-                type="checkbox"
-                id="requireResponseSwitch"
-                checked={requireResponse}
-                onChange={this.toggleRequireResponse}
-              />
-              <label className="form-check-label" htmlFor="requireResponseSwitch">
-                Require a response in each row
-              </label>
-            </div>
+                </thead>
+                <tbody>
+                  {gridOptions.row.map((row, rowIndex) => (
+                    <tr key={rowIndex}>
+                      <td>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={row.label}
+                          onChange={(e) => this.handleRowChange(rowIndex, e)}
+                        />
+                      </td>
+                      {gridOptions.column.map((_, colIndex) => (
+                        <td key={colIndex} className="text-center">
+                          <input
+                            type={selectedOption === 'multipleChoiceGrid' ? 'radio' : 'checkbox'}
+                            name={`row-${rowIndex}`}
+                            className="form-check-input"
+                          />
+                        </td>
+                      ))}
+                      <td>
+                        {gridOptions.row.length > 1 && (
+                          <button 
+                            className="btn btn-outline-secondary btn-sm"
+                            type="button"
+                            onClick={() => this.deleteGridRow(rowIndex)}
+                          >
+                            &times;
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <button className="btn btn-outline-dark" onClick={this.addGridRow}>
+                Add Row
+              </button>
+              <button className="btn btn-outline-dark mx-2" onClick={this.addGridColumn}>
+                Add Column
+              </button>
+              <div className="form-check form-switch mt-3">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  id="requireResponseSwitch"
+                  checked={requireResponse}
+                  onChange={this.toggleRequireResponse}
+                />
+                <label className="form-check-label" htmlFor="requireResponseSwitch">
+                  Require a response in each row
+                </label>
+              </div>
+              </div>
           </>
         );
   
