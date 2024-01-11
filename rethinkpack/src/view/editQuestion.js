@@ -163,6 +163,18 @@ class EditQuestion extends Component {
     }))
   }
 
+  handleQuestionText = (e) => {
+    this.setState( (prevState) => ({
+      questionList: { ...prevState.questionList, question: e.target.value }
+    }))
+  }
+
+  handleQuestionMarks = (e) => {
+    this.setState( (prevState) => ({
+      questionList: { ...prevState.questionList, marks: e.target.value }
+    }))
+  }
+
   addOption = (e) => {
     e.preventDefault();
     e.stopPropagation()
@@ -189,6 +201,8 @@ class EditQuestion extends Component {
       questionList: { ...prevState.questionList, options: prevState.questionList.options.filter((_, i) => i !== index) }
     }),
       () => {
+        console.log(`question: ${this.state.questionList.question}`)
+        console.log(`marks: ${this.state.questionList.marks}`)
         for (let i = 0; i<this.state.questionList.options.length; i++) {
           console.log(`options text: ${this.state.questionList.options[i].text}`)
           console.log(`options isCorrect: ${this.state.questionList.options[i].isCorrect}`)
@@ -268,22 +282,8 @@ class EditQuestion extends Component {
     this.setState({ options: updatedOptions });
   };
 
-  // selectMultipleChoiceRadio = (index, value) => {
-  //   this.setState((prevState) => ({
-  //     questionList: {
-  //       ...prevState.questionList,
-  //       options: prevState.questionList.options.map((option, i) =>
-  //         i === index ? { ...option, isCorrect: value } : {...option, isCorrect: false}
-  //       ),
-  //     },
-  //   }));
-  // }
-
   handleOptionChangeText = (index, value) => {
     const { questionList } = this.state;
-    // const updatedOptions = questionList.options.map((option, i) => (
-    //   i === index ? { ...option, text: value } : option
-    // ));
     this.setState({ questionList: {
       ...questionList,
       options: questionList.options.map((option, i) =>
@@ -372,7 +372,7 @@ class EditQuestion extends Component {
                   value={`${option}`}
                   checked={option.isCorrect}
                   disabled={isLeadingQuestion}
-                  onChange={() => this.selectMultipleChoiceRadio(index, !option.isCorrect)}
+                  onChange={() => this.selectOptionsRadio(index, !option.isCorrect)}
                 />
                 <input
                   type="text"
@@ -436,8 +436,6 @@ class EditQuestion extends Component {
                 )}
               </div>
             ))}
-            {/*  */}
-
             <button className="btn btn-outline-dark" onClick={this.addOption}>
               Add option
             </button>
@@ -494,27 +492,28 @@ class EditQuestion extends Component {
             </div>
           </div>
         );
-  
+//----------------------------- dropdown ----------------------------     
       case 'dropdown':
         return (
           <>
-            {options.map((option, index) => (
+            {questionList.options.map((option, index) => (
               <div key={index} className="d-flex align-items-center mb-2">
                 <input
                   type="radio"
                   className="form-check-input mx-2"
                   disabled={isLeadingQuestion}
                   checked={option.isCorrect}
-                  onChange={() => this.toggleCorrectAnswer(index)}
+                  onChange={() => this.selectOptionsRadio(index, !option.isCorrect)}
                 />
                 <span className="mr-2">{index + 1}.</span>
                 <input
                   type="text"
                   className="form-control mx-2"
-                  onChange={(e) => this.handleOptionChange(index, e.target.value)}
+                  value={option.text}
+                  onChange={(e) => this.handleOptionChangeText(index, e.target.value)}
                   placeholder={`Option ${index + 1}`}
                 />
-                {options.length > 1 && (
+                {questionList.options.length > 1 && (
                   <button
                     className="btn btn-outline-secondary"
                     type="button"
@@ -664,7 +663,7 @@ class EditQuestion extends Component {
     }));
   };
 
-  selectMultipleChoiceRadio = (index, value) => {
+  selectOptionsRadio = (index, value) => {
     this.setState((prevState) => ({
       questionList: {
         ...prevState.questionList,
@@ -1029,13 +1028,8 @@ class EditQuestion extends Component {
                       type="text" 
                       className="form-control" 
                       id="formQuestion" 
-                      defaultValue={this.state.questionList.question}
-                      /*
-                      onChange={(e) => { this.setState({ questionList: { ...this.state.questionList.question, question: e.target.value } }, 
-                        // callback  
-                        console.log(`question onChange callback: ${this.state.questionList.question}`)
-                        ) }}
-                        */
+                      value={this.state.questionList.question}
+                      onChange={this.handleQuestionText}
                     />
                   )}
                 </div>
@@ -1105,7 +1099,7 @@ class EditQuestion extends Component {
                     className="form-control" 
                     id="formMarks" 
                     value={this.state.questionList.marks}
-                    onChange={this.handleInputChange} 
+                    onChange={this.handleQuestionMarks} 
                   />
                   {validationErrors.marks && (
                     <div style={{ color: 'red', fontSize: 12 }}>
