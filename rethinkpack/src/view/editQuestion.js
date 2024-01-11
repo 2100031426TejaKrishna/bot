@@ -81,7 +81,8 @@ class EditQuestion extends Component {
         question: null, 
         questionType: '',
         optionType: 'multipleChoice',
-        options: [{ label: 'Option 1', value: 'Option 1', isCorrect: false }]
+        options: [{ label: 'Option 1', value: 'Option 1', isCorrect: false }],
+        marks: ''
         // Set default value for the question property
         // Add other properties with default values if needed
       },
@@ -760,13 +761,13 @@ class EditQuestion extends Component {
   };
 
   validateQuestionType = () => {
-    const { questionType } = this.state;
-    return questionType !== '';
+    const { questionList } = this.state;
+    return questionList.questionType !== '';
   };
   
   validateQuestion = () => {
-    const { question } = this.state;
-    return question.trim() !== '';
+    const { questionList } = this.state;
+    return questionList.question.trim() !== '';
   };
   
   validateOptionType = () => {
@@ -775,17 +776,16 @@ class EditQuestion extends Component {
   };
   
   validateOptions = () => {
-    const { options, questionList } = this.state;
+    const { questionList } = this.state;
     if (questionList.optionType === 'linear' || questionList.optionType === 'multipleChoiceGrid' || questionList.optionType === 'checkboxGrid') {
       return true;
     }
-
-    return options.length >= 2;
+    return questionList.options.length >= 2;
   };
   
   validateMarks = () => {
-    const { marks, isLeadingQuestion } = this.state;
-    return isLeadingQuestion || (marks.trim() !== '' && !isNaN(marks));
+    const { questionList, isLeadingQuestion } = this.state;
+    return isLeadingQuestion || (questionList.marks !== '' && !isNaN(questionList.marks));
   };
   
   validateCountries = () => {
@@ -805,7 +805,7 @@ class EditQuestion extends Component {
           <div className="toast show bg-dark text-white">
             <div className="d-flex justify-content-between">
               <div className="toast-body">
-                Created new question successfully!
+                Edited question successfully!
               </div>
               <button type="button" className="btn-close btn-close-white me-2 m-auto" onClick={() => this.setState({ showToast: false })}></button>
             </div>
@@ -866,7 +866,8 @@ class EditQuestion extends Component {
       questionType: this.state.questionList.questionType,
       question: this.state.questionList.question,
       optionType: this.state.questionList.optionType,
-      marks: isLeadingQuestion ? undefined : parseFloat(marks),
+      options: this.state.questionList.options,
+      marks: isLeadingQuestion ? undefined : parseFloat(this.state.questionList.marks),
       countries: showCountry ? selectedCountries : undefined,
       explanation: showExplanation ? explanation : undefined,
       isLeadingQuestion,
@@ -876,8 +877,8 @@ class EditQuestion extends Component {
     };
     // Case: multiple choce / checkbox / dropdown
     if (questionList.optionType === 'multipleChoice' || questionList.optionType === 'checkbox' || questionList.optionType === 'dropdown') {
-      dataToUpdate.options = options.map((option) => ({
-        text: option.label,
+      dataToUpdate.options = questionList.options.map((option) => ({
+        text: option.text,
         isCorrect: option.isCorrect || false, 
       }));
     }
@@ -909,41 +910,7 @@ class EditQuestion extends Component {
 
       if (response.ok) {
         console.log('Data submitted successfully');
-        this.setState({
-          question: '',
-          marks: '',
-          explanation: '',
-          nextQuestion: '',
-          questionType: '',
-          selectedOption: 'multipleChoice',
-          options: [{ label: 'Option 1', value: 'Option 1', isCorrect: false }],
-          gridOptions: { row: [{ label: 'Row 1', value: 'Row 1' }], column: [{ label: 'Column A', value: 'Column A' }] },
-          showCountry: false,
-          selectedCountries: [],
-          isLeadingQuestion: false,
-          showExplanation: false,
-          minScale: 1,
-          maxScale: 5,
-          validationErrors: {
-            questionType: '',
-            question: '',
-            optionType: '',
-            options: '',
-            marks: '',
-            country: '',
-            explanation: '',
-          },
-          requireResponse: false,
-          showToast: true,
-          questionList: {
-            question: null, 
-            questionType: '',
-            optionType: 'multipleChoice',
-            options: [{ label: 'Option 1', value: 'Option 1', isCorrect: false }]
-          },
-        });
-
-/*-----------MODAL ELEMENTS----------------*/
+        
         const modalElement = this.editQuestionModalRef.current;
         if (modalElement) {
           const bootstrapModal = Modal.getInstance(modalElement);
@@ -964,10 +931,7 @@ class EditQuestion extends Component {
     } catch (error) {
         console.error('Network error:', error);
     }
-
-    console.log(`questionList: ${questionList} `)
-
-
+    console.log(`questionList: ${JSON.stringify(questionList)}`)
   };
 
 /*---------------------RENDER----------------------------------*/
