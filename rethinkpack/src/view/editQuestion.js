@@ -77,12 +77,14 @@ class EditQuestion extends Component {
       // Additional variables
       questionIndex: props.index,
       questionId: props.questionId,
+      allQuestions: props.allQuestions,
       questionList: {
         question: null, 
         questionType: '',
         optionType: 'multipleChoice',
         options: [{ label: 'Option 1', value: 'Option 1', isCorrect: false }],
-        marks: ''
+        marks: '',
+        nextQuestion: null
         // Set default value for the question property
         // Add other properties with default values if needed
       },
@@ -183,6 +185,12 @@ class EditQuestion extends Component {
     }))
   }
 
+  handleQuestionNextQuestion = (e) => {
+    this.setState( (prevState) => ({
+      questionList: { ...prevState.questionList, nextQuestion: e.target.value }
+    }))
+  }
+
   addOption = (e) => {
     e.preventDefault();
     e.stopPropagation()
@@ -212,6 +220,7 @@ class EditQuestion extends Component {
         console.log(`question: ${this.state.questionList.question}`)
         console.log(`optionType: ${this.state.questionList.optionType}`)
         console.log(`marks: ${this.state.questionList.marks}`)
+        console.log(`nextQuestion: ${this.state.questionList.nextQuestion}`)
         for (let i = 0; i<this.state.questionList.options.length; i++) {
           console.log(`options text: ${this.state.questionList.options[i].text}`)
           console.log(`options isCorrect: ${this.state.questionList.options[i].isCorrect}`)
@@ -833,7 +842,7 @@ class EditQuestion extends Component {
         question: isQuestionValid ? '' : 'Enter the question',
         optionType: isOptionTypeValid ? '' : 'Select an option type',
         options: isOptionsValid ? '' : 'Add at least two options for this question',
-        marks: isMarksValid ? '' : 'Enter the marks for this question',
+        marks: isMarksValid ? '' : 'Enter the marks (an integer value) for this question',
         country: isCountriesValid ? '' : 'Select at least one country',
         explanation: isExplanationValid ? '' : (this.state.isLeadingQuestion ? 'Enter the recommendation for this question' : 'Enter the explanation for the correct answer'),
       },
@@ -938,7 +947,7 @@ class EditQuestion extends Component {
 
   render() {
 
-    const { selectedOption, showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, validationErrors, questionId, questionIndex } = this.state;
+    const { selectedOption, showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, validationErrors, questionId, questionIndex, allQuestions } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
 
     return (
@@ -1114,6 +1123,8 @@ class EditQuestion extends Component {
                   )}
                 </div>
               )}
+              
+              {/* Country */}
               {showCountry && (
                 <div className="mb-3">
                   <label className="col-form-label">Country:</label>
@@ -1142,6 +1153,26 @@ class EditQuestion extends Component {
                   )} 
                 </div>
               )}
+              
+              {/* Next Question */}
+              {!isLeadingQuestion && (
+                    <div className="mb-3">
+                      <label htmlFor="nextQuestion" className="col-form-label">Next Question:</label>
+                      <select
+                        className="form-select"
+                        id="nextQuestion"
+                        value={this.state.questionList.nextQuestion}
+                        onChange={this.handleQuestionNextQuestion}
+                      >
+                        <option value="">Select Next Question</option>
+                        {allQuestions.map((question) => (
+                          <option key={question._id} value={question._id}>
+                            {question.question}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
             </form>
             
 

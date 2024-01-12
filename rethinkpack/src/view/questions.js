@@ -12,7 +12,7 @@ const Questions = ({ triggerRefresh }) => {
     const handleDelete = async () => {
         if (questionToDelete) {
             try {
-                const response = await fetch(`http://rtp.dusky.bond:5000/api/deleteQuestion/${questionToDelete}`, { method: 'DELETE' });
+                const response = await fetch(`http://localhost:5000/api/deleteQuestion/${questionToDelete}`, { method: 'DELETE' });
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
@@ -33,7 +33,7 @@ const Questions = ({ triggerRefresh }) => {
 
     const fetchQuestionById = async (id) => {
         try {
-            const response = await fetch(`http://rtp.dusky.bond:5000/api/question/${id}`);
+            const response = await fetch(`http://localhost:5000/api/question/${id}`);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -49,7 +49,7 @@ const Questions = ({ triggerRefresh }) => {
     useEffect(() => {
         const fetchQuestions = async () => {
             try {
-                const response = await fetch('http://rtp.dusky.bond:5000/api/displayQuestions');
+                const response = await fetch('http://localhost:5000/api/displayQuestions');
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
@@ -268,6 +268,7 @@ const Questions = ({ triggerRefresh }) => {
                         <EditQuestion 
                             index = {index}
                             questionId = {question._id} 
+                            allQuestions = {questions}
                         />
                         <button 
                             className="btn btn-danger" 
