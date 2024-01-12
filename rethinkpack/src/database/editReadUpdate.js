@@ -33,4 +33,18 @@ router.get('/editReadUpdate/:id', async (req, res) => {
     }
 });
 
+// Update question by ID from database
+router.put('/editReadUpdate/update/:id', async (req, res) => {
+    try {
+        const update = await Questions.updateOne(
+            { _id: req.params.id },
+            { $set: req.body }
+          );
+          res.json(update);
+    } catch (error) {
+        console.log(`ERROR: editReadUpdate/id`)
+        res.status(500).send("Unable to fetch questions");
+    }
+});
+
 module.exports = { router, fetchQuestionsToEdit };

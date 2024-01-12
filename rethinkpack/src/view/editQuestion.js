@@ -2,6 +2,10 @@ import React, { Component } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
 import Modal from 'react-bootstrap/Modal';
+// import { triggerRefresh } from '../App';
+
+// const destination = "localhost:5000";
+const destination = "rtp.dusky.bond:5000";
 
 class EditQuestion extends Component {
   constructor(props) {
@@ -85,11 +89,9 @@ class EditQuestion extends Component {
         options: [{ label: 'Option 1', value: 'Option 1', isCorrect: false }],
         marks: '',
         nextQuestion: null
-        // Set default value for the question property
-        // Add other properties with default values if needed
       },
       stateQuestionId: '',
-      isLoading: true,
+      showModal: false,
     };
 
     this.initialState = { ...this.state };
@@ -125,16 +127,15 @@ class EditQuestion extends Component {
   }
 
 /*--------------API-----------------*/
+  
 
   fetchQuestion = async (questionId) => {
     try {
-      //localhost:5000
-      //rtp.dusky.bond:5000
-      const response = await fetch(`http://rtp.dusky.bond:5000/api/editReadUpdate/${questionId}`);
+      const response = await fetch(`http://${destination}/api/editReadUpdate/${questionId}`);
       const data = await response.json();
       if (data) {
         this.setState({
-          isLoading: false, 
+          showModal: true, 
           questionList: data,
           selectedOption: data.optionType
         })
@@ -142,6 +143,35 @@ class EditQuestion extends Component {
     } catch (error) {
       console.error('Error fetching questions:', error);
     }
+  };
+
+  updateQuestion = async(questionId, dataToUpdate) => {
+    try {
+      const response = await fetch(`http://${destination}/api/editReadUpdate/update/${questionId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dataToUpdate),
+      })
+      if (response.ok) {
+        console.log('Data submitted successfully');
+        this.setState({ 
+          showModal: false,
+          showToast: true 
+        });
+        setTimeout(() => this.setState({ showToast: false }), 10000);
+        //
+        // triggerRefresh()
+      } else {
+        console.error('Server responded with an error:', response.status, response.statusText);
+        const responseData = await response.json();
+        console.error('Server error data:', responseData);
+      }
+    } catch (error) {
+      console.error('Network error:', error);
+    }
+    console.log(`questionList: ${JSON.stringify(this.state.questionList)}`)
   };
 
 /*-------------MODAL-----------------*/
@@ -199,7 +229,7 @@ class EditQuestion extends Component {
         ...prevState.questionList,
         options: [
           ...prevState.questionList.options,
-          { text: "" , value: `Option ${prevState.questionList.options.length + 1}`, isCorrect: false }
+          { text: "" , isCorrect: false }
         ]
       }
     }));
@@ -853,22 +883,17 @@ class EditQuestion extends Component {
     }
 
     const {
-      questionType,
-      question,
-      selectedOption,
-      options,
       gridOptions,
       minScale,
       maxScale,
       isLeadingQuestion,
-      marks,
       showCountry,
       selectedCountries,
       explanation,
       showExplanation,
       requireResponse,
-      nextQuestion,
-      questionList
+      questionList,
+      questionId
     } = this.state;
 
     const dataToUpdate = {
@@ -882,7 +907,7 @@ class EditQuestion extends Component {
       isLeadingQuestion,
       showCountry,
       requireResponse,
-      nextQuestion: isLeadingQuestion ? undefined : nextQuestion
+      nextQuestion: isLeadingQuestion ? undefined : this.state.questionList.nextQuestion
     };
     // Case: multiple choce / checkbox / dropdown
     if (questionList.optionType === 'multipleChoice' || questionList.optionType === 'checkbox' || questionList.optionType === 'dropdown') {
@@ -905,49 +930,16 @@ class EditQuestion extends Component {
         columns: gridOptions.column.map(column => ({ text: column.label, isCorrect: column.isCorrect || false }))
       };
     }
-
-    try {
-      //localhost:5000
-      //rtp.dusky.bond:5000
-      const response = await fetch('http://rtp.dusky.bond:5000/api/insertQuestion', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(dataToUpdate),
-      });
-
-      if (response.ok) {
-        console.log('Data submitted successfully');
-        
-        const modalElement = this.editQuestionModalRef.current;
-        if (modalElement) {
-          const bootstrapModal = Modal.getInstance(modalElement);
-          bootstrapModal.hide();
-        }
-        document.body.classList.remove('modal-open');
-        const backdrop = document.querySelector('.modal-backdrop');
-        if (backdrop) {
-          backdrop.parentNode.removeChild(backdrop);
-        }
-        this.setState({ showToast: true });
-        setTimeout(() => this.setState({ showToast: false }), 10000);
-      } else {
-        console.error('Server responded with an error:', response.status, response.statusText);
-        const responseData = await response.json();
-        console.error('Server error data:', responseData);
-      }
-    } catch (error) {
-        console.error('Network error:', error);
-    }
-    console.log(`questionList: ${JSON.stringify(questionList)}`)
+    
+    // Update database API
+    this.updateQuestion(questionId, dataToUpdate)
   };
 
 /*---------------------RENDER----------------------------------*/
 
   render() {
 
-    const { selectedOption, showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, validationErrors, questionId, questionIndex, allQuestions } = this.state;
+    const { showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, validationErrors, questionId, questionIndex, allQuestions } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
 
     return (
@@ -957,16 +949,13 @@ class EditQuestion extends Component {
         <button 
           className="btn btn-primary" 
           id={`btEdit-${questionIndex}`}
-          //data-bs-toggle="modal" 
-          //data-bs-target={`#editQuestion`}
-          //data-bs-target={`#editQuestionModal-${questionIndex}`}
           onClick={() => this.onEditClickHandler(questionId)}>
             Edit
         </button>
 
         <Modal
-          show={this.state.isLoading === false}
-          onHide={() => this.setState({ isLoading: true })}
+          show={this.state.showModal === true}
+          onHide={() => this.setState({ showModal: false })}
           backdrop="static"
           className="modal-lg"
           ref={this.editQuestionModalRef}
@@ -1029,24 +1018,13 @@ class EditQuestion extends Component {
                   Question:
                 </label>
                 <div>
-                  {this.isLoading ? (
-                    // isLoading is true
-                    <input 
+                  <input 
                     type="text" 
                     className="form-control" 
                     id="formQuestion" 
-                    value="Loading..."
+                    value={this.state.questionList.question}
+                    onChange={this.handleQuestionText}
                   />
-                  ): (
-                    // isLoading is false
-                    <input 
-                      type="text" 
-                      className="form-control" 
-                      id="formQuestion" 
-                      value={this.state.questionList.question}
-                      onChange={this.handleQuestionText}
-                    />
-                  )}
                 </div>
                 {validationErrors.question && (
                   <div style={{ color: 'red', fontSize: 12 }}>
@@ -1174,10 +1152,7 @@ class EditQuestion extends Component {
                     </div>
                   )}
             </form>
-            
-
         </Modal.Body>
-        
         <Modal.Footer>
           <div className="d-flex justify-content-between w-100">
             <div>
