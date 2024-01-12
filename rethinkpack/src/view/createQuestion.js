@@ -467,9 +467,9 @@ class CreateQuestion extends Component {
               <table className="table">
                 <thead>
                   <tr>
-                    <th>Row/Column</th>
+                    <th className="fixed-width-column">Row/Column</th>
                     {gridOptions.column.map((col, colIndex) => (
-                      <th key={colIndex} className="text-center">
+                      <th key={colIndex} className="fixed-width-column text-center">
                         <input
                           type="text"
                           className="form-control"
@@ -493,7 +493,7 @@ class CreateQuestion extends Component {
                 <tbody>
                   {gridOptions.row.map((row, rowIndex) => (
                     <tr key={rowIndex}>
-                      <td>
+                      <td className="fixed-width-column">
                         <input
                           type="text"
                           className="form-control"
@@ -502,7 +502,7 @@ class CreateQuestion extends Component {
                         />
                       </td>
                       {gridOptions.column.map((_, colIndex) => (
-                        <td key={colIndex} className="text-center">
+                        <td key={colIndex} className="fixed-width-column text-center">
                           <input
                             type={selectedOption === 'multipleChoiceGrid' ? 'radio' : 'checkbox'}
                             name={`row-${rowIndex}`}
@@ -545,7 +545,7 @@ class CreateQuestion extends Component {
               </div>
               </div>
           </>
-        );
+        );    
   
       default:
         return null;
