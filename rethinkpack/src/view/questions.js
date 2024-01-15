@@ -13,7 +13,7 @@ const Questions = ({ triggerRefresh }) => {
     const [error, setError] = useState(null);
     const [questionsUpdated, setQuestionsUpdated] = useState(false);
 
-    // for editQuestion
+    // for editQuestion refresh functionality
     const refreshQuestions = () => {
         setQuestionsUpdated(false); // Reset the flag to re-fetch next questions
         this.fetchQuestions();

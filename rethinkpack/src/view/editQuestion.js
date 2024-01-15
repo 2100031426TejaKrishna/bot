@@ -161,7 +161,11 @@ class EditQuestion extends Component {
         });
         setTimeout(() => this.setState({ showToast: false }), 10000);
        
+        const responseData = await response.json();
+
         // Trigger re-fetch in parent component
+        console.log('Server response:', response);
+        console.log('Parsed response data:', responseData);
         this.props.refreshQuestions();
  
       } else {
@@ -174,10 +178,6 @@ class EditQuestion extends Component {
     }
     console.log(`questionList: ${JSON.stringify(this.state.questionList)}`)
   };
-
-  
-
-  
 
 /*-------------MODAL-----------------*/
 
