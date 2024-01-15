@@ -2,6 +2,10 @@ import React, { useEffect, useState } from 'react';
 import './questions.css';
 import EditQuestion from './editQuestion';
 
+// Switch URLs between Server and Local hosting here
+// const destination = "localhost:5000";
+const destination = "rtp.dusky.bond:5000";
+
 const Questions = ({ triggerRefresh }) => {
     const [questions, setQuestions] = useState([]);
     const [questionToDelete, setQuestionToDelete] = useState([]);
@@ -9,10 +13,16 @@ const Questions = ({ triggerRefresh }) => {
     const [error, setError] = useState(null);
     const [questionsUpdated, setQuestionsUpdated] = useState(false);
 
+    // for editQuestion
+    const refreshQuestions = () => {
+        setQuestionsUpdated(false); // Reset the flag to re-fetch next questions
+        this.fetchQuestions();
+    };
+
     const handleDelete = async () => {
         if (questionToDelete) {
             try {
-                const response = await fetch(`http://rtp.dusky.bond:5000/api/deleteQuestion/${questionToDelete}`, { method: 'DELETE' });
+                const response = await fetch(`http://${destination}/api/deleteQuestion/${questionToDelete}`, { method: 'DELETE' });
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
@@ -33,7 +43,7 @@ const Questions = ({ triggerRefresh }) => {
 
     const fetchQuestionById = async (id) => {
         try {
-            const response = await fetch(`http://rtp.dusky.bond:5000/api/question/${id}`);
+            const response = await fetch(`http://${destination}/api/question/${id}`);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -49,7 +59,7 @@ const Questions = ({ triggerRefresh }) => {
     useEffect(() => {
         const fetchQuestions = async () => {
             try {
-                const response = await fetch('http://rtp.dusky.bond:5000/api/displayQuestions');
+                const response = await fetch(`http://${destination}/api/displayQuestions`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
@@ -61,7 +71,8 @@ const Questions = ({ triggerRefresh }) => {
         };
 
         fetchQuestions();
-    }, [triggerRefresh]);
+
+    }, [triggerRefresh, questionsUpdated]);
 
     useEffect(() => {
         if (questions.length === 0 || questionsUpdated) return;
@@ -269,6 +280,7 @@ const Questions = ({ triggerRefresh }) => {
                             index = {index}
                             questionId = {question._id} 
                             allQuestions = {questions}
+                            refreshQuestions={refreshQuestions}
                         />
                         <button 
                             className="btn btn-danger" 

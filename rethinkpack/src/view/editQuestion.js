@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
 import Modal from 'react-bootstrap/Modal';
-// import { triggerRefresh } from '../App';
 
 // const destination = "localhost:5000";
 const destination = "rtp.dusky.bond:5000";
@@ -101,6 +100,7 @@ class EditQuestion extends Component {
     // bind API?
     this.fetchQuestion = this.fetchQuestion.bind(this);
     this.onEditClickHandler = this.onEditClickHandler.bind(this);
+    this.updateQuestion = this.updateQuestion.bind(this);
   }
 
   resetState() {
@@ -128,7 +128,6 @@ class EditQuestion extends Component {
 
 /*--------------API-----------------*/
   
-
   fetchQuestion = async (questionId) => {
     try {
       const response = await fetch(`http://${destination}/api/editReadUpdate/${questionId}`);
@@ -161,8 +160,10 @@ class EditQuestion extends Component {
           showToast: true 
         });
         setTimeout(() => this.setState({ showToast: false }), 10000);
-        //
-        // triggerRefresh()
+       
+        // Trigger re-fetch in parent component
+        this.props.refreshQuestions();
+ 
       } else {
         console.error('Server responded with an error:', response.status, response.statusText);
         const responseData = await response.json();
@@ -173,6 +174,10 @@ class EditQuestion extends Component {
     }
     console.log(`questionList: ${JSON.stringify(this.state.questionList)}`)
   };
+
+  
+
+  
 
 /*-------------MODAL-----------------*/
 
