@@ -1,4 +1,4 @@
-.questions-tree-map-container {
+/* .questions-tree-map-container {
     width: 100%;
     height: 800px; 
     display: flex;
@@ -15,4 +15,56 @@
     text-align: center;
     padding: 10px;
     overflow: auto;
-}
+} */
+
+.questions-tree-map-container {
+    width: 100%;
+    height: 800px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: auto;
+  }
+  
+  .node-container {
+    width: 200px;
+    height: 150px;
+    border: 1px solid #ccc;
+    background-color: white;
+    text-align: center;
+    padding: 10px;
+    overflow: auto;
+    margin: 10px; /* Added margin to create space between nodes */
+    position: relative;
+    transition: border-color 0.3s ease; /* Added transition for smoother hover effect */
+  }
+  
+  .node-container:hover {
+    border-color: #007bff; /* Change border color on hover */
+  }
+  
+  .node-container::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    border: 2px solid #ccc;
+    box-sizing: border-box;
+  }
+  
+  /* Additional styles to improve layout */
+  .questions-tree-map-container::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    border: 2px solid #ccc;
+    box-sizing: border-box;
+  }
+  

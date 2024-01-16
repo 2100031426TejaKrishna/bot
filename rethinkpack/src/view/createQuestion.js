@@ -470,21 +470,26 @@ class CreateQuestion extends Component {
                     <th>Row/Column</th>
                     {gridOptions.column.map((col, colIndex) => (
                       <th key={colIndex} className="text-center">
-                        <input
-                          type="text"
-                          className="form-control"
-                          value={col.label}
-                          onChange={(e) => this.handleColumnChange(colIndex, e)}
-                        />
-                        {gridOptions.column.length > 1 && (
-                          <button 
-                            className="btn btn-outline-secondary btn-sm"
-                            type="button"
-                            onClick={() => this.deleteGridColumn(colIndex)}
-                          >
-                            &times;
-                          </button>
-                        )}
+                        <div className="d-flex justify-content-between align-items-center"> {}
+                        
+                          <input
+                              type="text"
+                              className="form-control"
+                              value={col.label}
+                              onChange={(e) => this.handleColumnChange(colIndex, e)}
+                          />
+                          {gridOptions.column.length > 1 && (
+                            <div className="delete-column-btn">
+                              <button 
+                                className="btn btn-outline-secondary btn-sm"
+                                type="button"
+                                onClick={() => this.deleteGridColumn(colIndex)}
+                              >
+                                &times;
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </th>
                     ))}
                     <th></th> {/* Empty header for delete row buttons */}
@@ -492,8 +497,8 @@ class CreateQuestion extends Component {
                 </thead>
                 <tbody>
                   {gridOptions.row.map((row, rowIndex) => (
-                    <tr key={rowIndex}>
-                      <td>
+                    <tr key={rowIndex} className="grid-row-spacing">
+                      <td className="grid-column-spacing">
                         <input
                           type="text"
                           className="form-control"
@@ -502,7 +507,7 @@ class CreateQuestion extends Component {
                         />
                       </td>
                       {gridOptions.column.map((_, colIndex) => (
-                        <td key={colIndex} className="text-center">
+                        <td key={colIndex}>
                           <input
                             type={selectedOption === 'multipleChoiceGrid' ? 'radio' : 'checkbox'}
                             name={`row-${rowIndex}`}

@@ -2,3 +2,30 @@
   max-width: 100%;
   overflow-x: auto;
 }
+
+/* Spacing for table cells (td) */
+.grid-row-spacing td {
+  padding-bottom: 20px; /* Space below each cell in a row */
+}
+
+/* General styling for tables */
+table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: separate; /* Needed for border-spacing to work */
+  border-spacing: 0 10px; /* Horizontal and vertical spacing */
+}
+
+th:first-child, td:first-child {
+  width: 250px;
+}
+
+th, td {
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Adjust button spacing
+.add-buttons-container {
+  margin-top: 20px;
+} */
