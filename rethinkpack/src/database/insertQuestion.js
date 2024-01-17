@@ -20,7 +20,12 @@ const questionSchema = new mongoose.Schema({
             text: String,
         }],
         columns: [{
-        text: String
+            text: String
+        }],
+        answers: [{
+            rowIndex: Number,
+            columnIndex: Number,
+            isCorrect: Boolean
         }]
     },
     requireResponse: Boolean,  

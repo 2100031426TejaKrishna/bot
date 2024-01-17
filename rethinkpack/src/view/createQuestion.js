@@ -15,7 +15,7 @@ class CreateQuestion extends Component {
       questionType: '',
       selectedOption: 'multipleChoice',
       options: [{ label: 'Option 1', value: 'Option 1', isCorrect: false }],
-      gridOptions: { row: [{ label: 'Row 1', value: 'Row 1' }], column: [{ label: 'Column 1', value: 'Column 1' }] },
+      gridOptions: { row: [{ label: 'Row 1', value: 'Row 1' }], column: [{ label: 'Column 1', value: 'Column 1' }], answers: [] },
       showCountry: false,
       countries: [
         "Afghanistan", "Albania", "Algeria", "Andorra", "Angola",
@@ -461,6 +461,7 @@ class CreateQuestion extends Component {
   
       case 'multipleChoiceGrid':
       case 'checkboxGrid':
+        const isSingleRow = gridOptions.row.length === 1;
         return (
           <>
             <div className="scrollable-table-container">
@@ -471,7 +472,6 @@ class CreateQuestion extends Component {
                     {gridOptions.column.map((col, colIndex) => (
                       <th key={colIndex} className="text-center">
                         <div className="d-flex justify-content-between align-items-center"> {}
-                        
                           <input
                               type="text"
                               className="form-control"
@@ -492,13 +492,13 @@ class CreateQuestion extends Component {
                         </div>
                       </th>
                     ))}
-                    <th></th> {/* Empty header for delete row buttons */}
+                    <th className={isSingleRow ? "last-column-no-space" : "last-column-space"}></th>
                   </tr>
                 </thead>
                 <tbody>
                   {gridOptions.row.map((row, rowIndex) => (
                     <tr key={rowIndex} className="grid-row-spacing">
-                      <td className="grid-column-spacing">
+                      <td>
                         <input
                           type="text"
                           className="form-control"
@@ -512,11 +512,13 @@ class CreateQuestion extends Component {
                             type={selectedOption === 'multipleChoiceGrid' ? 'radio' : 'checkbox'}
                             name={`row-${rowIndex}`}
                             className="form-check-input"
+                            // checked={isAnswerSelected}
+                            // onChange={() => this.toggleGridAnswer(rowIndex, colIndex)}
                           />
                         </td>
                       ))}
-                      <td>
-                        {gridOptions.row.length > 1 && (
+                      <td className={isSingleRow ? "last-column-no-space" : "last-column-space"}>
+                        {!isSingleRow && (
                           <button 
                             className="btn btn-outline-secondary btn-sm"
                             type="button"
@@ -601,6 +603,26 @@ class CreateQuestion extends Component {
       }));
     }
   };
+
+  // toggleGridAnswer = (rowIndex, colIndex) => {
+  //   this.setState(prevState => {
+  //     let answers = [...prevState.gridOptions.answers];
+  //     const existingIndex = answers.findIndex(ans => ans.rowIndex === rowIndex && ans.columnIndex === colIndex);
+  
+  //     if (existingIndex >= 0) {
+  //       answers.splice(existingIndex, 1); // Remove if already exists
+  //     } else {
+  //       answers.push({ rowIndex, columnIndex, isCorrect: true });
+  //     }
+  
+  //     return {
+  //       gridOptions: {
+  //         ...prevState.gridOptions,
+  //         answers: answers
+  //       }
+  //     };
+  //   });
+  // };  
 
   handleCountryChange = (event) => {
     const { value } = event.target;
@@ -752,7 +774,8 @@ class CreateQuestion extends Component {
     if (selectedOption === 'multipleChoiceGrid' || selectedOption === 'checkboxGrid') {
       dataToInsert.grid = {
         rows: gridOptions.row.map(row => ({ text: row.label })),
-        columns: gridOptions.column.map(column => ({ text: column.label }))
+        columns: gridOptions.column.map(column => ({ text: column.label })),
+        answers: gridOptions.answers
       };
     }
 
