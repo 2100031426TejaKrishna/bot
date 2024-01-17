@@ -145,39 +145,38 @@ class EditQuestion extends Component {
   };
 
   updateQuestion = async(questionId, dataToUpdate) => {
-    
-    console.log(`updateQuestion executed`)
-    // try {
-    //   const response = await fetch(`http://${destination}/api/updateQuestion${questionId}`, {
-    //     method: 'PUT',
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //     },
-    //     body: JSON.stringify(dataToUpdate),
-    //   })
-    //   if (response.ok) {
-    //     console.log('Data submitted successfully');
-    //     this.setState({ 
-    //       showModal: false,
-    //       showToast: true 
-    //     });
-    //     setTimeout(() => this.setState({ showToast: false }), 10000);
+    console.log(`updateQuestion API executed`);
+    try {
+      const response = await fetch(`http://${destination}/api/update/${questionId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dataToUpdate),
+      })
+      if (response.ok) {
+        console.log('Data submitted successfully');
+        this.setState({ 
+          showModal: false,
+          showToast: true 
+        });
+        setTimeout(() => this.setState({ showToast: false }), 10000);
        
-    //     const responseData = await response.json();
+        const responseData = await response.json();
 
-    //     // Trigger re-fetch in parent component
-    //     console.log('Server response:', response);
-    //     console.log('Parsed response data:', responseData);
-    //     this.props.refreshQuestions();
+        // Trigger re-fetch in parent component
+        console.log('Server response:', response);
+        console.log('Parsed response data:', responseData);
+        this.props.refreshQuestions();
  
-    //   } else {
-    //     console.error('Server responded with an error:', response.status, response.statusText);
-    //     const responseData = await response.json();
-    //     console.error('Server error data:', responseData);
-    //   }
-    // } catch (error) {
-    //   console.error('Network error:', error);
-    // }
+      } else {
+        console.error('Server responded with an error:', response.status, response.statusText);
+        const responseData = await response.json();
+        console.error('Server error data:', responseData);
+      }
+    } catch (error) {
+      console.error('Network error:', error);
+    }
     console.log(`questionList: ${JSON.stringify(this.state.questionList)}`)
   };
 

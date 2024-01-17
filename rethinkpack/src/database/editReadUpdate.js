@@ -34,7 +34,8 @@ router.get('/editReadUpdate/:id', async (req, res) => {
 });
 
 // Update question by ID from database
-router.put('/editReadUpdate/update/:id', async (req, res) => {
+router.patch('/update/:id', async (req, res) => {
+    console.log(`updateQuestion router executed`);
     try {
         const update = await Questions.updateOne(
             { _id: req.params.id },
