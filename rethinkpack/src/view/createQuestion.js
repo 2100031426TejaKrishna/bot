@@ -506,17 +506,20 @@ class CreateQuestion extends Component {
                           onChange={(e) => this.handleRowChange(rowIndex, e)}
                         />
                       </td>
-                      {gridOptions.column.map((_, colIndex) => (
-                        <td key={colIndex}>
-                          <input
-                            type={selectedOption === 'multipleChoiceGrid' ? 'radio' : 'checkbox'}
-                            name={`row-${rowIndex}`}
-                            className="form-check-input"
-                            // checked={isAnswerSelected}
-                            // onChange={() => this.toggleGridAnswer(rowIndex, colIndex)}
-                          />
-                        </td>
-                      ))}
+                      {gridOptions.column.map((_, colIndex) => {
+                        const isSelected = gridOptions.answers.some(answer => answer.rowIndex === rowIndex && answer.columnIndex === colIndex);
+                        return (
+                          <td key={colIndex}>
+                            <input
+                              type={selectedOption === 'multipleChoiceGrid' ? 'radio' : 'checkbox'}
+                              name={`row-${rowIndex}`}
+                              className="form-check-input"
+                              checked={isSelected}
+                              onChange={(e) => this.handleGridOptionChange(rowIndex, colIndex, e.target.checked)}
+                            />
+                          </td>
+                        );
+                      })}
                       <td className={isSingleRow ? "last-column-no-space" : "last-column-space"}>
                         {!isSingleRow && (
                           <button 
@@ -604,25 +607,30 @@ class CreateQuestion extends Component {
     }
   };
 
-  // toggleGridAnswer = (rowIndex, colIndex) => {
-  //   this.setState(prevState => {
-  //     let answers = [...prevState.gridOptions.answers];
-  //     const existingIndex = answers.findIndex(ans => ans.rowIndex === rowIndex && ans.columnIndex === colIndex);
-  
-  //     if (existingIndex >= 0) {
-  //       answers.splice(existingIndex, 1); // Remove if already exists
-  //     } else {
-  //       answers.push({ rowIndex, columnIndex, isCorrect: true });
-  //     }
-  
-  //     return {
-  //       gridOptions: {
-  //         ...prevState.gridOptions,
-  //         answers: answers
-  //       }
-  //     };
-  //   });
-  // };  
+  handleGridOptionChange = (rowIndex, colIndex, isSelected) => {
+    this.setState(prevState => {
+      const { gridOptions } = prevState;
+      let updatedAnswers = [...gridOptions.answers];
+
+      const answerIndex = updatedAnswers.findIndex(answer => answer.rowIndex === rowIndex && answer.colIndex === colIndex);
+      if (isSelected) {
+        if (answerIndex === -1) {
+          updatedAnswers.push({ rowIndex, colIndex: colIndex, isCorrect: true });
+        }
+      } else {
+        if (answerIndex !== -1) {
+          updatedAnswers.splice(answerIndex, 1);
+        }
+      }
+
+      return {
+        gridOptions: {
+          ...gridOptions,
+          answers: updatedAnswers
+        }
+      };
+    });
+  };
 
   handleCountryChange = (event) => {
     const { value } = event.target;

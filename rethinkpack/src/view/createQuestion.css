@@ -28,7 +28,7 @@ th, td {
 
 /* Adjusted CSS classes for different scenarios */
 .last-column-space {
-  width: 50px; /* Adjust as needed for delete button */
+  width: 30px; /* Adjust as needed for delete button */
 }
 
 .last-column-no-space {
