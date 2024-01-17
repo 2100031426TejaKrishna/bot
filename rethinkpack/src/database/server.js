@@ -5,7 +5,6 @@ const connectToDatabase = require('./database');
 const insertQuestionRoute = require('./insertQuestion');
 const { router: displayQuestionRoute, fetchQuestions } = require('./displayQuestion');
 const { router: editReadUpdateRoute, fetchQuestionsToEdit } = require('./editReadUpdate');
-const updateRoute = require('./updateQuestion');
 const deleteQuestionRouter = require('./deleteQuestion'); 
 
 const corsOptions = {
@@ -22,7 +21,6 @@ app.use(bodyParser.json());
 
 connectToDatabase().then(async () => {
   console.log("Database connected!");
-  app.use('/api', updateRoute);
   app.use('/api', insertQuestionRoute);
   app.use('/api', displayQuestionRoute);
   app.use('/api', editReadUpdateRoute);
