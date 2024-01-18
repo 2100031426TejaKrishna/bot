@@ -130,7 +130,7 @@ class EditQuestion extends Component {
   
   fetchQuestion = async (questionId) => {
     try {
-      const response = await fetch(`http://${destination}/api/editReadUpdate/${questionId}`);
+      const response = await fetch(`http://${destination}/api/read/${questionId}`);
       const data = await response.json();
       if (data) {
         this.setState({
