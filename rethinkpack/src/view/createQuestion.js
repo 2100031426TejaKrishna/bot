@@ -255,6 +255,17 @@ class CreateQuestion extends Component {
     }));
   };
 
+  clearGridSelections = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    this.setState(prevState => ({
+      gridOptions: {
+        ...prevState.gridOptions,
+        answers: []
+      }
+    }));
+  };
+
   renderOptionsArea = () => {
     const { selectedOption, options, gridOptions, requireResponse, isLeadingQuestion, allQuestions } = this.state;
     const clearSelections = (e) => {
@@ -266,19 +277,6 @@ class CreateQuestion extends Component {
       }));
       this.setState({ options: clearedOptions });
     };
-
-    const clearGridSelections = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const clearedGridOptions = {
-        ...gridOptions,
-        column: gridOptions.column.map((col) => ({
-          ...col,
-          isCorrect: false,
-        })),
-      };
-      this.setState({ gridOptions: clearedGridOptions });
-    };  
   
     switch (selectedOption) {
       case 'multipleChoice':
@@ -507,15 +505,16 @@ class CreateQuestion extends Component {
                         />
                       </td>
                       {gridOptions.column.map((_, colIndex) => {
-                        const isSelected = gridOptions.answers.some(answer => answer.rowIndex === rowIndex && answer.columnIndex === colIndex);
+                        const isCorrect = gridOptions.answers.some(answer => answer.rowIndex === rowIndex && answer.columnIndex === colIndex && answer.isCorrect);
                         return (
                           <td key={colIndex}>
                             <input
                               type={selectedOption === 'multipleChoiceGrid' ? 'radio' : 'checkbox'}
-                              name={`row-${rowIndex}`}
                               className="form-check-input"
-                              checked={isSelected}
-                              onChange={(e) => this.handleGridOptionChange(rowIndex, colIndex, e.target.checked)}
+                              name={`row-${rowIndex}`}
+                              checked={isCorrect}
+                              onChange={() => this.toggleGridAnswer(rowIndex, colIndex)}
+                              disabled={isLeadingQuestion}
                             />
                           </td>
                         );
@@ -540,6 +539,9 @@ class CreateQuestion extends Component {
               </button>
               <button className="btn btn-outline-dark mx-2" onClick={this.addGridColumn}>
                 Add Column
+              </button>
+              <button className="btn btn-outline-danger ms-2" onClick={this.clearGridSelections}>
+                Clear
               </button>
               <div className="form-check form-switch mt-3">
                 <input
@@ -607,31 +609,25 @@ class CreateQuestion extends Component {
     }
   };
 
-  handleGridOptionChange = (rowIndex, colIndex, isSelected) => {
-    this.setState(prevState => {
-      const { gridOptions } = prevState;
-      let updatedAnswers = [...gridOptions.answers];
-
-      const answerIndex = updatedAnswers.findIndex(answer => answer.rowIndex === rowIndex && answer.colIndex === colIndex);
-      if (isSelected) {
-        if (answerIndex === -1) {
-          updatedAnswers.push({ rowIndex, colIndex: colIndex, isCorrect: true });
-        }
+  toggleGridAnswer = (rowIndex, colIndex) => {
+    const { selectedOption, gridOptions } = this.state;
+    let newAnswers = [...gridOptions.answers];
+  
+    if (selectedOption === 'multipleChoiceGrid') {
+      const rowAnswers = newAnswers.filter(answer => answer.rowIndex !== rowIndex);
+      newAnswers = [...rowAnswers, { rowIndex, columnIndex: colIndex, isCorrect: true }];
+    } else if (selectedOption === 'checkboxGrid') {
+      const answerIndex = newAnswers.findIndex(answer => answer.rowIndex === rowIndex && answer.columnIndex === colIndex);
+      if (answerIndex > -1) {
+        newAnswers[answerIndex].isCorrect = !newAnswers[answerIndex].isCorrect;
       } else {
-        if (answerIndex !== -1) {
-          updatedAnswers.splice(answerIndex, 1);
-        }
+        newAnswers.push({ rowIndex, columnIndex: colIndex, isCorrect: true });
       }
-
-      return {
-        gridOptions: {
-          ...gridOptions,
-          answers: updatedAnswers
-        }
-      };
-    });
+    }
+  
+    this.setState({ gridOptions: { ...gridOptions, answers: newAnswers } });
   };
-
+  
   handleCountryChange = (event) => {
     const { value } = event.target;
     this.setState((prevState) => {
@@ -783,7 +779,7 @@ class CreateQuestion extends Component {
       dataToInsert.grid = {
         rows: gridOptions.row.map(row => ({ text: row.label })),
         columns: gridOptions.column.map(column => ({ text: column.label })),
-        answers: gridOptions.answers
+        answers: gridOptions.answers.filter(answer => answer.isCorrect)
       };
     }
 
@@ -798,6 +794,7 @@ class CreateQuestion extends Component {
 
       if (response.ok) {
         console.log('Data submitted successfully');
+        console.log(dataToInsert);
         const modalInstance = Modal.getInstance(this.createQuestionModalRef.current);
         modalInstance.hide();
         this.createQuestionModalRef.current.addEventListener('hidden.bs.modal', () => {
@@ -822,6 +819,8 @@ class CreateQuestion extends Component {
   render() {
     const { questionType, selectedOption, showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, validationErrors, allQuestions, nextQuestion } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
+    const showNextQuestion = isLeadingQuestion && 
+    (selectedOption === 'linear' || selectedOption === 'multipleChoiceGrid' || selectedOption === 'checkboxGrid');
 
     return (
       <div>
@@ -985,7 +984,7 @@ class CreateQuestion extends Component {
                       )} 
                     </div>
                   )}
-                  {!isLeadingQuestion && (
+                  {showNextQuestion && (
                     <div className="mb-3">
                       <label htmlFor="nextQuestion" className="col-form-label">Next Question:</label>
                       <select

@@ -224,16 +224,22 @@ const Questions = ({ triggerRefresh }) => {
                                 {question.grid.rows.map((row, rowIndex) => (
                                     <tr key={rowIndex}>
                                         <td>{row.text}</td>
-                                        {question.grid.columns.map((column, columnIndex) => (
-                                            <td key={columnIndex}>
-                                                <input 
-                                                    type="radio" 
-                                                    name={`${row.text}-${column.text}`} 
-                                                    value={`${row.text}-${column.text}`}
-                                                    disabled={true}  
-                                                />
-                                            </td>
-                                        ))}
+                                        {question.grid.columns.map((column, columnIndex) => {
+                                            const isCorrect = question.grid.answers.some(answer => 
+                                                answer.rowIndex === rowIndex && answer.columnIndex === columnIndex && answer.isCorrect
+                                            );
+                                            return (
+                                                <td key={columnIndex}>
+                                                    <input 
+                                                        type="radio" 
+                                                        name={`${row.text}-${column.text}`} 
+                                                        value={`${row.text}-${column.text}`}
+                                                        checked={isCorrect}
+                                                        disabled={true}  
+                                                    />
+                                                </td>
+                                            );
+                                        })}
                                     </tr>
                                 ))}
                             </tbody>
@@ -253,16 +259,20 @@ const Questions = ({ triggerRefresh }) => {
                                 {question.grid.rows.map((row, rowIndex) => (
                                     <tr key={rowIndex}>
                                         <td>{row.text}</td>
-                                        {question.grid.columns.map((column, columnIndex) => (
+                                        {question.grid.columns.map((column, columnIndex) => {
+                                            const isCorrect = question.grid.answers.some(answer => 
+                                                answer.rowIndex === rowIndex && answer.columnIndex === columnIndex && answer.isCorrect
+                                            );
                                             <td key={columnIndex}>
                                                 <input 
                                                     type="checkbox" 
                                                     name={`${row.text}-${column.text}`} 
                                                     value={`${row.text}-${column.text}`}
+                                                    checked={isCorrect}
                                                     disabled={true}  
                                                 />
                                             </td>
-                                        ))}
+                                        })}
                                     </tr>
                                 ))}
                             </tbody>
