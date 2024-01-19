@@ -4,7 +4,7 @@ const cors = require('cors');
 const connectToDatabase = require('./database');
 const insertQuestionRoute = require('./insertQuestion');
 const { router: displayQuestionRoute, fetchQuestions } = require('./displayQuestion');
-const { router: editReadUpdateRoute, fetchQuestionsToEdit } = require('./editReadUpdate');
+const editReadUpdateRoute = require('./editReadUpdate');
 const deleteQuestionRouter = require('./deleteQuestion'); 
 
 const corsOptions = {
@@ -26,7 +26,6 @@ connectToDatabase().then(async () => {
   app.use('/api', editReadUpdateRoute);
   app.use('/api', deleteQuestionRouter);
   await fetchQuestions();
-  await fetchQuestionsToEdit();
 
   const PORT = 5000;
 

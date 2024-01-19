@@ -12,12 +12,16 @@ const Questions = ({ triggerRefresh }) => {
     const [showToast, setShowToast] = useState(false);
     const [error, setError] = useState(null);
     const [questionsUpdated, setQuestionsUpdated] = useState(false);
-    const [editUpdate, setEditUpdate] = useState(false);
+    const [editUpdateToggle, setEditUpdateToggle] = useState(false);
 
-    // for editQuestion refresh functionality
+    // editQuestion.js refresh functionality
     const refreshQuestions = () => {
-        // changing state of editUpdate will trigger fetchQuestions
-        setEditUpdate(true);
+        // changing state of editUpdateToggle will trigger fetchQuestions
+        if (editUpdateToggle) {
+            setEditUpdateToggle(false);
+        } else {
+            setEditUpdateToggle(true);
+        }
     };
 
     const handleDelete = async () => {
@@ -66,7 +70,6 @@ const Questions = ({ triggerRefresh }) => {
                 }
                 const data = await response.json();
                 setQuestions(data);
-                setEditUpdate(false);
             } catch (error) {
                 console.error("Error fetching questions:", error);
             }
@@ -74,7 +77,7 @@ const Questions = ({ triggerRefresh }) => {
 
         fetchQuestions();
 
-    }, [triggerRefresh, editUpdate]);
+    }, [triggerRefresh, editUpdateToggle]);
 
     useEffect(() => {
         if (questions.length === 0 || questionsUpdated) return;
