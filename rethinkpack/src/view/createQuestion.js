@@ -62,6 +62,7 @@ class CreateQuestion extends Component {
       selectedCountries: [],
       isLeadingQuestion: false,
       showExplanation: false,
+      firstQuestion: false,
       showToast: false,
       minScale: 1,
       maxScale: 5,
@@ -582,6 +583,12 @@ class CreateQuestion extends Component {
     }));
   };
 
+  toggleFirstQuestion = () => {
+    this.setState(prevState => ({
+      firstQuestion: !prevState.firstQuestion,
+    }));
+  };
+
   toggleRequireResponse = () => {
     this.setState(prevState => ({
       requireResponse: !prevState.requireResponse,
@@ -738,6 +745,7 @@ class CreateQuestion extends Component {
       minScale,
       maxScale,
       isLeadingQuestion,
+      firstQuestion,
       marks,
       showCountry,
       selectedCountries,
@@ -756,6 +764,7 @@ class CreateQuestion extends Component {
       explanation: showExplanation ? explanation : undefined,
       isLeadingQuestion,
       showCountry,
+      firstQuestion,
       requireResponse,
       nextQuestion: isLeadingQuestion ? undefined : nextQuestion
     };
@@ -817,10 +826,9 @@ class CreateQuestion extends Component {
   };
 
   render() {
-    const { questionType, selectedOption, showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, validationErrors, allQuestions, nextQuestion } = this.state;
+    const { questionType, selectedOption, showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, firstQuestion, validationErrors, allQuestions, nextQuestion } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
-    const showNextQuestion = isLeadingQuestion && 
-    (selectedOption === 'linear' || selectedOption === 'multipleChoiceGrid' || selectedOption === 'checkboxGrid');
+    const showNextQuestion = (isLeadingQuestion && (selectedOption === 'linear' || selectedOption === 'multipleChoiceGrid' || selectedOption === 'checkboxGrid')) || !isLeadingQuestion;
 
     return (
       <div>
@@ -1046,6 +1054,19 @@ class CreateQuestion extends Component {
                         {explanationLabel}
                       </label>
                     </div>
+                  </div>
+                  <div className="form-check form-switch form-check-inline">
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      role="switch"
+                      id="firstQuestionCheck"
+                      checked={firstQuestion}
+                      onChange={this.toggleFirstQuestion}
+                    />
+                    <label className="form-check-label" htmlFor="firstQuestionCheck">
+                      First Question
+                    </label>
                   </div>
                   <button type="button" className="btn btn-dark" onClick={this.handleSubmit}>
                     Submit

@@ -32,6 +32,7 @@ const questionSchema = new mongoose.Schema({
     marks: Number,
     countries: [String],
     explanation: String,
+    firstQuestion: Boolean,
     recommendation: String,
     nextQuestion: String,
     date: {
