@@ -12,11 +12,12 @@ const Questions = ({ triggerRefresh }) => {
     const [showToast, setShowToast] = useState(false);
     const [error, setError] = useState(null);
     const [questionsUpdated, setQuestionsUpdated] = useState(false);
+    const [editUpdate, setEditUpdate] = useState(false);
 
     // for editQuestion refresh functionality
     const refreshQuestions = () => {
-        setQuestionsUpdated(false); // Reset the flag to re-fetch next questions
-        this.fetchQuestions();
+        // changing state of editUpdate will trigger fetchQuestions
+        setEditUpdate(true);
     };
 
     const handleDelete = async () => {
@@ -65,6 +66,7 @@ const Questions = ({ triggerRefresh }) => {
                 }
                 const data = await response.json();
                 setQuestions(data);
+                setEditUpdate(false);
             } catch (error) {
                 console.error("Error fetching questions:", error);
             }
@@ -72,7 +74,7 @@ const Questions = ({ triggerRefresh }) => {
 
         fetchQuestions();
 
-    }, [triggerRefresh, questionsUpdated]);
+    }, [triggerRefresh, editUpdate]);
 
     useEffect(() => {
         if (questions.length === 0 || questionsUpdated) return;
@@ -277,6 +279,20 @@ const Questions = ({ triggerRefresh }) => {
                                 ))}
                             </tbody>
                         </table>
+                    )}
+                    {(question.optionType === 'multipleChoiceGrid' || question.optionType === 'checkboxGrid') && (
+                        <div className="form-check form-switch mt-3">
+                            <input
+                                className="form-check-input"
+                                type="checkbox"
+                                id={`requireResponseSwitch-${question._id}`}
+                                checked={question.requireResponse}
+                                disabled={true}  
+                            />
+                            <label className="form-check-label" htmlFor={`requireResponseSwitch-${question._id}`}>
+                                Require a response in each row
+                            </label>
+                        </div>
                     )}
                     {question.marks && <p className="question-marks">Marks: {question.marks}</p>}
                     {question.countries && question.countries.length > 0 && (
