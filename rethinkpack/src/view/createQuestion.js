@@ -88,15 +88,32 @@ class CreateQuestion extends Component {
     this.setState({
       ...this.initialState,
       showToast: this.state.showToast,
-      options: [{ label: 'Option 1', value: 'Option 1', isCorrect: false }]
+      options: this.state.options.map((_, index) => ({
+        label: `Option ${index + 1}`,
+        value: `Option ${index + 1}`,
+        isCorrect: false,
+        nextQuestion: ''
+      }))
     });
   }
 
   componentDidMount() {
     const createQuestionModal = document.getElementById('createQuestion');
-    createQuestionModal.addEventListener('hidden.bs.modal', this.resetState);
+    createQuestionModal.addEventListener('shown.bs.modal', () => {
+        this.resetState(); 
+        this.fetchQuestions();
+    });
+    createQuestionModal.addEventListener('hidden.bs.modal', () => {
+        this.resetState();
+    });
     this.fetchQuestions();
   }
+
+  componentDidUpdate(prevProps) {
+    if (this.props.questionsChanged !== prevProps.questionsChanged) {
+      this.fetchQuestions();
+    }
+  };
 
   fetchQuestions = async () => {
     try {
@@ -111,7 +128,7 @@ class CreateQuestion extends Component {
   componentWillUnmount() {
     const createQuestionModal = document.getElementById('createQuestion');
     createQuestionModal.removeEventListener('hidden.bs.modal', this.resetState);
-  }
+  };
 
   addOption = (e) => {
     e.preventDefault();
@@ -474,7 +491,7 @@ class CreateQuestion extends Component {
                           <input
                               type="text"
                               className="form-control"
-                              value={col.label}
+                              placeholder={`Column ${colIndex + 1}`}
                               onChange={(e) => this.handleColumnChange(colIndex, e)}
                           />
                           {gridOptions.column.length > 1 && (
@@ -501,7 +518,7 @@ class CreateQuestion extends Component {
                         <input
                           type="text"
                           className="form-control"
-                          value={row.label}
+                          placeholder={`Row ${rowIndex + 1}`}
                           onChange={(e) => this.handleRowChange(rowIndex, e)}
                         />
                       </td>

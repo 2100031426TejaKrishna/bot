@@ -13,7 +13,7 @@ function App() {
 
   return (
     <div className="App">
-      <CreateQuestion onQuestionCreated={refreshQuestions} />
+      <CreateQuestion onQuestionCreated={refreshQuestions} onQuestionDeleted={refreshQuestions} triggerRefresh={triggerRefresh} />
       <ul className="nav nav-tabs" style={{ paddingLeft: '80px' }}>
         <li className="nav-item">
           <a 
