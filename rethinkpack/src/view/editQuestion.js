@@ -3,6 +3,9 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
 import Modal from 'react-bootstrap/Modal';
 
+// debug
+console.log (`22/01/24 17:40`);
+
 // const destination = "localhost:5000";
 const destination = "rtp.dusky.bond:5000";
 
@@ -62,6 +65,7 @@ class EditQuestion extends Component {
         "Zambia", "Zimbabwe"
       ],
       selectedCountries: [],
+      isFirstQuestion: false,
       isLeadingQuestion: false,
       showExplanation: false,
       showToast: false,
@@ -85,8 +89,9 @@ class EditQuestion extends Component {
         question: null, 
         questionType: '',
         optionType: 'multipleChoice',
-        options: [{ label: 'Option 1', value: 'Option 1', isCorrect: false }],
+        options: [{ label: 'Option 1', value: 'Option 1', isCorrect: false, optionsNextQuestion: '' }],
         marks: '',
+        firstQuestion: false,
         nextQuestion: null
       },
       stateQuestionId: '',
@@ -161,12 +166,8 @@ class EditQuestion extends Component {
           showToast: true 
         });
         setTimeout(() => this.setState({ showToast: false }), 10000);
-       
-        const responseData = await response.json();
 
         // Trigger re-fetch in parent component
-        console.log('Server response:', response);
-        console.log('Parsed response data:', responseData);
         this.props.refreshQuestions();
  
       } else {
@@ -186,8 +187,6 @@ class EditQuestion extends Component {
     // reset
     const editQuestionModal = document.getElementById("editQuestion");
     editQuestionModal.addEventListener('hidden.bs.modal', this.resetState);
-
-    console.log(`componentDidMount executed`)
   }
 
   componentWillUnmount() {
@@ -260,6 +259,7 @@ class EditQuestion extends Component {
         for (let i = 0; i<this.state.questionList.options.length; i++) {
           console.log(`options text: ${this.state.questionList.options[i].text}`)
           console.log(`options isCorrect: ${this.state.questionList.options[i].isCorrect}`)
+          console.log(`options nextQuestion: ${this.state.questionList.options[i].nextQuestion}`)
         }
       }
     );
@@ -382,9 +382,33 @@ class EditQuestion extends Component {
     });
   };
 
+  handleOptionsNextQuestionChange = (index, nextQuestionId) => {
+    const { questionList } = this.state;
+    this.setState({ 
+      questionList: {
+        ...questionList,
+        options: questionList.options.map((option, i) =>
+        i === index ? { ...option, optionsNextQuestion: nextQuestionId } : option
+        )
+    }})
+  };
+
+  clearOptionsNextQuestion = () => {
+    const { questionList } = this.state;
+    const clearedOptions = questionList.options.map((option) => ({
+      ...option,
+      optionsNextQuestion: '',
+    }));
+    this.setState({ 
+      questionList: {
+        ...questionList,
+        options: clearedOptions
+    }})
+  };
+
 //------------------ OPTIONS ----------------------------------  
   renderOptionsArea = () => {
-    const { selectedOption, options, gridOptions, requireResponse, isLeadingQuestion, questionList } = this.state;
+    const { selectedOption, options, gridOptions, requireResponse, isLeadingQuestion, questionList, allQuestions } = this.state;
     const clearSelections = (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -451,14 +475,32 @@ class EditQuestion extends Component {
                   disabled={isLeadingQuestion}
                   onChange={() => this.selectOptionsRadio(index, !option.isCorrect)}
                 />
-                <input
-                  type="text"
-                  id={`formOptions-${index}`}
-                  className="form-control mx-2"
-                  value={questionList.options[index].text}
-                  onChange={(e) => this.handleOptionChangeText(index, e.target.value)}
-                  placeholder={`Option ${index + 1}`}
-                />
+                <div className="d-flex flex-grow-1 mx-2">
+                  <input
+                    type="text"
+                    id={`formOptions-${index}`}
+                    className="form-control mx-2"
+                    value={questionList.options[index].text}
+                    onChange={(e) => this.handleOptionChangeText(index, e.target.value)}
+                    placeholder={`Option ${index + 1}`}
+                    style={{ flex: '1' }}
+                  />
+                  {isLeadingQuestion && (
+                      <select
+                        className="form-select mx-2"
+                        style={{ flex: '1' }}
+                        value={option.nextQuestion}
+                        onChange={(e) => this.handleOptionsNextQuestionChange(index, e.target.value)}
+                      >
+                        <option value="">Select Next Question</option>
+                        {allQuestions.map((question) => (
+                          <option key={question._id} value={question._id}>
+                            {question.question}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                </div>
                 {questionList.options.length > 1 && (
                   <button
                     className="btn btn-outline-secondary"
@@ -470,14 +512,21 @@ class EditQuestion extends Component {
                 )}
               </div>
             ))}
-            <button className="btn btn-outline-dark" onClick={this.addOption}>
-              Add option
-            </button>
-            {options.length > 0 && (
-              <button className="btn btn-outline-danger ms-2" onClick={clearSelections}>
-                Clear
+            <div className="d-flex align-items-center">
+              <button className="btn btn-outline-dark" onClick={this.addOption}>
+                Add option
               </button>
-            )}
+              {options.length > 0 && (
+                <button className="btn btn-outline-danger ms-2" onClick={clearSelections}>
+                  Clear
+                </button>
+              )}
+              {isLeadingQuestion && (
+                  <button className="btn btn-outline-danger ms-2" onClick={this.clearOptionsNextQuestion}>
+                    Clear Next Question
+                  </button>
+                )}
+            </div>
           </>
         );
 //----------------------------- checkbox ----------------------------      
@@ -494,14 +543,32 @@ class EditQuestion extends Component {
                   disabled={isLeadingQuestion}
                   onChange={() => this.toggleCorrectAnswer(index)}
                 />
-                <input
-                  type="text"
-                  id={`formOptions-${index}`}
-                  className="form-control mx-2"
-                  value={questionList.options[index].text}
-                  onChange={(e) => this.handleOptionChangeText(index, e.target.value)}
-                  placeholder={`Option ${index + 1}`}
-                />
+                <div className="d-flex flex-grow-1 mx-2">
+                  <input
+                    type="text"
+                    id={`formOptions-${index}`}
+                    className="form-control mx-2"
+                    value={questionList.options[index].text}
+                    onChange={(e) => this.handleOptionChangeText(index, e.target.value)}
+                    placeholder={`Option ${index + 1}`}
+                    style={{ flex: '1' }}
+                  />
+                  {isLeadingQuestion && (
+                      <select
+                        className="form-select mx-2"
+                        style={{ flex: '1' }}
+                        value={option.nextQuestion}
+                        onChange={(e) => this.handleOptionsNextQuestionChange(index, e.target.value)}
+                      >
+                        <option value="">Select Next Question</option>
+                        {allQuestions.map((question) => (
+                          <option key={question._id} value={question._id}>
+                            {question.question}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                </div>
                 {questionList.options.length > 1 && (
                   <button
                     className="btn btn-outline-secondary"
@@ -513,14 +580,21 @@ class EditQuestion extends Component {
                 )}
               </div>
             ))}
-            <button className="btn btn-outline-dark" onClick={this.addOption}>
-              Add option
-            </button>
-            {options.length > 0 && (
-              <button className="btn btn-outline-danger ms-2" onClick={clearSelections}>
-                Clear
+            <div className="d-flex align-items-center">
+              <button className="btn btn-outline-dark" onClick={this.addOption}>
+                Add option
               </button>
-            )}
+              {options.length > 0 && (
+                <button className="btn btn-outline-danger ms-2" onClick={clearSelections}>
+                  Clear
+                </button>
+              )}
+              {isLeadingQuestion && (
+                  <button className="btn btn-outline-danger ms-2" onClick={this.clearOptionsNextQuestion}>
+                    Clear Next Question
+                  </button>
+                )}
+            </div>
           </>
         );
   
@@ -583,13 +657,31 @@ class EditQuestion extends Component {
                   onChange={() => this.selectOptionsRadio(index, !option.isCorrect)}
                 />
                 <span className="mr-2">{index + 1}.</span>
-                <input
-                  type="text"
-                  className="form-control mx-2"
-                  value={option.text}
-                  onChange={(e) => this.handleOptionChangeText(index, e.target.value)}
-                  placeholder={`Option ${index + 1}`}
-                />
+                <div className="d-flex flex-grow-1 mx-2">
+                  <input
+                    type="text"
+                    className="form-control mx-2"
+                    value={option.text}
+                    onChange={(e) => this.handleOptionChangeText(index, e.target.value)}
+                    placeholder={`Option ${index + 1}`}
+                    style={{ flex: '1' }}
+                  />
+                  {isLeadingQuestion && (
+                      <select
+                        className="form-select mx-2"
+                        style={{ flex: '1' }}
+                        value={option.nextQuestion}
+                        onChange={(e) => this.handleOptionsNextQuestionChange(index, e.target.value)}
+                      >
+                        <option value="">Select Next Question</option>
+                        {allQuestions.map((question) => (
+                          <option key={question._id} value={question._id}>
+                            {question.question}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                </div>
                 {questionList.options.length > 1 && (
                   <button
                     className="btn btn-outline-secondary"
@@ -601,116 +693,127 @@ class EditQuestion extends Component {
                 )}
               </div>
             ))}
-            <button className="btn btn-outline-dark" onClick={this.addOption}>
-              Add Option
-            </button>
-            {options.length > 0 && (
-              <button className="btn btn-outline-danger ms-2" onClick={clearSelections}>
-                Clear
+            <div className="d-flex align-items-center">
+              <button className="btn btn-outline-dark" onClick={this.addOption}>
+                Add option
               </button>
-            )}
-          </>
-        );
-  
-      case 'multipleChoiceGrid':
-      case 'checkboxGrid':
-        const numberOfRows = Math.max(gridOptions.row.length, gridOptions.column.length);
-
-        return (
-          <>
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Rows</th>
-                  <th>Columns</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[...Array(numberOfRows)].map((_, index) => (
-                  <tr key={index}>
-                    <td>
-                      {gridOptions.row[index] && (
-                        <div className="d-flex align-items-center">
-                          <span className="row-number">{index + 1}.</span>
-                          <input
-                            type="text"
-                            className="form-control mx-2"
-                            onChange={(e) => this.handleRowChange(index, e)}
-                            placeholder={`Row ${index + 1}`}
-                          />
-                          <button
-                            className="btn btn-outline-secondary"
-                            type="button"
-                            onClick={() => this.deleteGridRow(index)}
-                          >
-                            &times;
-                          </button>
-                        </div>
-                      )}
-                    </td>
-                    <td>
-                      {gridOptions.column[index] && (
-                        <div className="d-flex align-items-center">
-                          <input
-                            type={selectedOption === 'multipleChoiceGrid' ? 'radio' : 'checkbox'}
-                            className="form-check-input"
-                            name={`column-${index}`}
-                            checked={gridOptions.column[index].isCorrect}
-                            onChange={() => this.toggleCorrectAnswer(index)}
-                            disabled={isLeadingQuestion}
-                          />
-                          <input
-                            type="text"
-                            className="form-control mx-2"
-                            onChange={(e) => this.handleColumnChange(index, e)}
-                            placeholder={`Column ${index + 1}`}
-                          />
-                          <button
-                            className="btn btn-outline-secondary"
-                            type="button"
-                            onClick={() => this.deleteGridColumn(index)}
-                          >
-                            &times;
-                          </button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-                <tr>
-                  <td>
-                    <button className="btn btn-outline-dark" onClick={this.addGridRow}>
-                      Add Row
-                    </button>
-                  </td>
-                  <td>
-                    <button className="btn btn-outline-dark" onClick={this.addGridColumn}>
-                      Add Column
-                    </button>
-                    {options.length > 0 && (
-                      <button className="btn btn-outline-danger ms-2" onClick={clearGridSelections}>
-                        Clear
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-            <div className="form-check form-switch">
-              <input
-                className="form-check-input"
-                type="checkbox"
-                id="requireResponseSwitch"
-                checked={requireResponse}
-                onChange={this.toggleRequireResponse}
-              />
-              <label className="form-check-label" htmlFor="requireResponseSwitch">
-                Require a response in each row
-              </label>
+              {options.length > 0 && (
+                <button className="btn btn-outline-danger ms-2" onClick={clearSelections}>
+                  Clear
+                </button>
+              )}
+              {isLeadingQuestion && (
+                  <button className="btn btn-outline-danger ms-2" onClick={this.clearOptionsNextQuestion}>
+                    Clear Next Question
+                  </button>
+                )}
             </div>
           </>
         );
   
+      // paste below here
+      case 'multipleChoiceGrid':
+      case 'checkboxGrid':
+        const isSingleRow = gridOptions.row.length === 1;
+        return (
+          <>
+            <div className="scrollable-table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Row/Column</th>
+                    {gridOptions.column.map((col, colIndex) => (
+                      <th key={colIndex} className="text-center">
+                        <div className="d-flex justify-content-between align-items-center"> {}
+                          <input
+                              type="text"
+                              className="form-control"
+                              value={col.label}
+                              onChange={(e) => this.handleColumnChange(colIndex, e)}
+                          />
+                          {gridOptions.column.length > 1 && (
+                            <div className="delete-column-btn">
+                              <button 
+                                className="btn btn-outline-secondary btn-sm"
+                                type="button"
+                                onClick={() => this.deleteGridColumn(colIndex)}
+                              >
+                                &times;
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </th>
+                    ))}
+                    <th className={isSingleRow ? "last-column-no-space" : "last-column-space"}></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {gridOptions.row.map((row, rowIndex) => (
+                    <tr key={rowIndex} className="grid-row-spacing">
+                      <td>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={row.label}
+                          onChange={(e) => this.handleRowChange(rowIndex, e)}
+                        />
+                      </td>
+                      {gridOptions.column.map((_, colIndex) => {
+                        const isCorrect = gridOptions.answers.some(answer => answer.rowIndex === rowIndex && answer.columnIndex === colIndex && answer.isCorrect);
+                        return (
+                          <td key={colIndex}>
+                            <input
+                              type={selectedOption === 'multipleChoiceGrid' ? 'radio' : 'checkbox'}
+                              className="form-check-input"
+                              name={`row-${rowIndex}`}
+                              checked={isCorrect}
+                              onChange={() => this.toggleGridAnswer(rowIndex, colIndex)}
+                              disabled={isLeadingQuestion}
+                            />
+                          </td>
+                        );
+                      })}
+                      <td className={isSingleRow ? "last-column-no-space" : "last-column-space"}>
+                        {!isSingleRow && (
+                          <button 
+                            className="btn btn-outline-secondary btn-sm"
+                            type="button"
+                            onClick={() => this.deleteGridRow(rowIndex)}
+                          >
+                            &times;
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <button className="btn btn-outline-dark" onClick={this.addGridRow}>
+                Add Row
+              </button>
+              <button className="btn btn-outline-dark mx-2" onClick={this.addGridColumn}>
+                Add Column
+              </button>
+              <button className="btn btn-outline-danger ms-2" onClick={this.clearGridSelections}>
+                Clear
+              </button>
+              <div className="form-check form-switch mt-3">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  id="requireResponseSwitch"
+                  checked={requireResponse}
+                  onChange={this.toggleRequireResponse}
+                />
+                <label className="form-check-label" htmlFor="requireResponseSwitch">
+                  Require a response in each row
+                </label>
+              </div>
+              </div>
+          </>
+        ); 
+      //
       default:
         return null;
     }
@@ -722,9 +825,31 @@ class EditQuestion extends Component {
     }));
   };
 
+
+  // handleQuestionTypeRadio = (e) => {
+  //   this.setState( (prevState) => ({
+  //     questionList: { ...prevState.questionList, questionType: e.target.value }
+  //   }))
+  // }
+
+  toggleFirstQuestion = () => {
+    // const { questionList } = this.state;
+    this.setState(prevState => ({
+      //isFirstQuestion: !prevState.isFirstQuestion,
+      questionList: {... prevState.questionList, firstQuestion: !prevState.questionList.firstQuestion}
+    }));
+  };
+
   toggleLeadingQuestion = () => {
+    const { questionList } = this.state;
+    const clearedOptions = questionList.options.map((option) => ({
+      ...option,
+      nextQuestion: '',
+    }));
     this.setState(prevState => ({
       isLeadingQuestion: !prevState.isLeadingQuestion,
+      // Clear nextQuestion state values when toggle Leading Question
+      questionList: {...this.state.questionList, options: clearedOptions}
     }));
   };
 
@@ -892,6 +1017,7 @@ class EditQuestion extends Component {
       gridOptions,
       minScale,
       maxScale,
+      isFirstQuestion,
       isLeadingQuestion,
       showCountry,
       selectedCountries,
@@ -910,6 +1036,8 @@ class EditQuestion extends Component {
       marks: isLeadingQuestion ? undefined : parseFloat(this.state.questionList.marks),
       countries: showCountry ? selectedCountries : undefined,
       explanation: showExplanation ? explanation : undefined,
+      // isFirstQuestion,
+      firstQuestion: this.state.questionList.firstQuestion,
       isLeadingQuestion,
       showCountry,
       requireResponse,
@@ -1139,7 +1267,7 @@ class EditQuestion extends Component {
               )}
               
               {/* Next Question */}
-              {!isLeadingQuestion && (
+                  {!isLeadingQuestion && (
                     <div className="mb-3">
                       <label htmlFor="nextQuestion" className="col-form-label">Next Question:</label>
                       <select
@@ -1202,6 +1330,20 @@ class EditQuestion extends Component {
                 </label>
               </div>
             </div>
+            <div className="form-check form-switch form-check-inline">
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      role="switch"
+                      id="firstQuestion"
+                      checked={this.state.questionList.firstQuestion}
+                      // checked={isFirstQuestion}
+                      onChange={this.toggleFirstQuestion}
+                    />
+                    <label className="form-check-label" htmlFor="firstQuestionCheck">
+                      First Question
+                    </label>
+              </div>
             <button type="button" className="btn btn-dark" onClick={this.handleSubmit}>
             Submit
             </button>

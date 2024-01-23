@@ -1,0 +1,22 @@
+GET http://rtp.dusky.bond:5000/api/editReadUpdate
+
+###
+
+GET http://rtp.dusky.bond:5000/api/editReadUpdate/658538a6ce58d563c955907f
+
+###
+
+GET http://rtp.dusky.bond:5000/api/editReadUpdate/65a0ca8eab43e08f575b1fc5
+
+###
+
+GET http://rtp.dusky.bond:5000/api/editReadUpdate/trial/65a0ca8eab43e08f575b1fc5
+
+###
+
+PATCH http://rtp.dusky.bond:5000/api/editReadUpdate/65a0ca8eab43e08f575b1fc5
+Content-Type: application/json
+
+{
+    "question": "change update example REST"
+}

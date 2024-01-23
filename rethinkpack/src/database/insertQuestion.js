@@ -20,13 +20,19 @@ const questionSchema = new mongoose.Schema({
             text: String,
         }],
         columns: [{
-        text: String
+            text: String
+        }],
+        answers: [{
+            rowIndex: Number,
+            columnIndex: Number,
+            isCorrect: Boolean
         }]
     },
     requireResponse: Boolean,  
     marks: Number,
     countries: [String],
     explanation: String,
+    firstQuestion: Boolean,
     recommendation: String,
     nextQuestion: String,
     date: {

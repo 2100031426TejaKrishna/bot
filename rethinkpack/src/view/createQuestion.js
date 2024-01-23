@@ -15,7 +15,7 @@ class CreateQuestion extends Component {
       questionType: '',
       selectedOption: 'multipleChoice',
       options: [{ label: 'Option 1', value: 'Option 1', isCorrect: false }],
-      gridOptions: { row: [{ label: 'Row 1', value: 'Row 1' }], column: [{ label: 'Column 1', value: 'Column 1' }] },
+      gridOptions: { row: [{ label: 'Row 1', value: 'Row 1' }], column: [{ label: 'Column 1', value: 'Column 1' }], answers: [] },
       showCountry: false,
       countries: [
         "Afghanistan", "Albania", "Algeria", "Andorra", "Angola",
@@ -62,6 +62,7 @@ class CreateQuestion extends Component {
       selectedCountries: [],
       isLeadingQuestion: false,
       showExplanation: false,
+      firstQuestion: false,
       showToast: false,
       minScale: 1,
       maxScale: 5,
@@ -87,15 +88,32 @@ class CreateQuestion extends Component {
     this.setState({
       ...this.initialState,
       showToast: this.state.showToast,
-      options: [{ label: 'Option 1', value: 'Option 1', isCorrect: false }]
+      options: this.state.options.map((_, index) => ({
+        label: `Option ${index + 1}`,
+        value: `Option ${index + 1}`,
+        isCorrect: false,
+        nextQuestion: ''
+      }))
     });
   }
 
   componentDidMount() {
     const createQuestionModal = document.getElementById('createQuestion');
-    createQuestionModal.addEventListener('hidden.bs.modal', this.resetState);
+    createQuestionModal.addEventListener('shown.bs.modal', () => {
+        this.resetState(); 
+        this.fetchQuestions();
+    });
+    createQuestionModal.addEventListener('hidden.bs.modal', () => {
+        this.resetState();
+    });
     this.fetchQuestions();
   }
+
+  componentDidUpdate(prevProps) {
+    if (this.props.questionsChanged !== prevProps.questionsChanged) {
+      this.fetchQuestions();
+    }
+  };
 
   fetchQuestions = async () => {
     try {
@@ -110,7 +128,7 @@ class CreateQuestion extends Component {
   componentWillUnmount() {
     const createQuestionModal = document.getElementById('createQuestion');
     createQuestionModal.removeEventListener('hidden.bs.modal', this.resetState);
-  }
+  };
 
   addOption = (e) => {
     e.preventDefault();
@@ -255,6 +273,17 @@ class CreateQuestion extends Component {
     }));
   };
 
+  clearGridSelections = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    this.setState(prevState => ({
+      gridOptions: {
+        ...prevState.gridOptions,
+        answers: []
+      }
+    }));
+  };
+
   renderOptionsArea = () => {
     const { selectedOption, options, gridOptions, requireResponse, isLeadingQuestion, allQuestions } = this.state;
     const clearSelections = (e) => {
@@ -266,19 +295,6 @@ class CreateQuestion extends Component {
       }));
       this.setState({ options: clearedOptions });
     };
-
-    const clearGridSelections = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const clearedGridOptions = {
-        ...gridOptions,
-        column: gridOptions.column.map((col) => ({
-          ...col,
-          isCorrect: false,
-        })),
-      };
-      this.setState({ gridOptions: clearedGridOptions });
-    };  
   
     switch (selectedOption) {
       case 'multipleChoice':
@@ -461,6 +477,7 @@ class CreateQuestion extends Component {
   
       case 'multipleChoiceGrid':
       case 'checkboxGrid':
+        const isSingleRow = gridOptions.row.length === 1;
         return (
           <>
             <div className="scrollable-table-container">
@@ -471,11 +488,10 @@ class CreateQuestion extends Component {
                     {gridOptions.column.map((col, colIndex) => (
                       <th key={colIndex} className="text-center">
                         <div className="d-flex justify-content-between align-items-center"> {}
-                        
                           <input
                               type="text"
                               className="form-control"
-                              value={col.label}
+                              placeholder={`Column ${colIndex + 1}`}
                               onChange={(e) => this.handleColumnChange(colIndex, e)}
                           />
                           {gridOptions.column.length > 1 && (
@@ -492,31 +508,37 @@ class CreateQuestion extends Component {
                         </div>
                       </th>
                     ))}
-                    <th></th> {/* Empty header for delete row buttons */}
+                    <th className={isSingleRow ? "last-column-no-space" : "last-column-space"}></th>
                   </tr>
                 </thead>
                 <tbody>
                   {gridOptions.row.map((row, rowIndex) => (
                     <tr key={rowIndex} className="grid-row-spacing">
-                      <td className="grid-column-spacing">
+                      <td>
                         <input
                           type="text"
                           className="form-control"
-                          value={row.label}
+                          placeholder={`Row ${rowIndex + 1}`}
                           onChange={(e) => this.handleRowChange(rowIndex, e)}
                         />
                       </td>
-                      {gridOptions.column.map((_, colIndex) => (
-                        <td key={colIndex}>
-                          <input
-                            type={selectedOption === 'multipleChoiceGrid' ? 'radio' : 'checkbox'}
-                            name={`row-${rowIndex}`}
-                            className="form-check-input"
-                          />
-                        </td>
-                      ))}
-                      <td>
-                        {gridOptions.row.length > 1 && (
+                      {gridOptions.column.map((_, colIndex) => {
+                        const isCorrect = gridOptions.answers.some(answer => answer.rowIndex === rowIndex && answer.columnIndex === colIndex && answer.isCorrect);
+                        return (
+                          <td key={colIndex}>
+                            <input
+                              type={selectedOption === 'multipleChoiceGrid' ? 'radio' : 'checkbox'}
+                              className="form-check-input"
+                              name={`row-${rowIndex}`}
+                              checked={isCorrect}
+                              onChange={() => this.toggleGridAnswer(rowIndex, colIndex)}
+                              disabled={isLeadingQuestion}
+                            />
+                          </td>
+                        );
+                      })}
+                      <td className={isSingleRow ? "last-column-no-space" : "last-column-space"}>
+                        {!isSingleRow && (
                           <button 
                             className="btn btn-outline-secondary btn-sm"
                             type="button"
@@ -535,6 +557,9 @@ class CreateQuestion extends Component {
               </button>
               <button className="btn btn-outline-dark mx-2" onClick={this.addGridColumn}>
                 Add Column
+              </button>
+              <button className="btn btn-outline-danger ms-2" onClick={this.clearGridSelections}>
+                Clear
               </button>
               <div className="form-check form-switch mt-3">
                 <input
@@ -575,6 +600,12 @@ class CreateQuestion extends Component {
     }));
   };
 
+  toggleFirstQuestion = () => {
+    this.setState(prevState => ({
+      firstQuestion: !prevState.firstQuestion,
+    }));
+  };
+
   toggleRequireResponse = () => {
     this.setState(prevState => ({
       requireResponse: !prevState.requireResponse,
@@ -602,6 +633,25 @@ class CreateQuestion extends Component {
     }
   };
 
+  toggleGridAnswer = (rowIndex, colIndex) => {
+    const { selectedOption, gridOptions } = this.state;
+    let newAnswers = [...gridOptions.answers];
+  
+    if (selectedOption === 'multipleChoiceGrid') {
+      const rowAnswers = newAnswers.filter(answer => answer.rowIndex !== rowIndex);
+      newAnswers = [...rowAnswers, { rowIndex, columnIndex: colIndex, isCorrect: true }];
+    } else if (selectedOption === 'checkboxGrid') {
+      const answerIndex = newAnswers.findIndex(answer => answer.rowIndex === rowIndex && answer.columnIndex === colIndex);
+      if (answerIndex > -1) {
+        newAnswers[answerIndex].isCorrect = !newAnswers[answerIndex].isCorrect;
+      } else {
+        newAnswers.push({ rowIndex, columnIndex: colIndex, isCorrect: true });
+      }
+    }
+  
+    this.setState({ gridOptions: { ...gridOptions, answers: newAnswers } });
+  };
+  
   handleCountryChange = (event) => {
     const { value } = event.target;
     this.setState((prevState) => {
@@ -712,6 +762,7 @@ class CreateQuestion extends Component {
       minScale,
       maxScale,
       isLeadingQuestion,
+      firstQuestion,
       marks,
       showCountry,
       selectedCountries,
@@ -730,6 +781,7 @@ class CreateQuestion extends Component {
       explanation: showExplanation ? explanation : undefined,
       isLeadingQuestion,
       showCountry,
+      firstQuestion,
       requireResponse,
       nextQuestion: isLeadingQuestion ? undefined : nextQuestion
     };
@@ -752,7 +804,8 @@ class CreateQuestion extends Component {
     if (selectedOption === 'multipleChoiceGrid' || selectedOption === 'checkboxGrid') {
       dataToInsert.grid = {
         rows: gridOptions.row.map(row => ({ text: row.label })),
-        columns: gridOptions.column.map(column => ({ text: column.label }))
+        columns: gridOptions.column.map(column => ({ text: column.label })),
+        answers: gridOptions.answers.filter(answer => answer.isCorrect)
       };
     }
 
@@ -767,6 +820,7 @@ class CreateQuestion extends Component {
 
       if (response.ok) {
         console.log('Data submitted successfully');
+        console.log(dataToInsert);
         const modalInstance = Modal.getInstance(this.createQuestionModalRef.current);
         modalInstance.hide();
         this.createQuestionModalRef.current.addEventListener('hidden.bs.modal', () => {
@@ -789,8 +843,9 @@ class CreateQuestion extends Component {
   };
 
   render() {
-    const { questionType, selectedOption, showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, validationErrors, allQuestions, nextQuestion } = this.state;
+    const { questionType, selectedOption, showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, firstQuestion, validationErrors, allQuestions, nextQuestion } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
+    const showNextQuestion = (isLeadingQuestion && (selectedOption === 'linear' || selectedOption === 'multipleChoiceGrid' || selectedOption === 'checkboxGrid')) || !isLeadingQuestion;
 
     return (
       <div>
@@ -954,7 +1009,7 @@ class CreateQuestion extends Component {
                       )} 
                     </div>
                   )}
-                  {!isLeadingQuestion && (
+                  {showNextQuestion && (
                     <div className="mb-3">
                       <label htmlFor="nextQuestion" className="col-form-label">Next Question:</label>
                       <select
@@ -1016,6 +1071,19 @@ class CreateQuestion extends Component {
                         {explanationLabel}
                       </label>
                     </div>
+                  </div>
+                  <div className="form-check form-switch form-check-inline">
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      role="switch"
+                      id="firstQuestionCheck"
+                      checked={firstQuestion}
+                      onChange={this.toggleFirstQuestion}
+                    />
+                    <label className="form-check-label" htmlFor="firstQuestionCheck">
+                      First Question
+                    </label>
                   </div>
                   <button type="button" className="btn btn-dark" onClick={this.handleSubmit}>
                     Submit
