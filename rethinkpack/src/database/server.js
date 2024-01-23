@@ -4,8 +4,11 @@ const cors = require('cors');
 const connectToDatabase = require('./database');
 const insertQuestionRoute = require('./insertQuestion');
 const { router: displayQuestionRoute, fetchQuestions } = require('./displayQuestion');
+// const { router: treeMapRouter, fetchDataFromMongoDB } = require('./mongodb-utils');
 const editReadUpdateRoute = require('./editReadUpdate');
 const deleteQuestionRouter = require('./deleteQuestion'); 
+// const treeMapRouter = require('./mongodb-utils');
+
 
 const corsOptions = {
   origin: ['http://rtp.dusky.bond'],
@@ -25,7 +28,11 @@ connectToDatabase().then(async () => {
   app.use('/api', displayQuestionRoute);
   app.use('/api', editReadUpdateRoute);
   app.use('/api', deleteQuestionRouter);
-  await fetchQuestions();
+  // app.use('/api', treeMapRouter);
+  // app.use(fetchDataFromMongoDB);
+
+  // await fetchQuestions();
+  // await fetchDataFromMongoDB();
 
   const PORT = 5000;
 
