@@ -1,7 +1,8 @@
 import React, { useState, useCallback } from 'react';
-import CreateQuestion from './view/createQuestion';
-import Questions from './view/questions';
-import QuestionsTreeMap from './view/questionsTreeMap';
+import CreateQuestion from './admin/view/createQuestion';
+import Questions from './admin/view/questions';
+import QuestionsTreeMap from './admin/view/questionsTreeMap';
+import CustomerQuestions from './customer/view/questions';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 
 function App() {
@@ -41,7 +42,7 @@ function App() {
         {/* other components */}
         <Switch>
           <Route path="/customer">
-            <Questions triggerRefresh={triggerRefresh} />
+            <CustomerQuestions triggerRefresh={triggerRefresh} />
           </Route>
           {/* other routes */}
         </Switch>
