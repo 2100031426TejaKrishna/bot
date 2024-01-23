@@ -6,8 +6,8 @@ import Modal from 'react-bootstrap/Modal';
 // debug
 console.log (`22/01/24 17:40`);
 
-// const destination = "localhost:5000";
-const destination = "rtp.dusky.bond:5000";
+const destination = "localhost:5000";
+// const destination = "rtp.dusky.bond:5000";
 
 class EditQuestion extends Component {
   constructor(props) {
@@ -89,7 +89,7 @@ class EditQuestion extends Component {
         question: null, 
         questionType: '',
         optionType: 'multipleChoice',
-        options: [{ label: 'Option 1', value: 'Option 1', isCorrect: false, optionsNextQuestion: '' }],
+        options: [{ label: 'Option 1', value: 'Option 1', isCorrect: false, optionsNextQuestion: null }],
         marks: '',
         firstQuestion: false,
         nextQuestion: null
@@ -118,10 +118,10 @@ class EditQuestion extends Component {
 /*--------------onClick-----------------*/
 
   onEditClickHandler = (id) => {
-    this.fetchQuestion(id).then( data => {
+    this.fetchQuestion(id).then( () => {
       this.setState(
         { 
-          // questionList: data, 
+          // isLeadingQuestion: (this.state.questionList.marks) ? false : true 
         },
         // Callback function
         () => { 
@@ -141,7 +141,8 @@ class EditQuestion extends Component {
         this.setState({
           showModal: true, 
           questionList: data,
-          selectedOption: data.optionType
+          selectedOption: data.optionType,
+          isLeadingQuestion: (data.marks) ? false : true 
         })
       }
     } catch (error) {
@@ -167,7 +168,7 @@ class EditQuestion extends Component {
         });
         setTimeout(() => this.setState({ showToast: false }), 10000);
 
-        // Trigger re-fetch in parent component
+        // Trigger re-fetch in parent component questions.js
         this.props.refreshQuestions();
  
       } else {
@@ -259,7 +260,7 @@ class EditQuestion extends Component {
         for (let i = 0; i<this.state.questionList.options.length; i++) {
           console.log(`options text: ${this.state.questionList.options[i].text}`)
           console.log(`options isCorrect: ${this.state.questionList.options[i].isCorrect}`)
-          console.log(`options nextQuestion: ${this.state.questionList.options[i].nextQuestion}`)
+          console.log(`options optionsNextQuestion: ${this.state.questionList.options[i].optionsNextQuestion}`)
         }
       }
     );
@@ -393,19 +394,6 @@ class EditQuestion extends Component {
     }})
   };
 
-  clearOptionsNextQuestion = () => {
-    const { questionList } = this.state;
-    const clearedOptions = questionList.options.map((option) => ({
-      ...option,
-      optionsNextQuestion: '',
-    }));
-    this.setState({ 
-      questionList: {
-        ...questionList,
-        options: clearedOptions
-    }})
-  };
-
 //------------------ OPTIONS ----------------------------------  
   renderOptionsArea = () => {
     const { selectedOption, options, gridOptions, requireResponse, isLeadingQuestion, questionList, allQuestions } = this.state;
@@ -418,6 +406,20 @@ class EditQuestion extends Component {
         isCorrect: false,
       }));
       this.setState({ questionList: {...this.state.questionList, options: clearedOptions} });
+    };
+
+    const clearOptionsNextQuestion = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const clearedOptions = questionList.options.map((option) => ({
+        ...option,
+        optionsNextQuestion: '',
+      }));
+      this.setState({ 
+        questionList: {
+          ...questionList,
+          options: clearedOptions
+      }})
     };
 
     const clearGridSelections = (e) => {
@@ -489,7 +491,7 @@ class EditQuestion extends Component {
                       <select
                         className="form-select mx-2"
                         style={{ flex: '1' }}
-                        value={option.nextQuestion}
+                        value={questionList.options[index].optionsNextQuestion}
                         onChange={(e) => this.handleOptionsNextQuestionChange(index, e.target.value)}
                       >
                         <option value="">Select Next Question</option>
@@ -522,7 +524,7 @@ class EditQuestion extends Component {
                 </button>
               )}
               {isLeadingQuestion && (
-                  <button className="btn btn-outline-danger ms-2" onClick={this.clearOptionsNextQuestion}>
+                  <button className="btn btn-outline-danger ms-2" onClick={clearOptionsNextQuestion}>
                     Clear Next Question
                   </button>
                 )}
@@ -557,7 +559,7 @@ class EditQuestion extends Component {
                       <select
                         className="form-select mx-2"
                         style={{ flex: '1' }}
-                        value={option.nextQuestion}
+                        value={option.optionsNextQuestion}
                         onChange={(e) => this.handleOptionsNextQuestionChange(index, e.target.value)}
                       >
                         <option value="">Select Next Question</option>
@@ -590,7 +592,7 @@ class EditQuestion extends Component {
                 </button>
               )}
               {isLeadingQuestion && (
-                  <button className="btn btn-outline-danger ms-2" onClick={this.clearOptionsNextQuestion}>
+                  <button className="btn btn-outline-danger ms-2" onClick={clearOptionsNextQuestion}>
                     Clear Next Question
                   </button>
                 )}
@@ -670,7 +672,7 @@ class EditQuestion extends Component {
                       <select
                         className="form-select mx-2"
                         style={{ flex: '1' }}
-                        value={option.nextQuestion}
+                        value={option.optionsNextQuestion}
                         onChange={(e) => this.handleOptionsNextQuestionChange(index, e.target.value)}
                       >
                         <option value="">Select Next Question</option>
@@ -703,7 +705,7 @@ class EditQuestion extends Component {
                 </button>
               )}
               {isLeadingQuestion && (
-                  <button className="btn btn-outline-danger ms-2" onClick={this.clearOptionsNextQuestion}>
+                  <button className="btn btn-outline-danger ms-2" onClick={clearOptionsNextQuestion}>
                     Clear Next Question
                   </button>
                 )}
@@ -825,31 +827,15 @@ class EditQuestion extends Component {
     }));
   };
 
-
-  // handleQuestionTypeRadio = (e) => {
-  //   this.setState( (prevState) => ({
-  //     questionList: { ...prevState.questionList, questionType: e.target.value }
-  //   }))
-  // }
-
   toggleFirstQuestion = () => {
-    // const { questionList } = this.state;
     this.setState(prevState => ({
-      //isFirstQuestion: !prevState.isFirstQuestion,
-      questionList: {... prevState.questionList, firstQuestion: !prevState.questionList.firstQuestion}
+      questionList: { ...prevState.questionList, firstQuestion: !prevState.questionList.firstQuestion }
     }));
   };
 
   toggleLeadingQuestion = () => {
-    const { questionList } = this.state;
-    const clearedOptions = questionList.options.map((option) => ({
-      ...option,
-      nextQuestion: '',
-    }));
     this.setState(prevState => ({
-      isLeadingQuestion: !prevState.isLeadingQuestion,
-      // Clear nextQuestion state values when toggle Leading Question
-      questionList: {...this.state.questionList, options: clearedOptions}
+      isLeadingQuestion: !prevState.isLeadingQuestion
     }));
   };
 
@@ -1017,7 +1003,6 @@ class EditQuestion extends Component {
       gridOptions,
       minScale,
       maxScale,
-      isFirstQuestion,
       isLeadingQuestion,
       showCountry,
       selectedCountries,
@@ -1036,18 +1021,25 @@ class EditQuestion extends Component {
       marks: isLeadingQuestion ? undefined : parseFloat(this.state.questionList.marks),
       countries: showCountry ? selectedCountries : undefined,
       explanation: showExplanation ? explanation : undefined,
-      // isFirstQuestion,
       firstQuestion: this.state.questionList.firstQuestion,
       isLeadingQuestion,
       showCountry,
       requireResponse,
       nextQuestion: isLeadingQuestion ? undefined : this.state.questionList.nextQuestion
     };
+
+    // Leading Question Marks check
+    if (isLeadingQuestion === true) {
+      // Case when isLeadingQuestion is true, set marks to null
+      dataToUpdate.marks = null
+    }
+
     // Case: multiple choce / checkbox / dropdown
     if (questionList.optionType === 'multipleChoice' || questionList.optionType === 'checkbox' || questionList.optionType === 'dropdown') {
       dataToUpdate.options = questionList.options.map((option) => ({
         text: option.text,
-        isCorrect: option.isCorrect || false, 
+        isCorrect: option.isCorrect || false,
+        optionsNextQuestion: (isLeadingQuestion) ? option.optionsNextQuestion : null 
       }));
     }
   
@@ -1337,7 +1329,6 @@ class EditQuestion extends Component {
                       role="switch"
                       id="firstQuestion"
                       checked={this.state.questionList.firstQuestion}
-                      // checked={isFirstQuestion}
                       onChange={this.toggleFirstQuestion}
                     />
                     <label className="form-check-label" htmlFor="firstQuestionCheck">
@@ -1359,7 +1350,6 @@ class EditQuestion extends Component {
         <div 
           className="modal fade" 
           id={`editQuestion`}
-          //id={`editQuestionModal-${questionIndex}`}
           tabIndex="-1" 
           aria-labelledby="editQuestionLabel" 
           aria-hidden="true" 
