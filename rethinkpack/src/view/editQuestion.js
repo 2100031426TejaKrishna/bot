@@ -4,10 +4,10 @@ import 'bootstrap/dist/js/bootstrap.bundle.min';
 import Modal from 'react-bootstrap/Modal';
 
 // debug
-console.log (`23/01/24 17:15`);
+console.log (`23/01/24 18:04`);
 
-const destination = "localhost:5000";
-// const destination = "rtp.dusky.bond:5000";
+// const destination = "localhost:5000";
+const destination = "rtp.dusky.bond:5000";
 
 class EditQuestion extends Component {
   constructor(props) {
