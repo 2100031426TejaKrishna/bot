@@ -143,6 +143,7 @@
                 )}
                 {questions.map((question, index) => (
                     <div key={index} className="question-card">
+                        {question.firstQuestion && <h5 style={{ fontWeight: 'bold', color: 'red' }}>Question 1</h5>}
                         <h6>
                         {question.questionType === 'productInfo' ? 'Product Information' : 
                         question.questionType === 'packagingInfo' ? 'Packaging Information' : ''}

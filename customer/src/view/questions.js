@@ -4,13 +4,13 @@ const Questions = () => {
     const [questions, setQuestions] = useState([]);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
-    const destination = "localhost:5001";
-    // const destination = "rtp.dusky.bond:5001";
+    const destination = "localhost:5000";
+    // const destination = "rtp.dusky.bond:5000";
 
     useEffect(() => {
         const fetchQuestions = async () => {
             try {
-                const response = await fetch(`http://${destination}/api/displayQuestions`);
+                const response = await fetch(`http://${destination}/api/displayQuestionsCustomer`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }

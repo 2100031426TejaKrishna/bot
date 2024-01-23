@@ -42,7 +42,6 @@ const questionSchema = new mongoose.Schema({
 
 const Questions = mongoose.model('questions', questionSchema);
 
-// This function fetches all questions
 const fetchQuestions = async () => {
     try {
         const questions = await Questions.find({}).sort({ _id: 1 });
@@ -54,8 +53,7 @@ const fetchQuestions = async () => {
     }
 }
 
-// Endpoint for the customer site to fetch questions
-router.get('/displayQuestions', async (req, res) => {
+router.get('/displayQuestionsCustomer', async (req, res) => {
     try {
         const questions = await fetchQuestions();
         res.json(questions);
