@@ -4,14 +4,15 @@ import 'bootstrap/dist/js/bootstrap.bundle.min';
 import Modal from 'react-bootstrap/Modal';
 
 // debug
-console.log (`22/01/24 17:40`);
+console.log (`23/01/24 17:15`);
 
-// const destination = "localhost:5000";
-const destination = "rtp.dusky.bond:5000";
+const destination = "localhost:5000";
+// const destination = "rtp.dusky.bond:5000";
 
 class EditQuestion extends Component {
   constructor(props) {
     super(props);
+    // Declare all state variables to observe below
     this.state = {
       question: '',
       marks: '',
@@ -90,6 +91,7 @@ class EditQuestion extends Component {
         questionType: '',
         optionType: 'multipleChoice',
         options: [{ label: 'Option 1', value: 'Option 1', isCorrect: false, optionsNextQuestion: null }],
+        linearScale: [ { scale: '', label: '' } ],
         marks: '',
         firstQuestion: false,
         nextQuestion: null
@@ -195,7 +197,7 @@ class EditQuestion extends Component {
     editQuestionModal.removeEventListener('hidden.bs.modal', this.resetState);
   }
 
-/*---------------------------------*/
+/*----------- function helpers ----------------------*/
 
   handleQuestionTypeRadio = (e) => {
     this.setState( (prevState) => ({
@@ -392,6 +394,26 @@ class EditQuestion extends Component {
         i === index ? { ...option, optionsNextQuestion: nextQuestionId } : option
         )
     }})
+  };
+
+  handleLinearScaleLabelChange = (index, value) => {
+    const { questionList } = this.state;
+    this.setState({ questionList: {
+      ...questionList,
+      linearScale: questionList.linearScale.map((option, i) =>
+      i === index ? { ...option, label: value } : option
+      ),
+    }}) 
+  };
+
+  handleLinearScaleValue = (index, value) => {
+    const { questionList } = this.state;
+    this.setState({ questionList: {
+      ...questionList,
+      linearScale: questionList.linearScale.map((option, i) =>
+      i === index ? { ...option, scale: value } : option
+      ),
+    }}) 
   };
 
 //------------------ OPTIONS ----------------------------------  
@@ -599,7 +621,7 @@ class EditQuestion extends Component {
             </div>
           </>
         );
-  
+  // ---------------------------- linear scale ----------------------------
       case 'linear':
         const minScale = this.state.minScale;
         const maxScale = this.state.maxScale;
@@ -610,18 +632,23 @@ class EditQuestion extends Component {
               <select
                 id="minScale"
                 className="form-select me-2"
-                value={minScale}
-                onChange={(e) => this.setState({ minScale: parseInt(e.target.value) })}
+                value={questionList.linearScale[0].scale}
+                onChange={(e) => this.handleLinearScaleValue(0, e.target.value)}
+                // value={minScale}
+                // onChange={(e) => this.setState({ minScale: parseInt(e.target.value) })}
               >
                 <option value="0">0</option>
                 <option value="1">1</option>
               </select>
               <span className="me-2">to</span>
+              {/* RESUME HERE -------------------------------------------- */}
               <select
                 id="maxScale"
                 className="form-select"
-                value={maxScale}
-                onChange={(e) => this.setState({ maxScale: parseInt(e.target.value) })}
+                value={questionList.linearScale[1].scale}
+                onChange={(e) => this.handleLinearScaleValue(1, e.target.value)}
+                // value={maxScale}
+                // onChange={(e) => this.setState({ maxScale: parseInt(e.target.value) })}
               >
                 {Array.from({ length: 9 }, (_, i) => (
                   <option key={i} value={i + 2}>
@@ -631,13 +658,15 @@ class EditQuestion extends Component {
               </select>
             </div>
             <div>
-              {[minScale, maxScale].map((scaleValue) => (
+              {[minScale, maxScale].map((scaleValue, index) => (
                 <div key={scaleValue} className="d-flex align-items-center mb-2">
-                  <span className="mr-2">{scaleValue} </span>
+                  <span className="mr-2">{questionList.linearScale[index].scale} </span>
                   <input
                     type="text"
                     id={`scaleLabel${scaleValue}`}
                     className="form-control mx-2"
+                    value={this.state.questionList.linearScale[index].label}
+                    onChange={(e) => this.handleLinearScaleLabelChange(index, e.target.value)}
                     placeholder={`Labels (Optional)`}
                   />
                 </div>
@@ -916,6 +945,8 @@ class EditQuestion extends Component {
     });
   };
 
+  // --------------- VALIDATIONS---------------------------------
+
   validateQuestionType = () => {
     const { questionList } = this.state;
     return questionList.questionType !== '';
@@ -972,6 +1003,8 @@ class EditQuestion extends Component {
     return null;
   }
 
+  // -------------------------- HANDLE SUBMIT ------------------------------
+
   handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -1018,6 +1051,7 @@ class EditQuestion extends Component {
       question: this.state.questionList.question,
       optionType: this.state.questionList.optionType,
       options: this.state.questionList.options,
+      linearScale: this.state.questionList.linearScale,
       marks: isLeadingQuestion ? undefined : parseFloat(this.state.questionList.marks),
       countries: showCountry ? selectedCountries : undefined,
       explanation: showExplanation ? explanation : undefined,
