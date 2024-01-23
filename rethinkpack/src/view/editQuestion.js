@@ -6,8 +6,8 @@ import Modal from 'react-bootstrap/Modal';
 // debug
 console.log (`22/01/24 17:40`);
 
-const destination = "localhost:5000";
-// const destination = "rtp.dusky.bond:5000";
+// const destination = "localhost:5000";
+const destination = "rtp.dusky.bond:5000";
 
 class EditQuestion extends Component {
   constructor(props) {
