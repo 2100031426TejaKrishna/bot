@@ -4,8 +4,8 @@ const Questions = () => {
     const [questions, setQuestions] = useState([]);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
-    const destination = "localhost:5000";
-    // const destination = "rtp.dusky.bond:5000";
+    // const destination = "localhost:5000";
+    const destination = "rtp.dusky.bond:5000";
 
     useEffect(() => {
         const fetchQuestions = async () => {
