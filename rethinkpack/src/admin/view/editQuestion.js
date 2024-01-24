@@ -4,7 +4,7 @@ import 'bootstrap/dist/js/bootstrap.bundle.min';
 import Modal from 'react-bootstrap/Modal';
 
 // debug
-console.log (`24/01/24 12:33`);
+console.log (`24/01/24 17:46`);
 
 // const destination = "localhost:5000";
 const destination = "rtp.dusky.bond:5000";
@@ -21,7 +21,8 @@ class EditQuestion extends Component {
       questionType: '',
       selectedOption: 'multipleChoice',
       options: [{ label: 'Option 1', value: 'Option 1', isCorrect: false }],
-      gridOptions: { row: [{ label: 'Row 1', value: 'Row 1' }], column: [{ label: 'Column A', value: 'Column A' }] },
+      gridOptions: { row: [{ label: 'Row 1', value: 'Row 1' }], column: [{ label: 'Column 1', value: 'Column 1' }], answers: [] },
+      fetchedGridOptions: { row: [{ label: 'Row 1', value: 'Row 1' }], column: [{ label: 'Column 1', value: 'Column 1' }], answers: [] },
       showCountry: false,
       countries: [
         "Afghanistan", "Albania", "Algeria", "Andorra", "Angola",
@@ -142,8 +143,13 @@ class EditQuestion extends Component {
           showModal: true, 
           questionList: data,
           selectedOption: data.optionType,
-          isLeadingQuestion: (data.marks) ? false : true 
-        })
+          // fetchedGridOptions: data.grid,
+          gridOptions: data.grid,
+          isLeadingQuestion: (data.marks) ? false : true
+        },
+        // DEBUG ----------------------------------------------------
+        () => {console.log(`fetchedGridOptions: ${JSON.stringify(this.state.fetchedGridOptions)}`)}
+        )
       }
     } catch (error) {
       console.error('Error fetching questions:', error);
@@ -273,8 +279,8 @@ class EditQuestion extends Component {
       gridOptions: {
         ...prevState.gridOptions,
         row: [
-          ...prevState.gridOptions.row,
-          { label: `Row ${prevState.gridOptions.row.length + 1}`, value: `Row ${prevState.gridOptions.row.length + 1}` }
+          ...prevState.gridOptions.rows,
+          { label: `Row ${prevState.gridOptions.rows.length + 1}`, value: `Row ${prevState.gridOptions.rows.length + 1}` }
         ]
       }
     }));
@@ -288,8 +294,8 @@ class EditQuestion extends Component {
         gridOptions: {
           ...prevState.gridOptions,
           column: [
-            ...prevState.gridOptions.column,
-            { label: `Column ${prevState.gridOptions.column.length + 1}`, value: `Column ${prevState.gridOptions.column.length + 1}` }
+            ...prevState.gridOptions.columns,
+            { label: `Column ${prevState.gridOptions.columns.length + 1}`, value: `Column ${prevState.gridOptions.columns.length + 1}` }
           ]
         }
       };
@@ -300,7 +306,7 @@ class EditQuestion extends Component {
     this.setState(prevState => ({
       gridOptions: {
         ...prevState.gridOptions,
-        row: prevState.gridOptions.row.filter((_, idx) => idx !== index)
+        row: prevState.gridOptions.rows.filter((_, idx) => idx !== index)
       }
     }));
   };
@@ -309,7 +315,7 @@ class EditQuestion extends Component {
     this.setState(prevState => ({
       gridOptions: {
         ...prevState.gridOptions,
-        column: prevState.gridOptions.column.filter((_, idx) => idx !== index)
+        column: prevState.gridOptions.columns.filter((_, idx) => idx !== index)
       }
     }));
   };
@@ -350,7 +356,7 @@ class EditQuestion extends Component {
   handleRowChange = (index, e) => {
     const newValue = e.target.value;
     this.setState(prevState => {
-      const updatedRow = prevState.gridOptions.row.map((option, i) => {
+      const updatedRow = prevState.gridOptions.rows.map((option, i) => {
         if (i === index) {
           return { ...option, label: newValue, value: newValue };
         }
@@ -368,7 +374,7 @@ class EditQuestion extends Component {
   handleColumnChange = (index, e) => {
     const newValue = e.target.value;
     this.setState(prevState => {
-      const updatedColumn = prevState.gridOptions.column.map((option, i) => {
+      const updatedColumn = prevState.gridOptions.columns.map((option, i) => {
         if (i === index) {
           return { ...option, label: newValue, value: newValue };
         }
@@ -416,7 +422,7 @@ class EditQuestion extends Component {
 
 //------------------ OPTIONS ----------------------------------  
   renderOptionsArea = () => {
-    const { selectedOption, options, gridOptions, requireResponse, isLeadingQuestion, questionList, allQuestions } = this.state;
+    const { selectedOption, options, gridOptions, fetchedGridOptions, requireResponse, isLeadingQuestion, questionList, allQuestions } = this.state;
     const clearSelections = (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -447,7 +453,7 @@ class EditQuestion extends Component {
       e.stopPropagation();
       const clearedGridOptions = {
         ...gridOptions,
-        column: gridOptions.column.map((col) => ({
+        column: gridOptions.columns.map((col) => ({
           ...col,
           isCorrect: false,
         })),
@@ -733,11 +739,11 @@ class EditQuestion extends Component {
             </div>
           </>
         );
-  
+  // -------------------------------- Multiple choice grid / Checkbox grid ------------
       // paste below here
       case 'multipleChoiceGrid':
       case 'checkboxGrid':
-        const isSingleRow = gridOptions.row.length === 1;
+        const isSingleRow = gridOptions.rows.length === 1;
         return (
           <>
             <div className="scrollable-table-container">
@@ -745,16 +751,16 @@ class EditQuestion extends Component {
                 <thead>
                   <tr>
                     <th>Row/Column</th>
-                    {gridOptions.column.map((col, colIndex) => (
+                    {gridOptions.columns.map((col, colIndex) => (
                       <th key={colIndex} className="text-center">
                         <div className="d-flex justify-content-between align-items-center"> {}
                           <input
                               type="text"
                               className="form-control"
-                              value={col.label}
+                              value={col.text}
                               onChange={(e) => this.handleColumnChange(colIndex, e)}
                           />
-                          {gridOptions.column.length > 1 && (
+                          {gridOptions.columns.length > 1 && (
                             <div className="delete-column-btn">
                               <button 
                                 className="btn btn-outline-secondary btn-sm"
@@ -772,17 +778,17 @@ class EditQuestion extends Component {
                   </tr>
                 </thead>
                 <tbody>
-                  {gridOptions.row.map((row, rowIndex) => (
+                  {gridOptions.rows.map((row, rowIndex) => (
                     <tr key={rowIndex} className="grid-row-spacing">
                       <td>
                         <input
                           type="text"
                           className="form-control"
-                          value={row.label}
+                          value={row.text}
                           onChange={(e) => this.handleRowChange(rowIndex, e)}
                         />
                       </td>
-                      {gridOptions.column.map((_, colIndex) => {
+                      {gridOptions.columns.map((_, colIndex) => {
                         const isCorrect = gridOptions.answers.some(answer => answer.rowIndex === rowIndex && answer.columnIndex === colIndex && answer.isCorrect);
                         return (
                           <td key={colIndex}>
@@ -909,7 +915,7 @@ class EditQuestion extends Component {
       this.setState((prevState) => ({
         gridOptions: {
           ...prevState.gridOptions,
-          column: prevState.gridOptions.column.map((col, i) => {
+          column: prevState.gridOptions.columns.map((col, i) => {
             if (i === index) {
               return { ...col, isCorrect: !col.isCorrect };
             }
@@ -1076,12 +1082,12 @@ class EditQuestion extends Component {
 
     if (questionList.optionType === 'multipleChoiceGrid' || questionList.optionType === 'checkboxGrid') {
       dataToUpdate.grid = {
-        rows: gridOptions.row.map(row => ({ text: row.label })),
-        columns: gridOptions.column.map(column => ({ text: column.label, isCorrect: column.isCorrect || false }))
+        rows: gridOptions.rows.map(row => ({ text: row.label })),
+        columns: gridOptions.columns.map(column => ({ text: column.label, isCorrect: column.isCorrect || false }))
       };
     }
     
-    // Update database API
+    // Update database server API
     this.updateQuestion(questionId, dataToUpdate)
   };
 
