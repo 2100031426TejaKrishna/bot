@@ -127,6 +127,10 @@
             return <div>Error: {error.message}</div>;
         }
 
+        if (!questions.length) {
+            return <div>No questions available</div>;
+        }
+
         return (
             <div className="questions-container">
                 {showToast && (
