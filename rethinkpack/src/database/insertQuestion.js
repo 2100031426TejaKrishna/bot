@@ -52,12 +52,16 @@ router.post('/insertQuestion', async (req, res) => {
             questionData.recommendation = questionData.explanation;
             delete questionData.explanation;
             delete questionData.marks;
-            delete questionData.nextQuestion;
+            if (questionData.optionType !== 'multipleChoiceGrid' && questionData.optionType !== 'checkboxGrid') {
+                delete questionData.nextQuestion;
+            }
         } else {
-            questionData.options = questionData.options.map(option => {
-                delete option.optionsNextQuestion;
-                return option;
-            });
+            if (questionData.optionType !== 'multipleChoiceGrid' && questionData.optionType !== 'checkboxGrid') {
+                questionData.options = questionData.options.map(option => {
+                    delete option.optionsNextQuestion;
+                    return option;
+                });
+            }
         }
 
         if (!questionData.showCountry) {
