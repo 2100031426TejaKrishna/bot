@@ -4,7 +4,7 @@ import 'bootstrap/dist/js/bootstrap.bundle.min';
 import Modal from 'react-bootstrap/Modal';
 
 // debug
-console.log (`23/01/24 18:04`);
+console.log (`24/01/24 12:33`);
 
 // const destination = "localhost:5000";
 const destination = "rtp.dusky.bond:5000";
@@ -70,8 +70,6 @@ class EditQuestion extends Component {
       isLeadingQuestion: false,
       showExplanation: false,
       showToast: false,
-      minScale: 1,
-      maxScale: 5,
       validationErrors: {
         questionType: '',
         question: '',
@@ -623,8 +621,6 @@ class EditQuestion extends Component {
         );
   // ---------------------------- linear scale ----------------------------
       case 'linear':
-        const minScale = this.state.minScale;
-        const maxScale = this.state.maxScale;
 
         return (
           <div>
@@ -634,21 +630,16 @@ class EditQuestion extends Component {
                 className="form-select me-2"
                 value={questionList.linearScale[0].scale}
                 onChange={(e) => this.handleLinearScaleValue(0, e.target.value)}
-                // value={minScale}
-                // onChange={(e) => this.setState({ minScale: parseInt(e.target.value) })}
               >
                 <option value="0">0</option>
                 <option value="1">1</option>
               </select>
               <span className="me-2">to</span>
-              {/* RESUME HERE -------------------------------------------- */}
               <select
                 id="maxScale"
                 className="form-select"
                 value={questionList.linearScale[1].scale}
                 onChange={(e) => this.handleLinearScaleValue(1, e.target.value)}
-                // value={maxScale}
-                // onChange={(e) => this.setState({ maxScale: parseInt(e.target.value) })}
               >
                 {Array.from({ length: 9 }, (_, i) => (
                   <option key={i} value={i + 2}>
@@ -658,12 +649,13 @@ class EditQuestion extends Component {
               </select>
             </div>
             <div>
-              {[minScale, maxScale].map((scaleValue, index) => (
-                <div key={scaleValue} className="d-flex align-items-center mb-2">
+              {/* In the below map loop, the option parameter is required to compile */}
+              {questionList.linearScale.map((option, index) => ( 
+                <div key={index} className="d-flex align-items-center mb-2">
                   <span className="mr-2">{questionList.linearScale[index].scale} </span>
                   <input
                     type="text"
-                    id={`scaleLabel${scaleValue}`}
+                    id={`label${index}`}
                     className="form-control mx-2"
                     value={this.state.questionList.linearScale[index].label}
                     onChange={(e) => this.handleLinearScaleLabelChange(index, e.target.value)}
@@ -1034,8 +1026,6 @@ class EditQuestion extends Component {
 
     const {
       gridOptions,
-      minScale,
-      maxScale,
       isLeadingQuestion,
       showCountry,
       selectedCountries,
@@ -1078,10 +1068,10 @@ class EditQuestion extends Component {
     }
   
     if (questionList.optionType === 'linear') {
-      dataToUpdate.linearScale = [
-        { scale: minScale, label: document.getElementById('scaleLabel' + minScale).value },
-        { scale: maxScale, label: document.getElementById('scaleLabel' + maxScale).value },
-      ];
+      dataToUpdate.linearScale = questionList.linearScale.map((option) => ({
+        scale: option.scale,
+        label: option.label
+      }));
     }
 
     if (questionList.optionType === 'multipleChoiceGrid' || questionList.optionType === 'checkboxGrid') {
