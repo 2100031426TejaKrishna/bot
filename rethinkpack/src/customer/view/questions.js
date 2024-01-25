@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import './questions.css';
 
 const Questions = () => {
     const [questions, setQuestions] = useState([]);
@@ -38,11 +39,31 @@ const Questions = () => {
 
     const handleNextQuestion = () => {
         if (canProceed) {
-            // ... existing logic to go to next question
+            // Check if it's not the last question before incrementing
+            if (currentQuestionIndex < questions.length - 1) {
+                setCurrentQuestionIndex(currentQuestionIndex + 1);
+                // Reset the answer for the next question
+                setCurrentAnswer('');
+                // Reset the canProceed for the next question
+                setCanProceed(false);
+            }
         } else {
             alert('Please answer the current question before proceeding.');
         }
     };
+    
+    const handlePreviousQuestion = () => {
+        // Check if it's not the first question before decrementing
+        if (currentQuestionIndex > 0) {
+            setCurrentQuestionIndex(currentQuestionIndex - 1);
+            // Reset the answer for the previous question (if needed)
+            setCurrentAnswer('');
+            // Ideally, you would also restore the previous answer here
+            // For simplicity, we're just allowing to go back
+            setCanProceed(true); // Assuming you can always go back
+        }
+    };
+
 
     if (isLoading) {
         return <div>Loading questions...</div>;
@@ -55,32 +76,20 @@ const Questions = () => {
     const currentQuestion = questions[currentQuestionIndex];
 
     const renderOptions = (question) => {
+        console.log(question);
         switch (question.optionType) {
             case 'multipleChoice':
+            case 'checkbox':
                 return question.options.map((option, index) => (
                     <div key={index}>
                         <input
-                            type="radio"
+                            type={question.optionType === 'multipleChoice' ? 'radio' : 'checkbox'}
                             id={`option_${index}`}
-                            name="radioGroup"
+                            name={question.optionType === 'multipleChoice' ? 'radioGroup' : `checkbox_${index}`}
                             value={option.text}
                             onChange={handleAnswerChange}
                             checked={currentAnswer === option.text}
-                        />
-                        <label htmlFor={`option_${index}`}>{option.text}</label>
-                    </div>
-                ));
-            case 'checkbox':
-                // Assuming currentAnswer is an object with boolean values for each checkbox
-                return question.options.map((option, index) => (
-                    <div key={index}>
-                        <input
-                            type="checkbox"
-                            id={`option_${index}`}
-                            name={`checkbox_${index}`}
-                            value={option.text}
-                            onChange={handleAnswerChange}
-                            checked={currentAnswer[option.text] || false}
+                            className="form-check-input"
                         />
                         <label htmlFor={`option_${index}`}>{option.text}</label>
                     </div>
@@ -88,6 +97,8 @@ const Questions = () => {
             case 'dropdown':
                 return (
                     <select
+                        className="form-select" 
+                        aria-label="Small select example" 
                         onChange={handleAnswerChange}
                         value={currentAnswer}
                     >
@@ -96,36 +107,48 @@ const Questions = () => {
                         ))}
                     </select>
                 );
-            case 'linearScale':
-                return (
-                    <div>
-                        <label>{question.linearScale[0].label}</label>
-                        {[...Array(question.linearScale[1].scale - question.linearScale[0].scale + 1)].map((_, index) => (
-                            <label key={index}>
-                                <input
-                                    type="radio"
-                                    name="linearScale"
-                                    value={question.linearScale[0].scale + index}
-                                    onChange={handleAnswerChange}
-                                    checked={currentAnswer === `${question.linearScale[0].scale + index}`}
-                                />
-                                {question.linearScale[0].scale + index}
+                case 'linearScale':
+                    const scaleStart = question.linearScale[0].scale;
+                    const scaleEnd = question.linearScale[1].scale;
+                    const startLabel = question.linearScale[0].label;
+                    const endLabel = question.linearScale[1].label;
+                    
+                    // Create an array of values from scaleStart to scaleEnd
+                    const scaleValues = Array.from({ length: scaleEnd - scaleStart + 1 }, (_, i) => scaleStart + i);
+                    
+                    return (
+                        <div className="custom-linear-scale">
+                        {/* Render the start label if it exists */}
+                        {startLabel && <div className="custom-scale-label">{startLabel}</div>}
+                        
+                        {/* Map over the scale values and render radio buttons */}
+                        {scaleValues.map((value, index) => (
+                            <label key={index} className="custom-scale-option">
+                            <input
+                                type="radio"
+                                name="linearScale"
+                                value={value}
+                                onChange={handleAnswerChange}
+                                checked={currentAnswer === String(value)}
+                                className="custom-form-check-input"
+                            />
+                            <span className="custom-scale-option-value">{value}</span>
                             </label>
                         ))}
-                        <label>{question.linearScale[1].label}</label>
-                    </div>
-                );
+                    
+                        {/* Render the end label if it exists */}
+                        {endLabel && <div className="custom-scale-label">{endLabel}</div>}
+                        </div>
+                    );                  
             case 'multipleChoiceGrid':
             case 'checkboxGrid':
-                // Logic for rendering grid options will be more complex and may involve a nested map
-                // For simplicity, the example shows a basic structure
                 return (
                     <table>
                         <thead>
                             <tr>
                                 <th></th>
                                 {question.grid.columns.map((col, colIndex) => (
-                                    <th key={colIndex}>{col.text}</th>
+                                    <th key={colIndex} className="table-header-non-bold">{col.text}</th>
                                 ))}
                             </tr>
                         </thead>
@@ -141,6 +164,7 @@ const Questions = () => {
                                                 value={`${rowIndex}-${colIndex}`}
                                                 onChange={(e) => handleAnswerChange(e, colIndex, rowIndex)}
                                                 checked={currentAnswer === `${rowIndex}-${colIndex}`}
+                                                className="form-check-input"
                                             />
                                         </td>
                                     ))}
@@ -155,14 +179,27 @@ const Questions = () => {
     };
 
     return (
-        <div>
-            <div>
+        <div className="survey-questions-container">
+            <div className="survey-questions-card">
                 <h4>{currentQuestion.question}</h4>
-                {renderOptions(currentQuestion)}
+                <div className="options-container">
+                    {renderOptions(currentQuestion)}
+                </div>
             </div>
-            <footer>
-                <div>Question {currentQuestionIndex + 1} of {questions.length}</div>
-                <button onClick={handleNextQuestion} disabled={!canProceed}>Next</button>
+            <div className="survey-questions-progress-bar-container">
+                <div className="survey-questions-progress-bar">
+                    <div className="survey-questions-progress-bar-fill" style={{ width: `${(currentQuestionIndex + 1) / questions.length * 100}%` }}></div>
+                </div>
+            </div>
+            <footer className="survey-questions-footer">
+                <div className="survey-questions-navigation-buttons">
+                    {currentQuestionIndex > 0 && (
+                        <button className="survey-questions-button" onClick={handlePreviousQuestion}>Back</button>
+                    )}
+                    {currentQuestionIndex < questions.length - 1 && (
+                        <button className="survey-questions-button" onClick={handleNextQuestion} disabled={!canProceed}>Next</button>
+                    )}
+                </div>
             </footer>
         </div>
     );

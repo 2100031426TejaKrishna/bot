@@ -6,7 +6,7 @@ const Questions = mongoose.model('questions');
 
 const fetchQuestions = async () => {
     try {
-        const questions = await Questions.find({}).sort({ _id: 1 });
+        const questions = await Questions.find({ firstQuestion: true });
         console.log(questions);
         return questions;
     } catch (error) {

@@ -163,7 +163,8 @@
                                                 name={question.question} 
                                                 value={option.text} 
                                                 defaultChecked={option.isCorrect}
-                                                disabled={true}  
+                                                disabled={true} 
+                                                className="form-check-input"
                                             />
                                             {option.text}
                                             {option.nextQuestionTitle && <span className="next-question-title"> Next Question: {option.nextQuestionTitle}</span>}
@@ -182,6 +183,7 @@
                                             value={option.text} 
                                             defaultChecked={option.isCorrect}
                                             disabled={true}  
+                                            className="form-check-input"
                                         />
                                         {option.text}
                                         {option.nextQuestionTitle && <span className="next-question-title"> Next Question: {option.nextQuestionTitle}</span>}
@@ -212,7 +214,7 @@
                                         Array.from({ length: question.linearScale[1].scale - question.linearScale[0].scale + 1 }).map((_, index) => (
                                             <label key={index} className="scale-option-horizontal">
                                                 {index + question.linearScale[0].scale}
-                                                <input type="radio" name={`linearScale-${question._id}`} value={index + question.linearScale[0].scale} disabled />
+                                                <input type="radio" name={`linearScale-${question._id}`} value={index + question.linearScale[0].scale} disabled className="form-check-input" />
                                             </label>
                                         ))
                                     }
@@ -246,6 +248,7 @@
                                                             value={`${row.text}-${column.text}`}
                                                             checked={isCorrect}
                                                             disabled={true}  
+                                                            className="form-check-input"
                                                         />
                                                     </td>
                                                 );
@@ -281,6 +284,7 @@
                                                             value={`${row.text}-${column.text}`}
                                                             checked={isCorrect}
                                                             disabled={true}  
+                                                            className="form-check-input"
                                                         />
                                                     </td>
                                                 )
