@@ -1,54 +1,50 @@
-
 const express = require('express');
 const mongoose = require('mongoose');
 const Questions = mongoose.model('questions');
 const router = express.Router();
 
-const fetchDataFromMongoDB = async (req, res, next) => {
-  try {
-    // Check if req.params is defined and contains 'id' property
-    const id = req.params && req.params.id;
-    if (!id) {
-      throw new Error('Invalid request, missing parameter: id');
+
+// Fetch the first question
+const fetchFirstQuestion = async () => {
+    try {
+        const question = await Questions.findOne({ firstQuestion: true });
+        return question;
+    } catch (error) {
+        console.error("Error fetching the first question:", error);
+        throw error;
     }
-
-    const data = await Questions.findOne({ _id: id }).lean().exec();
-
-    // Attach the fetched data to the request object for later use
-    req.fetchedData = data;
-
-    next(); // Call the next middleware or route handler
-  } catch (error) {
-    console.error('Error fetching data from MongoDB:', error);
-    res.status(500).send("Internal Server Error");
-  }
 };
 
-router.get('/question/:id', fetchDataFromMongoDB, async (req, res) => {
-  try {
-    const question = await Questions.findById(req.params.id);
-    if (!question) {
-      return res.status(404).send("Question not found");
+// Fetch the next question by ID
+const fetchNextQuestion = async (nextQuestionId) => {
+    try {
+        const question = await Questions.findById(nextQuestionId);
+        return question;
+    } catch (error) {
+        console.error("Error fetching the next question:", error);
+        throw error;
     }
-    res.json({ ...question._doc, additionalData: req.fetchedData });
+};
+
+// Endpoint to get the first question
+router.get('/firstQuestion', async (req, res) => {
+  try {
+      const question = await fetchFirstQuestion();
+      res.json(question);
   } catch (error) {
-    console.error("Error fetching specific question:", error);
-    res.status(500).send("Internal Server Error");
+      res.status(500).send("Unable to fetch the first question");
   }
 });
 
-router.get('/api/findRootQuestion', async (req, res) => {
-  try {
-    // Find the root question based on your data model
-    const rootQuestion = await Questions.findOne({ isRoot: true });
-    if (!rootQuestion) {
-      return res.status(404).json({ message: 'Root question not found' });
+// Endpoint to get the next question
+router.get('/nextQuestion/:id', async (req, res) => {
+    try {
+        const question = await fetchNextQuestion(req.params.id);
+        res.json(question);
+    } catch (error) {
+        res.status(500).send("Unable to fetch the next question");
     }
-    res.json(rootQuestion);
-  } catch (error) {
-    console.error('Error finding root question:', error);
-    res.status(500).json({ message: 'Internal Server Error' });
-  }
 });
 
-module.exports = { router, fetchDataFromMongoDB };
+module.exports = { router};
+// -------------------------------------this is the base line-------------------------------------------- ----- -----
