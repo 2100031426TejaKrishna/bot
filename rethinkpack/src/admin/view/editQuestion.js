@@ -3,9 +3,6 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
 import Modal from 'react-bootstrap/Modal';
 
-// debug
-console.log (`24/01/24 17:46`);
-
 // const destination = "localhost:5000";
 const destination = "rtp.dusky.bond:5000";
 
@@ -22,7 +19,6 @@ class EditQuestion extends Component {
       selectedOption: 'multipleChoice',
       options: [{ label: 'Option 1', value: 'Option 1', isCorrect: false }],
       gridOptions: { row: [{ label: 'Row 1', value: 'Row 1' }], column: [{ label: 'Column 1', value: 'Column 1' }], answers: [] },
-      fetchedGridOptions: { row: [{ label: 'Row 1', value: 'Row 1' }], column: [{ label: 'Column 1', value: 'Column 1' }], answers: [] },
       showCountry: false,
       countries: [
         "Afghanistan", "Albania", "Algeria", "Andorra", "Angola",
@@ -75,6 +71,7 @@ class EditQuestion extends Component {
         questionType: '',
         question: '',
         optionType: '',
+        grid: '',
         options: '',
         marks: '',
         country: '',
@@ -143,13 +140,9 @@ class EditQuestion extends Component {
           showModal: true, 
           questionList: data,
           selectedOption: data.optionType,
-          // fetchedGridOptions: data.grid,
           gridOptions: data.grid,
           isLeadingQuestion: (data.marks) ? false : true
-        },
-        // DEBUG ----------------------------------------------------
-        () => {console.log(`fetchedGridOptions: ${JSON.stringify(this.state.fetchedGridOptions)}`)}
-        )
+        })
       }
     } catch (error) {
       console.error('Error fetching questions:', error);
@@ -278,9 +271,9 @@ class EditQuestion extends Component {
     this.setState(prevState => ({
       gridOptions: {
         ...prevState.gridOptions,
-        row: [
+        rows: [
           ...prevState.gridOptions.rows,
-          { label: `Row ${prevState.gridOptions.rows.length + 1}`, value: `Row ${prevState.gridOptions.rows.length + 1}` }
+          { text: ``, value: `Row ${prevState.gridOptions.rows.length + 1}` }
         ]
       }
     }));
@@ -293,9 +286,9 @@ class EditQuestion extends Component {
       return {
         gridOptions: {
           ...prevState.gridOptions,
-          column: [
+          columns: [
             ...prevState.gridOptions.columns,
-            { label: `Column ${prevState.gridOptions.columns.length + 1}`, value: `Column ${prevState.gridOptions.columns.length + 1}` }
+            { text: ``, value: `Column ${prevState.gridOptions.columns.length + 1}` }
           ]
         }
       };
@@ -306,7 +299,7 @@ class EditQuestion extends Component {
     this.setState(prevState => ({
       gridOptions: {
         ...prevState.gridOptions,
-        row: prevState.gridOptions.rows.filter((_, idx) => idx !== index)
+        rows: prevState.gridOptions.rows.filter((_, idx) => idx !== index)
       }
     }));
   };
@@ -315,7 +308,7 @@ class EditQuestion extends Component {
     this.setState(prevState => ({
       gridOptions: {
         ...prevState.gridOptions,
-        column: prevState.gridOptions.columns.filter((_, idx) => idx !== index)
+        columns: prevState.gridOptions.columns.filter((_, idx) => idx !== index)
       }
     }));
   };
@@ -358,14 +351,14 @@ class EditQuestion extends Component {
     this.setState(prevState => {
       const updatedRow = prevState.gridOptions.rows.map((option, i) => {
         if (i === index) {
-          return { ...option, label: newValue, value: newValue };
+          return { ...option, text: newValue, value: newValue };
         }
         return option;
       });
       return {
         gridOptions: {
           ...prevState.gridOptions,
-          row: updatedRow
+          rows: updatedRow
         }
       };
     });
@@ -376,14 +369,14 @@ class EditQuestion extends Component {
     this.setState(prevState => {
       const updatedColumn = prevState.gridOptions.columns.map((option, i) => {
         if (i === index) {
-          return { ...option, label: newValue, value: newValue };
+          return { ...option, text: newValue, value: newValue };
         }
         return option;
       });
       return {
         gridOptions: {
           ...prevState.gridOptions,
-          column: updatedColumn
+          columns: updatedColumn
         }
       };
     });
@@ -422,7 +415,7 @@ class EditQuestion extends Component {
 
 //------------------ OPTIONS ----------------------------------  
   renderOptionsArea = () => {
-    const { selectedOption, options, gridOptions, fetchedGridOptions, requireResponse, isLeadingQuestion, questionList, allQuestions } = this.state;
+    const { options, gridOptions, requireResponse, isLeadingQuestion, questionList, allQuestions, validationErrors } = this.state;
     const clearSelections = (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -744,9 +737,15 @@ class EditQuestion extends Component {
       case 'multipleChoiceGrid':
       case 'checkboxGrid':
         const isSingleRow = gridOptions.rows.length === 1;
+        
         return (
           <>
             <div className="scrollable-table-container">
+            {validationErrors.grid && (
+                  <div style={{ color: 'red', fontSize: 12 }}>
+                    {validationErrors.grid}
+                  </div>
+                )}
               <table>
                 <thead>
                   <tr>
@@ -759,6 +758,7 @@ class EditQuestion extends Component {
                               className="form-control"
                               value={col.text}
                               onChange={(e) => this.handleColumnChange(colIndex, e)}
+                              placeholder={`Column ${colIndex + 1}`}
                           />
                           {gridOptions.columns.length > 1 && (
                             <div className="delete-column-btn">
@@ -786,6 +786,7 @@ class EditQuestion extends Component {
                           className="form-control"
                           value={row.text}
                           onChange={(e) => this.handleRowChange(rowIndex, e)}
+                          placeholder={`Row ${rowIndex + 1}`}
                         />
                       </td>
                       {gridOptions.columns.map((_, colIndex) => {
@@ -793,7 +794,7 @@ class EditQuestion extends Component {
                         return (
                           <td key={colIndex}>
                             <input
-                              type={selectedOption === 'multipleChoiceGrid' ? 'radio' : 'checkbox'}
+                              type={questionList.optionType === 'multipleChoiceGrid' ? 'radio' : 'checkbox'}
                               className="form-check-input"
                               name={`row-${rowIndex}`}
                               checked={isCorrect}
@@ -889,6 +890,52 @@ class EditQuestion extends Component {
     }));
   }
 
+  toggleGridAnswer = (rowIndex, colIndex) => {
+    const { questionList, gridOptions } = this.state;
+    let newAnswers = [...gridOptions.answers];
+  
+    if (questionList.optionType === 'multipleChoiceGrid') {
+
+      const rowAnswers = newAnswers.filter(answer => answer.rowIndex !== rowIndex);
+      newAnswers = [...rowAnswers, { rowIndex, columnIndex: colIndex, isCorrect: true }];
+
+      // TRIAL
+      // Can only have one answer in each row
+      // let countRowIsCorrect = 0;
+      // for (let i=0; gridOptions.answers.length; i++) {
+      //   if (gridOptions.answers[i].isCorrect === true) {
+      //     countRowIsCorrect++;
+      //     console.log(`countRowIsCorrect: ${countRowIsCorrect}`)
+      //   } else {
+      //     console.log(`countRowIsCorrect: never counted`)
+      //   }
+      // }
+
+      // if(countRowIsCorrect > 1){
+      //   newAnswers = [];
+      // } else {
+      //   const rowAnswers = newAnswers.filter(answer => answer.rowIndex !== rowIndex);
+      //   newAnswers = [...rowAnswers, { rowIndex, columnIndex: colIndex, isCorrect: true }];
+      // }
+      //
+
+    } else if (questionList.optionType === 'checkboxGrid') {
+      const answerIndex = newAnswers.findIndex(answer => answer.rowIndex === rowIndex && answer.columnIndex === colIndex);
+      if (answerIndex > -1) {
+        newAnswers[answerIndex].isCorrect = !newAnswers[answerIndex].isCorrect;
+      } else {
+        newAnswers.push({ rowIndex, columnIndex: colIndex, isCorrect: true });
+      }
+    }
+  
+    this.setState({ gridOptions: { ...gridOptions, answers: newAnswers } },
+      () => {
+        // debug
+        console.log(`answers: ${JSON.stringify(this.state.gridOptions.answers)}`)
+      }
+    );
+  };
+
   toggleCorrectAnswer = (index) => {
     const { questionList } = this.state;
   
@@ -967,6 +1014,29 @@ class EditQuestion extends Component {
     }
     return questionList.options.length >= 2;
   };
+
+  validateGrid = () => {
+    const { gridOptions } = this.state;
+    // Check a label has been assigned for each row
+    for (let i=0; i<gridOptions.rows.length; i++) {
+      if (gridOptions.rows[i].text === '') {
+        return false
+      }
+    }
+    // Check a label has been assigned for each column
+    for (let i=0; i<gridOptions.columns.length; i++) {
+      if (gridOptions.columns[i].text === '') {
+        return false
+      }
+    }
+
+    // Check a minimum of one answer has been specified
+    if (gridOptions.answers.length < 1) {
+      return false
+    }
+
+    return true;
+  };
   
   validateMarks = () => {
     const { questionList, isLeadingQuestion } = this.state;
@@ -1013,12 +1083,16 @@ class EditQuestion extends Component {
     const isMarksValid = this.validateMarks();
     const isCountriesValid = this.validateCountries();
     const isExplanationValid = this.validateExplanation();
+    //
+    const isGridValid = this.validateGrid();
+
 
     this.setState({
       validationErrors: {
         questionType: isQuestionTypeValid ? '' : 'Select one question type',
         question: isQuestionValid ? '' : 'Enter the question',
         optionType: isOptionTypeValid ? '' : 'Select an option type',
+        grid: isGridValid ? '' : 'Complete all grid data entry',
         options: isOptionsValid ? '' : 'Add at least two options for this question',
         marks: isMarksValid ? '' : 'Enter the marks (an integer value) for this question',
         country: isCountriesValid ? '' : 'Select at least one country',
@@ -1026,7 +1100,16 @@ class EditQuestion extends Component {
       },
     });
 
-    if (!isQuestionTypeValid || !isQuestionValid || !isOptionTypeValid || !isOptionsValid || !isMarksValid || !isCountriesValid || !isExplanationValid) {
+    if (
+      !isQuestionTypeValid || 
+      !isQuestionValid || 
+      !isOptionTypeValid || 
+      !isGridValid || 
+      !isOptionsValid || 
+      !isMarksValid || 
+      !isCountriesValid || 
+      !isExplanationValid
+    ) {
       return;
     }
 
@@ -1047,6 +1130,7 @@ class EditQuestion extends Component {
       question: this.state.questionList.question,
       optionType: this.state.questionList.optionType,
       options: this.state.questionList.options,
+      grid: this.state.gridOptions,
       linearScale: this.state.questionList.linearScale,
       marks: isLeadingQuestion ? undefined : parseFloat(this.state.questionList.marks),
       countries: showCountry ? selectedCountries : undefined,
@@ -1082,8 +1166,9 @@ class EditQuestion extends Component {
 
     if (questionList.optionType === 'multipleChoiceGrid' || questionList.optionType === 'checkboxGrid') {
       dataToUpdate.grid = {
-        rows: gridOptions.rows.map(row => ({ text: row.label })),
-        columns: gridOptions.columns.map(column => ({ text: column.label, isCorrect: column.isCorrect || false }))
+        rows: gridOptions.rows.map(rows => ({ text: rows.text })),
+        columns: gridOptions.columns.map(columns => ({ text: columns.text })),
+        answers: gridOptions.answers.filter(answer => answer.isCorrect)
       };
     }
     
