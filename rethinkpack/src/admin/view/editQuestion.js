@@ -3,8 +3,8 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
 import Modal from 'react-bootstrap/Modal';
 
-const destination = "localhost:5000";
-// const destination = "rtp.dusky.bond:5000";
+// const destination = "localhost:5000";
+const destination = "rtp.dusky.bond:5000";
 
 class EditQuestion extends Component {
   constructor(props) {
@@ -87,7 +87,7 @@ class EditQuestion extends Component {
         questionType: '',
         optionType: 'multipleChoice',
         options: [{ label: 'Option 1', value: 'Option 1', isCorrect: false, optionsNextQuestion: null }],
-        linearScale: [ { scale: '', label: '' } ],
+        linearScale: [ { scale: 1, label: '' }, { scale: 4, label: '' },  ],
         marks: '',
         firstQuestion: false,
         nextQuestion: null
@@ -210,8 +210,17 @@ class EditQuestion extends Component {
 
   handleQuestionOptionType = (e) => {
     this.setState( (prevState) => ({
-      questionList: { ...prevState.questionList, optionType: e.target.value }
-    }))
+      questionList: { ...prevState.questionList, 
+        optionType: e.target.value,
+        // RESUME HERE FIX SETTING questionList.linearScale
+      }
+    }),
+    ( () => {
+      console.log(`optionType: ${this.state.questionList.optionType}`);
+      console.log(`linearScale: ${JSON.stringify(this.state.questionList.linearScale)}`)
+    }
+    )
+    )
   }
 
   handleQuestionMarks = (e) => {
@@ -413,6 +422,33 @@ class EditQuestion extends Component {
     }}) 
   };
 
+  clearGridSelections = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    this.setState(prevState => ({
+      gridOptions: {
+        ...prevState.gridOptions,
+        answers: []
+      }
+    }));
+  };
+
+  safeCheckMultipleChoiceGrid() {
+    const { gridOptions } = this.state;
+    // For radio type, there is only one selection possible for each row
+    // hence number of answers cannot be larger than the number of rows
+    if (gridOptions.answers.length > gridOptions.rows.length){
+      console.log(`safeCheckMultipleChoiceGrid`)
+      this.setState(prevState => ({
+        gridOptions: {
+          ...prevState.gridOptions,
+          answers: []
+        }
+      }));
+    }
+  };
+  
+
 //------------------ OPTIONS ----------------------------------  
   renderOptionsArea = () => {
     const { options, gridOptions, requireResponse, isLeadingQuestion, questionList, allQuestions, validationErrors } = this.state;
@@ -441,19 +477,12 @@ class EditQuestion extends Component {
       }})
     };
 
-    const clearGridSelections = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const clearedGridOptions = {
-        ...gridOptions,
-        column: gridOptions.columns.map((col) => ({
-          ...col,
-          isCorrect: false,
-        })),
-      };
-      this.setState({ gridOptions: clearedGridOptions });
-    };  
-  
+    // try here
+    // Check when changing from a populated checkboxGrid to multipleChoiceGrid
+    if (questionList.optionType === 'multipleChoiceGrid') {
+      this.safeCheckMultipleChoiceGrid();
+    };
+
     // Loading of Options
     switch (questionList.optionType) {
 //----------------------------- multiple choice ----------------------------
@@ -736,6 +765,7 @@ class EditQuestion extends Component {
       // paste below here
       case 'multipleChoiceGrid':
       case 'checkboxGrid':
+     
         const isSingleRow = gridOptions.rows.length === 1;
         
         return (
@@ -892,50 +922,41 @@ class EditQuestion extends Component {
 
   toggleGridAnswer = (rowIndex, colIndex) => {
     const { questionList, gridOptions } = this.state;
-    let newAnswers = [...gridOptions.answers];
   
-    if (questionList.optionType === 'multipleChoiceGrid') {
-
-      const rowAnswers = newAnswers.filter(answer => answer.rowIndex !== rowIndex);
-      newAnswers = [...rowAnswers, { rowIndex, columnIndex: colIndex, isCorrect: true }];
-
-      // TRIAL
-      // Can only have one answer in each row
-      // let countRowIsCorrect = 0;
-      // for (let i=0; gridOptions.answers.length; i++) {
-      //   if (gridOptions.answers[i].isCorrect === true) {
-      //     countRowIsCorrect++;
-      //     console.log(`countRowIsCorrect: ${countRowIsCorrect}`)
-      //   } else {
-      //     console.log(`countRowIsCorrect: never counted`)
-      //   }
-      // }
-
-      // if(countRowIsCorrect > 1){
-      //   newAnswers = [];
-      // } else {
-      //   const rowAnswers = newAnswers.filter(answer => answer.rowIndex !== rowIndex);
-      //   newAnswers = [...rowAnswers, { rowIndex, columnIndex: colIndex, isCorrect: true }];
-      // }
-      //
-
-    } else if (questionList.optionType === 'checkboxGrid') {
-      const answerIndex = newAnswers.findIndex(answer => answer.rowIndex === rowIndex && answer.columnIndex === colIndex);
+    if (questionList.optionType === 'checkboxGrid') {
+      const answerIndex = gridOptions.answers.findIndex(
+        (answer) => answer.rowIndex === rowIndex && answer.columnIndex === colIndex
+      );
+    
+      // If answer exists, delete it
       if (answerIndex > -1) {
-        newAnswers[answerIndex].isCorrect = !newAnswers[answerIndex].isCorrect;
+        gridOptions.answers.splice(answerIndex, 1);
       } else {
-        newAnswers.push({ rowIndex, columnIndex: colIndex, isCorrect: true });
+        // If answer doesn't exist, add it
+        gridOptions.answers.push({ rowIndex, columnIndex: colIndex, isCorrect: true });
       }
-    }
+    
+      this.setState({ gridOptions }, () => {
+        console.log(`answers: ${JSON.stringify(this.state.gridOptions.answers)}`);
+      });
+    } else if (questionList.optionType === 'multipleChoiceGrid') {
+      // Find any existing answer for the same row and remove it
+      const answerIndex = gridOptions.answers.findIndex(
+        (answer) => answer.rowIndex === rowIndex
+      );
+      if (answerIndex > -1) {
+        gridOptions.answers.splice(answerIndex, 1);
+      }
   
-    this.setState({ gridOptions: { ...gridOptions, answers: newAnswers } },
-      () => {
-        // debug
-        console.log(`answers: ${JSON.stringify(this.state.gridOptions.answers)}`)
-      }
-    );
+      // Add the new answer with isCorrect set to true
+      gridOptions.answers.push({ rowIndex, columnIndex: colIndex, isCorrect: true });
+  
+      this.setState({ gridOptions }, () => {
+        console.log(`answers: ${JSON.stringify(this.state.gridOptions.answers)}`);
+      });
+    }
   };
-
+ 
   toggleCorrectAnswer = (index) => {
     const { questionList } = this.state;
   
