@@ -3,8 +3,8 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
 import Modal from 'react-bootstrap/Modal';
 
-// const destination = "localhost:5000";
-const destination = "rtp.dusky.bond:5000";
+const destination = "localhost:5000";
+// const destination = "rtp.dusky.bond:5000";
 
 class EditQuestion extends Component {
   constructor(props) {
@@ -1016,25 +1016,27 @@ class EditQuestion extends Component {
   };
 
   validateGrid = () => {
-    const { gridOptions } = this.state;
-    // Check a label has been assigned for each row
-    for (let i=0; i<gridOptions.rows.length; i++) {
-      if (gridOptions.rows[i].text === '') {
+    
+    const { questionList, gridOptions } = this.state;
+
+    if (questionList.optionType === 'multipleChoiceGrid' || questionList.optionType === 'checkboxGrid') {
+        // Check a label has been assigned for each row
+      for (let i=0; i<gridOptions.rows.length; i++) {
+        if (gridOptions.rows[i].text === '') {
+          return false
+        }
+      }
+      // Check a label has been assigned for each column
+      for (let i=0; i<gridOptions.columns.length; i++) {
+        if (gridOptions.columns[i].text === '') {
+          return false
+        }
+      }
+      // Check a minimum of one answer has been specified
+      if (gridOptions.answers.length < 1) {
         return false
       }
     }
-    // Check a label has been assigned for each column
-    for (let i=0; i<gridOptions.columns.length; i++) {
-      if (gridOptions.columns[i].text === '') {
-        return false
-      }
-    }
-
-    // Check a minimum of one answer has been specified
-    if (gridOptions.answers.length < 1) {
-      return false
-    }
-
     return true;
   };
   
