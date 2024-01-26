@@ -5,8 +5,11 @@ const Questions = () => {
     const [questions, setQuestions] = useState([]);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [currentAnswer, setCurrentAnswer] = useState('');
+    const [selectedOptions, setSelectedOptions] = useState([]);
+    const [gridAnswers, setGridAnswers] = useState({});
     const [canProceed, setCanProceed] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+
     // const destination = "localhost:5000";
     const destination = "rtp.dusky.bond:5000";
 
@@ -28,42 +31,93 @@ const Questions = () => {
         fetchQuestions();
     }, []);
     
-    const handleAnswerChange = (event, optionIndex, rowIndex, colIndex) => {
-        // Logic to handle different types of answer changes
-        // For grid options, you might want to store an array or object
-        // For simplicity, this example assumes an answer is a simple string or boolean
-        setCurrentAnswer(event.target.value);
-        // Set canProceed based on the validity of the answer
-        setCanProceed(event.target.value.trim() !== '');
+    const handleAnswerChange = (event, optionType) => {
+        if (optionType === 'checkbox') {
+            const updatedOptions = event.target.checked
+                ? [...selectedOptions, event.target.value]
+                : selectedOptions.filter(option => option !== event.target.value);
+            setSelectedOptions(updatedOptions);
+            setCanProceed(updatedOptions.length > 0);
+        } else {
+            setCurrentAnswer(event.target.value);
+            setCanProceed(event.target.value.trim() !== '');
+        }
+    };
+
+    const handleGridAnswerChange = (rowIndex, colIndex, optionType) => {
+        setGridAnswers((prevGridAnswers) => {
+            const newGridAnswers = { ...prevGridAnswers };
+
+            if (optionType === 'checkboxGrid') {
+                newGridAnswers[rowIndex] = newGridAnswers[rowIndex] || [];
+                if (newGridAnswers[rowIndex].includes(colIndex)) {
+                    newGridAnswers[rowIndex] = newGridAnswers[rowIndex].filter(
+                        (item) => item !== colIndex
+                    );
+                } else {
+                    newGridAnswers[rowIndex].push(colIndex);
+                }
+            } else {
+                newGridAnswers[rowIndex] = [colIndex];
+            }
+
+            const isValid = validateGridAnswers();
+            setCanProceed(isValid);
+
+            return newGridAnswers;
+        });
     };
 
     const handleNextQuestion = () => {
-        if (canProceed) {
-            // Check if it's not the last question before incrementing
-            if (currentQuestionIndex < questions.length - 1) {
-                setCurrentQuestionIndex(currentQuestionIndex + 1);
-                // Reset the answer for the next question
-                setCurrentAnswer('');
-                // Reset the canProceed for the next question
-                setCanProceed(false);
+        if (currentQuestion.requireResponse) {
+            if (currentQuestion.optionType === 'multipleChoice' || currentQuestion.optionType === 'checkbox' || currentQuestion.optionType === 'dropdown' || currentQuestion.optionType === 'linear') {
+                if (currentAnswer.trim() !== '') {
+                    if (currentQuestionIndex < questions.length - 1) {
+                        setCurrentQuestionIndex(currentQuestionIndex + 1);
+                        setCurrentAnswer('');
+                    }
+                } else {
+                    alert('Please select an answer.');
+                }
+            } else if (currentQuestion.optionType === 'multipleChoiceGrid' || currentQuestion.optionType === 'checkboxGrid') {
+                if (validateGridAnswers()) {
+                    if (currentQuestionIndex < questions.length - 1) {
+                        setCurrentQuestionIndex(currentQuestionIndex + 1);
+                        setCurrentAnswer('');
+                    }
+                } else {
+                    alert('Please select an answer for each row.');
+                }
             }
         } else {
-            alert('Please answer the current question before proceeding.');
+            if (currentQuestionIndex < questions.length - 1) {
+                setCurrentQuestionIndex(currentQuestionIndex + 1);
+                setCurrentAnswer('');
+            }
         }
     };
     
+
+    const validateGridAnswers = () => {
+        if (currentQuestion.optionType === 'multipleChoiceGrid' || currentQuestion.optionType === 'checkboxGrid') {
+            if (currentQuestion.requireResponse) {
+                return Object.values(gridAnswers).every(selections => selections.length > 0);
+            }
+        }
+        return true;
+    };
+    
     const handlePreviousQuestion = () => {
-        // Check if it's not the first question before decrementing
         if (currentQuestionIndex > 0) {
             setCurrentQuestionIndex(currentQuestionIndex - 1);
-            // Reset the answer for the previous question (if needed)
             setCurrentAnswer('');
-            // Ideally, you would also restore the previous answer here
-            // For simplicity, we're just allowing to go back
-            setCanProceed(true); // Assuming you can always go back
+            setCanProceed(true); 
         }
     };
 
+    const handleClearSelection = () => {
+        setCurrentAnswer('');
+    };
 
     if (isLoading) {
         return <div>Loading questions...</div>;
@@ -76,19 +130,30 @@ const Questions = () => {
     const currentQuestion = questions[currentQuestionIndex];
 
     const renderOptions = (question) => {
-        console.log(question);
         switch (question.optionType) {
             case 'multipleChoice':
+                return question.options.map((option, index) => (
+                    <div key={index}>
+                        <input
+                            type="radio"
+                            id={`option_${index}`}
+                            value={option.text}
+                            onChange={handleAnswerChange}
+                            checked={currentAnswer === option.text}
+                            className="form-check-input"
+                        />
+                        <label htmlFor={`option_${index}`}>{option.text}</label>
+                    </div>
+                ));
             case 'checkbox':
                 return question.options.map((option, index) => (
                     <div key={index}>
                         <input
-                            type={question.optionType === 'multipleChoice' ? 'radio' : 'checkbox'}
+                            type="checkbox"
                             id={`option_${index}`}
-                            name={question.optionType === 'multipleChoice' ? 'radioGroup' : `checkbox_${index}`}
                             value={option.text}
-                            onChange={handleAnswerChange}
-                            checked={currentAnswer === option.text}
+                            onChange={(e) => handleAnswerChange(e, 'checkbox')}
+                            checked={selectedOptions.includes(option.text)}
                             className="form-check-input"
                         />
                         <label htmlFor={`option_${index}`}>{option.text}</label>
@@ -107,39 +172,33 @@ const Questions = () => {
                         ))}
                     </select>
                 );
-                case 'linearScale':
+                case 'linear':
                     const scaleStart = question.linearScale[0].scale;
                     const scaleEnd = question.linearScale[1].scale;
                     const startLabel = question.linearScale[0].label;
                     const endLabel = question.linearScale[1].label;
                     
-                    // Create an array of values from scaleStart to scaleEnd
                     const scaleValues = Array.from({ length: scaleEnd - scaleStart + 1 }, (_, i) => scaleStart + i);
                     
                     return (
                         <div className="custom-linear-scale">
-                        {/* Render the start label if it exists */}
-                        {startLabel && <div className="custom-scale-label">{startLabel}</div>}
-                        
-                        {/* Map over the scale values and render radio buttons */}
-                        {scaleValues.map((value, index) => (
-                            <label key={index} className="custom-scale-option">
-                            <input
-                                type="radio"
-                                name="linearScale"
-                                value={value}
-                                onChange={handleAnswerChange}
-                                checked={currentAnswer === String(value)}
-                                className="custom-form-check-input"
-                            />
-                            <span className="custom-scale-option-value">{value}</span>
-                            </label>
-                        ))}
-                    
-                        {/* Render the end label if it exists */}
-                        {endLabel && <div className="custom-scale-label">{endLabel}</div>}
+                            {startLabel && <div className="custom-scale-label">{startLabel}</div>}
+                            {scaleValues.map((value, index) => (
+                                <div key={index} className="custom-scale-option">
+                                    <span className="custom-scale-option-value">{value}</span>
+                                    <input
+                                        type="radio"
+                                        name="linearScale"
+                                        value={value}
+                                        onChange={handleAnswerChange}
+                                        checked={currentAnswer === String(value)}
+                                        className="form-check-input"
+                                    />
+                                </div>
+                            ))}
+                            {endLabel && <div className="custom-scale-label">{endLabel}</div>}
                         </div>
-                    );                  
+                    );
             case 'multipleChoiceGrid':
             case 'checkboxGrid':
                 return (
@@ -162,8 +221,8 @@ const Questions = () => {
                                                 type={question.optionType === 'multipleChoiceGrid' ? 'radio' : 'checkbox'}
                                                 name={question.optionType === 'multipleChoiceGrid' ? `row_${rowIndex}` : `row_${rowIndex}_col_${colIndex}`}
                                                 value={`${rowIndex}-${colIndex}`}
-                                                onChange={(e) => handleAnswerChange(e, colIndex, rowIndex)}
-                                                checked={currentAnswer === `${rowIndex}-${colIndex}`}
+                                                onChange={() => handleGridAnswerChange(rowIndex, colIndex, question.optionType)}
+                                                checked={gridAnswers[rowIndex]?.includes(colIndex)}
                                                 className="form-check-input"
                                             />
                                         </td>
@@ -192,6 +251,7 @@ const Questions = () => {
                 </div>
             </div>
             <footer className="survey-questions-footer">
+                <button className="survey-questions-button text-button" onClick={handleClearSelection}>Clear</button>
                 <div className="survey-questions-navigation-buttons">
                     {currentQuestionIndex > 0 && (
                         <button className="survey-questions-button" onClick={handlePreviousQuestion}>Back</button>

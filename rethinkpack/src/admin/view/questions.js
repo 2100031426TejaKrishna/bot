@@ -210,14 +210,18 @@
                             <div className="linear-scale">
                                 <div className="scale-label-left">{question.linearScale[0].label}</div>
                                 <div className="scale-options-horizontal">
-                                    {
-                                        Array.from({ length: question.linearScale[1].scale - question.linearScale[0].scale + 1 }).map((_, index) => (
-                                            <label key={index} className="scale-option-horizontal">
-                                                {index + question.linearScale[0].scale}
-                                                <input type="radio" name={`linearScale-${question._id}`} value={index + question.linearScale[0].scale} disabled className="form-check-input" />
-                                            </label>
-                                        ))
-                                    }
+                                    {Array.from({ length: question.linearScale[1].scale - question.linearScale[0].scale + 1 }).map((_, index) => (
+                                        <div key={index} className="scale-option-horizontal">
+                                            <label>{index + question.linearScale[0].scale}</label>
+                                            <input 
+                                                type="radio" 
+                                                name={`linearScale-${question._id}`} 
+                                                value={index + question.linearScale[0].scale} 
+                                                disabled 
+                                                className="form-check-input" 
+                                            />
+                                        </div>
+                                    ))}
                                 </div>
                                 <div className="scale-label-right">{question.linearScale[1].label}</div>
                             </div>

@@ -42,13 +42,16 @@
 }
 
 .survey-questions-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     width: 100%;
     max-width: 600px;
 }
 
 .survey-questions-navigation-buttons {
     display: flex;
-    justify-content: space-between;
+    gap: 25px;
 }
 
 .survey-questions-button {
@@ -64,6 +67,21 @@
     background-color: #cccccc;
 }
 
+.survey-questions-button.text-button {
+    padding: 10px 20px;
+    background: none;
+    border: none;
+    color: #76b5c5;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.survey-questions-button.text-button:hover,
+.survey-questions-button.text-button:focus {
+    padding: 10px 20px;
+    background-color: #e5eef1;
+}
+
 .table-header-non-bold {
     font-weight: normal;
 }
@@ -74,21 +92,25 @@
 
 .custom-linear-scale {
     display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-evenly;
     align-items: center;
-    justify-content: center;
-  }
+    overflow-x: auto; 
+    margin: 10px 0;
+}
   
-  .custom-scale-label {
-    margin: 0 10px;
-  }
-  
-  .custom-scale-option {
-    margin: 0 5px;
-    align-items: center;
+.custom-scale-label {
+    margin: 35px 0 10px 0;
+}
+
+.custom-scale-option {
     display: flex;
     flex-direction: column;
-  }
-  
-  .custom-form-check-input {
-    margin-bottom: 5px; 
-  }  
+    align-items: center;
+    justify-content: center;
+}
+
+.custom-scale-option-value {
+    text-align: center; 
+    margin-bottom: 5px;
+}
