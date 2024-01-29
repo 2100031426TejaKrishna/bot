@@ -9,6 +9,7 @@ const Questions = () => {
     const [gridAnswers, setGridAnswers] = useState({});
     const [canProceed, setCanProceed] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [answers, setAnswers] = useState({});
 
     // const destination = "localhost:5000";
     const destination = "rtp.dusky.bond:5000";
@@ -30,6 +31,24 @@ const Questions = () => {
 
         fetchQuestions();
     }, []);
+
+    useEffect(() => {
+        const prevAnswer = answers[currentQuestionIndex];
+        if (prevAnswer) {
+            if (Array.isArray(prevAnswer)) {
+                setSelectedOptions(prevAnswer);
+            } else if (typeof prevAnswer === 'object' && prevAnswer !== null) {
+                setGridAnswers(prevAnswer);
+            } else {
+                setCurrentAnswer(prevAnswer);
+            }
+        } else {
+            setCurrentAnswer('');
+            setSelectedOptions([]);
+            setGridAnswers({});
+        }
+        setCanProceed(!!prevAnswer);
+    }, [currentQuestionIndex, answers]);
     
     const handleAnswerChange = (event, optionType) => {
         if (optionType === 'checkbox') {
@@ -47,7 +66,7 @@ const Questions = () => {
     const handleGridAnswerChange = (rowIndex, colIndex, optionType) => {
         setGridAnswers((prevGridAnswers) => {
             const newGridAnswers = { ...prevGridAnswers };
-
+    
             if (optionType === 'checkboxGrid') {
                 newGridAnswers[rowIndex] = newGridAnswers[rowIndex] || [];
                 if (newGridAnswers[rowIndex].includes(colIndex)) {
@@ -60,48 +79,74 @@ const Questions = () => {
             } else {
                 newGridAnswers[rowIndex] = [colIndex];
             }
-
-            const isValid = validateGridAnswers();
+    
+            const isValid = validateGridAnswersWithTempAnswers(newGridAnswers);
             setCanProceed(isValid);
-
+    
             return newGridAnswers;
         });
     };
 
-    const handleNextQuestion = () => {
-        if (currentQuestion.requireResponse) {
-            if (currentQuestion.optionType === 'multipleChoice' || currentQuestion.optionType === 'checkbox' || currentQuestion.optionType === 'dropdown' || currentQuestion.optionType === 'linear') {
-                if (currentAnswer.trim() !== '') {
-                    if (currentQuestionIndex < questions.length - 1) {
-                        setCurrentQuestionIndex(currentQuestionIndex + 1);
-                        setCurrentAnswer('');
-                    }
-                } else {
-                    alert('Please select an answer.');
-                }
-            } else if (currentQuestion.optionType === 'multipleChoiceGrid' || currentQuestion.optionType === 'checkboxGrid') {
-                if (validateGridAnswers()) {
-                    if (currentQuestionIndex < questions.length - 1) {
-                        setCurrentQuestionIndex(currentQuestionIndex + 1);
-                        setCurrentAnswer('');
-                    }
-                } else {
-                    alert('Please select an answer for each row.');
-                }
-            }
-        } else {
-            if (currentQuestionIndex < questions.length - 1) {
-                setCurrentQuestionIndex(currentQuestionIndex + 1);
-                setCurrentAnswer('');
+    const validateGridAnswersWithTempAnswers = (tempAnswers) => {
+        if (currentQuestion.optionType === 'multipleChoiceGrid' || currentQuestion.optionType === 'checkboxGrid') {
+            if (currentQuestion.requireResponse) {
+                return currentQuestion.grid.rows.every((_, rowIndex) => {
+                    const rowAnswers = tempAnswers[rowIndex] || [];
+                    return rowAnswers.length > 0;
+                });
             }
         }
+        return true;
     };
+
+    const updateAnswers = (newAnswer) => {
+        setAnswers((prevAnswers) => ({
+            ...prevAnswers,
+            [currentQuestionIndex]: newAnswer
+        }));
+    };
+
+    const handleNextQuestion = () => {
+        const isAnswerSelected = () => {
+            switch (currentQuestion.optionType) {
+                case 'multipleChoice':
+                case 'dropdown':
+                case 'linear':
+                    return currentAnswer.trim() !== '';
+                case 'checkbox':
+                    return selectedOptions.length > 0;
+                case 'multipleChoiceGrid':
+                case 'checkboxGrid':
+                    return validateGridAnswers();
+                default:
+                    return false;
+            }
+        };
     
+        if (currentQuestion.requireResponse && !isAnswerSelected()) {
+            alert('Please select an answer.');
+            return;
+        }
+
+        const newAnswer = currentQuestion.optionType.includes('Grid') ? gridAnswers : currentQuestion.optionType === 'checkbox' ? selectedOptions : currentAnswer;
+        updateAnswers(newAnswer);
+    
+        if (currentQuestionIndex < questions.length - 1) {
+            setCurrentQuestionIndex(currentQuestionIndex + 1);
+            setCurrentAnswer('');
+            setSelectedOptions([]);
+            setGridAnswers({});
+            setCanProceed(false);
+        }
+    };
 
     const validateGridAnswers = () => {
         if (currentQuestion.optionType === 'multipleChoiceGrid' || currentQuestion.optionType === 'checkboxGrid') {
             if (currentQuestion.requireResponse) {
-                return Object.values(gridAnswers).every(selections => selections.length > 0);
+                return currentQuestion.grid.rows.every((_, rowIndex) => {
+                    const rowAnswers = gridAnswers[rowIndex] || [];
+                    return rowAnswers.length > 0;
+                });
             }
         }
         return true;
@@ -116,7 +161,15 @@ const Questions = () => {
     };
 
     const handleClearSelection = () => {
-        setCurrentAnswer('');
+        if (currentQuestion.optionType === 'checkboxGrid' || currentQuestion.optionType === 'multipleChoiceGrid') {
+            setGridAnswers({});
+        } else if (currentQuestion.optionType === 'checkbox') {
+            setSelectedOptions([]);
+        } else {
+            setCurrentAnswer('');
+        }
+    
+        setCanProceed(false);
     };
 
     if (isLoading) {
@@ -128,6 +181,10 @@ const Questions = () => {
     }
 
     const currentQuestion = questions[currentQuestionIndex];
+
+    const handleSubmit = () => {
+        console.log("Submitted Answers:", answers);
+    };
 
     const renderOptions = (question) => {
         switch (question.optionType) {
@@ -162,11 +219,12 @@ const Questions = () => {
             case 'dropdown':
                 return (
                     <select
-                        className="form-select" 
-                        aria-label="Small select example" 
+                        className="form-select"
+                        aria-label="Dropdown select example"
                         onChange={handleAnswerChange}
-                        value={currentAnswer}
+                        value={currentAnswer || "placeholder"} 
                     >
+                        <option value="placeholder" disabled hidden>Select an option</option> 
                         {question.options.map((option, index) => (
                             <option key={index} value={option.text}>{option.text}</option>
                         ))}
@@ -251,15 +309,17 @@ const Questions = () => {
                 </div>
             </div>
             <footer className="survey-questions-footer">
-                <button className="survey-questions-button text-button" onClick={handleClearSelection}>Clear</button>
                 <div className="survey-questions-navigation-buttons">
                     {currentQuestionIndex > 0 && (
                         <button className="survey-questions-button" onClick={handlePreviousQuestion}>Back</button>
                     )}
-                    {currentQuestionIndex < questions.length - 1 && (
+                    {currentQuestionIndex < questions.length - 1 ? (
                         <button className="survey-questions-button" onClick={handleNextQuestion} disabled={!canProceed}>Next</button>
+                    ) : (
+                        <button className="survey-questions-button" onClick={handleSubmit}>Submit</button>
                     )}
                 </div>
+                <button className="survey-questions-button text-button" onClick={handleClearSelection}>Clear</button>
             </footer>
         </div>
     );
