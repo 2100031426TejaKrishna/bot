@@ -18,6 +18,7 @@ class EditQuestion extends Component {
       questionType: '',
       selectedOption: 'multipleChoice',
       options: [{ label: 'Option 1', value: 'Option 1', isCorrect: false }],
+      defaultLinearArray: [ { scale: 1, label: 'Strongly Disagree' }, { scale: 5, label: 'Strongly Agree' },  ],
       gridOptions: { row: [{ label: 'Row 1', value: 'Row 1' }], column: [{ label: 'Column 1', value: 'Column 1' }], answers: [] },
       showCountry: false,
       countries: [
@@ -87,7 +88,7 @@ class EditQuestion extends Component {
         questionType: '',
         optionType: 'multipleChoice',
         options: [{ label: 'Option 1', value: 'Option 1', isCorrect: false, optionsNextQuestion: null }],
-        linearScale: [ { scale: 1, label: '' }, { scale: 4, label: '' },  ],
+        linearScale: [],
         marks: '',
         firstQuestion: false,
         nextQuestion: null
@@ -150,7 +151,6 @@ class EditQuestion extends Component {
   };
 
   updateQuestion = async(questionId, dataToUpdate) => {
-    console.log(`updateQuestion API executed`);
     try {
       const response = await fetch(`http://${destination}/api/update/${questionId}`, {
         method: 'PATCH',
@@ -178,7 +178,8 @@ class EditQuestion extends Component {
     } catch (error) {
       console.error('Network error:', error);
     }
-    console.log(`questionList: ${JSON.stringify(this.state.questionList)}`)
+    // debug
+    // console.log(`questionList: ${JSON.stringify(this.state.questionList)}`)
   };
 
 /*-------------MODAL-----------------*/
@@ -209,19 +210,20 @@ class EditQuestion extends Component {
   }
 
   handleQuestionOptionType = (e) => {
-    this.setState( (prevState) => ({
-      questionList: { ...prevState.questionList, 
+    this.setState((prevState) => ({
+      questionList: {
+        ...prevState.questionList,
         optionType: e.target.value,
-        // RESUME HERE FIX SETTING questionList.linearScale
+        // Condition check for linearScale array
+        // If array is empty, set default array
+        // If array is not empty, use fetched values
+        linearScale:
+          prevState.questionList.linearScale.length === 0
+            ? this.state.defaultLinearArray
+            : prevState.questionList.linearScale
       }
-    }),
-    ( () => {
-      console.log(`optionType: ${this.state.questionList.optionType}`);
-      console.log(`linearScale: ${JSON.stringify(this.state.questionList.linearScale)}`)
-    }
-    )
-    )
-  }
+    }));
+  };
 
   handleQuestionMarks = (e) => {
     this.setState( (prevState) => ({
@@ -259,19 +261,7 @@ class EditQuestion extends Component {
   deleteOption = (index) => {
     this.setState(prevState => ({
       questionList: { ...prevState.questionList, options: prevState.questionList.options.filter((_, i) => i !== index) }
-    }),
-      () => {
-        console.log(`question: ${this.state.questionList.question}`)
-        console.log(`optionType: ${this.state.questionList.optionType}`)
-        console.log(`marks: ${this.state.questionList.marks}`)
-        console.log(`nextQuestion: ${this.state.questionList.nextQuestion}`)
-        for (let i = 0; i<this.state.questionList.options.length; i++) {
-          console.log(`options text: ${this.state.questionList.options[i].text}`)
-          console.log(`options isCorrect: ${this.state.questionList.options[i].isCorrect}`)
-          console.log(`options optionsNextQuestion: ${this.state.questionList.options[i].optionsNextQuestion}`)
-        }
-      }
-    );
+    }));
   };
   
   addGridRow = (e) => {
@@ -477,7 +467,6 @@ class EditQuestion extends Component {
       }})
     };
 
-    // try here
     // Check when changing from a populated checkboxGrid to multipleChoiceGrid
     if (questionList.optionType === 'multipleChoiceGrid') {
       this.safeCheckMultipleChoiceGrid();
@@ -762,7 +751,6 @@ class EditQuestion extends Component {
           </>
         );
   // -------------------------------- Multiple choice grid / Checkbox grid ------------
-      // paste below here
       case 'multipleChoiceGrid':
       case 'checkboxGrid':
      
@@ -873,7 +861,6 @@ class EditQuestion extends Component {
               </div>
           </>
         ); 
-      //
       default:
         return null;
     }
@@ -936,9 +923,7 @@ class EditQuestion extends Component {
         gridOptions.answers.push({ rowIndex, columnIndex: colIndex, isCorrect: true });
       }
     
-      this.setState({ gridOptions }, () => {
-        console.log(`answers: ${JSON.stringify(this.state.gridOptions.answers)}`);
-      });
+      this.setState( { gridOptions } );
     } else if (questionList.optionType === 'multipleChoiceGrid') {
       // Find any existing answer for the same row and remove it
       const answerIndex = gridOptions.answers.findIndex(
@@ -951,9 +936,7 @@ class EditQuestion extends Component {
       // Add the new answer with isCorrect set to true
       gridOptions.answers.push({ rowIndex, columnIndex: colIndex, isCorrect: true });
   
-      this.setState({ gridOptions }, () => {
-        console.log(`answers: ${JSON.stringify(this.state.gridOptions.answers)}`);
-      });
+      this.setState( { gridOptions } );
     }
   };
  
@@ -1185,6 +1168,9 @@ class EditQuestion extends Component {
         scale: option.scale,
         label: option.label
       }));
+    } else {
+      // clear linearScale
+      dataToUpdate.linearScale = []
     }
 
     if (questionList.optionType === 'multipleChoiceGrid' || questionList.optionType === 'checkboxGrid') {
@@ -1193,6 +1179,9 @@ class EditQuestion extends Component {
         columns: gridOptions.columns.map(columns => ({ text: columns.text })),
         answers: gridOptions.answers.filter(answer => answer.isCorrect)
       };
+    } else {
+      // clear grid
+      dataToUpdate.grid = { rows: [], columns: [], answers: [] }
     }
     
     // Update database server API
@@ -1478,10 +1467,7 @@ class EditQuestion extends Component {
             </button>
           </div>
         </Modal.Footer>
-
         </Modal>
-
-
 
         {this.renderToast()}
 
