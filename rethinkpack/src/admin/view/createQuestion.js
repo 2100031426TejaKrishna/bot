@@ -4,6 +4,10 @@ import 'bootstrap/dist/js/bootstrap.bundle.min';
 import { Modal } from 'bootstrap';
 import './createQuestion.css';
 
+// Switch URLs between Server and Local hosting here
+// const destination = "localhost:5000";
+const destination = "rtp.dusky.bond:5000";
+
 class CreateQuestion extends Component {
   constructor(props) {
     super(props);
@@ -14,7 +18,7 @@ class CreateQuestion extends Component {
       nextQuestion: '',
       questionType: '',
       selectedOption: 'multipleChoice',
-      options: [{ label: 'Option 1', value: 'Option 1', isCorrect: false }],
+      options: [{ text: '', value: 'Option 1', isCorrect: false }],
       gridOptions: { row: [{ label: 'Row 1', value: 'Row 1' }], column: [{ label: 'Column 1', value: 'Column 1' }], answers: [] },
       showCountry: false,
       countries: [
@@ -88,15 +92,16 @@ class CreateQuestion extends Component {
     this.setState({
       ...this.initialState,
       showToast: this.state.showToast,
-      options: this.state.options.map((_, index) => ({
-        label: `Option ${index + 1}`,
-        value: `Option ${index + 1}`,
+      options: 
+      [ {
+        text: '',
+        value: '',
         isCorrect: false,
         nextQuestion: ''
-      }))
-    });
-  }
-
+      } ]
+    })
+  };
+  
   componentDidMount() {
     const createQuestionModal = document.getElementById('createQuestion');
     createQuestionModal.addEventListener('shown.bs.modal', () => {
@@ -117,7 +122,7 @@ class CreateQuestion extends Component {
 
   fetchQuestions = async () => {
     try {
-      const response = await fetch('http://rtp.dusky.bond:5000/api/displayAllQuestions');
+      const response = await fetch(`http://${destination}/api/displayAllQuestions`);
       const questions = await response.json();
       this.setState({ allQuestions: questions });
     } catch (error) {
@@ -134,7 +139,7 @@ class CreateQuestion extends Component {
     e.preventDefault();
     e.stopPropagation()
     this.setState((prevState) => ({
-      options: [...prevState.options, { label: `Option ${prevState.options.length + 1}`, value: `Option ${prevState.options.length + 1}`, isCorrect: false, nextQuestion: '' }],
+      options: [...prevState.options, { text: '', value: `Option ${prevState.options.length + 1}`, isCorrect: false, nextQuestion: '' }],
     }));
   };
 
@@ -209,10 +214,11 @@ class CreateQuestion extends Component {
 
   handleOptionChange = (index, value) => {
     const { options } = this.state;
-    const updatedOptions = options.map((option, i) => (
-      i === index ? { ...option, label: value, value: value } : option
-    ));
-    this.setState({ options: updatedOptions });
+    this.setState({
+      options: options.map((option, i) =>
+      i === index ? { ...option, text: value } : option
+      ),
+    }) 
   };
 
   handleRowChange = (index, e) => {
@@ -314,6 +320,7 @@ class CreateQuestion extends Component {
                   <input
                     type="text"
                     className="form-control mx-2"
+                    value={this.state.options[index].text}
                     onChange={(e) => this.handleOptionChange(index, e.target.value)}
                     placeholder={`Option ${index + 1}`}
                     style={{ flex: '1' }}
@@ -775,6 +782,7 @@ class CreateQuestion extends Component {
     const dataToInsert = {
       questionType,
       question,
+      options,
       optionType: selectedOption,
       marks: isLeadingQuestion ? undefined : parseFloat(marks),
       countries: showCountry ? selectedCountries : undefined,
@@ -788,7 +796,7 @@ class CreateQuestion extends Component {
 
     if (selectedOption === 'multipleChoice' || selectedOption === 'checkbox' || selectedOption === 'dropdown') {
       dataToInsert.options = options.map((option) => ({
-        text: option.label,
+        text: option.text,
         isCorrect: option.isCorrect || false,
         optionsNextQuestion: isLeadingQuestion ? option.nextQuestion : undefined
       }));
@@ -810,7 +818,7 @@ class CreateQuestion extends Component {
     }
 
     try {
-      const response = await fetch('http://rtp.dusky.bond:5000/api/insertQuestion', {
+      const response = await fetch(`http://${destination}/api/insertQuestion`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -251,13 +251,6 @@ class EditQuestion extends Component {
     }));
   };
 
-  editAddOption = (i) => {
-    this.setState((prevState) => ({
-      options: [...prevState.options, { label: `Option ${prevState.options.length + 1}`, value: `Option ${prevState.options.length + 1}`, isCorrect: false }],
-    }));
-    console.log(`editAddOption ${i}`)
-  };
-
   deleteOption = (index) => {
     this.setState(prevState => ({
       questionList: { ...prevState.questionList, options: prevState.questionList.options.filter((_, i) => i !== index) }
@@ -325,14 +318,6 @@ class EditQuestion extends Component {
     } else {
       this.setState({ [e.target.id]: e.target.value });
     }
-  };
-  
-  handleOptionChange = (index, value) => {
-    const { options } = this.state;
-    const updatedOptions = options.map((option, i) => (
-      i === index ? { ...option, text: value } : option
-    ));
-    this.setState({ options: updatedOptions });
   };
 
   handleOptionChangeText = (index, value) => {
@@ -1209,7 +1194,6 @@ class EditQuestion extends Component {
         <Modal
           show={this.state.showModal === true}
           onHide={() => this.setState({ showModal: false })}
-          backdrop="static"
           className="modal-lg"
           ref={this.editQuestionModalRef}
         >
