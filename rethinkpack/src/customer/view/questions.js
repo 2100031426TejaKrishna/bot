@@ -14,23 +14,57 @@ const Questions = () => {
     // const destination = "localhost:5000";
     const destination = "rtp.dusky.bond:5000";
 
+    // useEffect(() => {
+    //     const fetchQuestions = async () => {
+    //         try {
+    //             const response = await fetch(`http://${destination}/api/displayQuestionsCustomer`);
+    //             if (!response.ok) {
+    //                 throw new Error(`HTTP error! status: ${response.status}`);
+    //             }
+    //             const data = await response.json();
+    //             setQuestions(data);
+    //             setIsLoading(false);
+    //         } catch (error) {
+    //             console.error("Error fetching questions:", error);
+    //         }
+    //     };
+
+    //     fetchQuestions();
+    // }, []);
+
     useEffect(() => {
-        const fetchQuestions = async () => {
+        const fetchFirstQuestion = async () => {
             try {
-                const response = await fetch(`http://${destination}/api/displayQuestionsCustomer`);
+                const response = await fetch(`http://${destination}/api/firstQuestion`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const data = await response.json();
-                setQuestions(data);
+                console.log(data)
+                setQuestions([data]); 
                 setIsLoading(false);
             } catch (error) {
-                console.error("Error fetching questions:", error);
+                console.error("Error fetching first question:", error);
             }
         };
-
-        fetchQuestions();
+    
+        fetchFirstQuestion();
     }, []);
+    
+    const fetchNextQuestion = async (nextQuestionId) => {
+        try {
+            const response = await fetch(`http://${destination}/api/nextQuestion/${nextQuestionId}`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const nextQuestion = await response.json();
+            console.log(nextQuestion)
+            setQuestions(prevQuestions => [...prevQuestions, nextQuestion]);
+            setCurrentQuestionIndex(prevIndex => prevIndex + 1);
+        } catch (error) {
+            console.error("Error fetching the next question:", error);
+        }
+    };
 
     useEffect(() => {
         const prevAnswer = answers[currentQuestionIndex];
@@ -126,6 +160,8 @@ const Questions = () => {
         if (currentQuestion.requireResponse && !isAnswerSelected()) {
             alert('Please select an answer.');
             return;
+        } else {
+            fetchNextQuestion(questions[currentQuestionIndex].nextQuestion);
         }
 
         const newAnswer = currentQuestion.optionType.includes('Grid') ? gridAnswers : currentQuestion.optionType === 'checkbox' ? selectedOptions : currentAnswer;
@@ -137,6 +173,8 @@ const Questions = () => {
             setSelectedOptions([]);
             setGridAnswers({});
             setCanProceed(false);
+        } else {
+            fetchNextQuestion(questions[currentQuestionIndex].nextQuestion);
         }
     };
 
@@ -182,9 +220,38 @@ const Questions = () => {
 
     const currentQuestion = questions[currentQuestionIndex];
 
-    const handleSubmit = () => {
-        console.log("Submitted Answers:", answers);
-    };
+    const handleSubmit = async () => {
+        const lastAnswer = currentQuestion.optionType.includes('Grid') ? gridAnswers : currentQuestion.optionType === 'checkbox' ? selectedOptions : currentAnswer;
+        updateAnswers(lastAnswer); 
+
+        console.log("Submitted Answers:", {
+            ...answers, 
+            [currentQuestionIndex]: lastAnswer 
+        });
+    
+        const userId = "1"; 
+        const formattedResponses = questions.map((question, index) => ({
+            questionId: question._id,
+            answer: answers[index] || lastAnswer,
+        }));
+    
+        try {
+            const response = await fetch(`http://${destination}/api/submitResponse`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ userId, responses: formattedResponses }),
+            });
+    
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            console.log("Response submitted successfully");
+        } catch (error) {
+            console.error("Error submitting response:", error);
+        }
+    };    
 
     const renderOptions = (question) => {
         switch (question.optionType) {
@@ -298,6 +365,10 @@ const Questions = () => {
     return (
         <div className="survey-questions-container">
             <div className="survey-questions-card">
+                <h6>
+                    {currentQuestion.questionType === 'productInfo' ? 'Product Information' : 
+                    currentQuestion.questionType === 'packagingInfo' ? 'Packaging Information' : ''}
+                </h6>
                 <h4>{currentQuestion.question}</h4>
                 <div className="options-container">
                     {renderOptions(currentQuestion)}
