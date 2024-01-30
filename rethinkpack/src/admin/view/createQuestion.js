@@ -148,6 +148,44 @@ class CreateQuestion extends Component {
       options: prevState.options.filter((_, i) => i !== index)
     }));
   };
+
+  safeCheckMultipleChoice() {
+    const { options } = this.state
+    
+    // check for more than one isCorrect truths, should only have one isCorrect truth for radio buttons
+    let countIsCorrect = 0;
+        
+    for(let i=0; i<options.length; i++) {    
+      if(options[i].isCorrect === true) {
+        countIsCorrect ++
+      }
+    };
+
+    // clear the selection if more than one answer exists
+    if(countIsCorrect>1) {
+      console.log(`countIsCorrect greater than 1`)
+      this.setState((prevState) => ({
+        options: prevState.options.map((option) => ({
+          ...option,
+          isCorrect: false, // Set isCorrect to false for each option
+        })),
+      }));
+    }
+  };
+
+  safeCheckMultipleChoiceGrid() {
+    const { gridOptions } = this.state;
+    // For radio type, there is only one selection possible for each row
+    // hence number of answers cannot be larger than the number of rows
+    if (gridOptions.answers.length > gridOptions.row.length){
+      this.setState(prevState => ({
+        gridOptions: {
+          ...prevState.gridOptions,
+          answers: []
+        }
+      }));
+    }
+  };
   
   addGridRow = (e) => {
     e.preventDefault();
@@ -291,7 +329,7 @@ class CreateQuestion extends Component {
   };
 
   renderOptionsArea = () => {
-    const { selectedOption, options, gridOptions, requireResponse, isLeadingQuestion, allQuestions } = this.state;
+    const { selectedOption, options, gridOptions, requireResponse, isLeadingQuestion, allQuestions, validationErrors } = this.state;
     const clearSelections = (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -301,10 +339,17 @@ class CreateQuestion extends Component {
       }));
       this.setState({ options: clearedOptions });
     };
+
+    // Check when changing from a populated checkboxGrid to multipleChoiceGrid
+    if (selectedOption === 'multipleChoiceGrid') {
+      this.safeCheckMultipleChoiceGrid();
+    };
   
     switch (selectedOption) {
       case 'multipleChoice':
+        this.safeCheckMultipleChoice();
       case 'checkbox':
+
         return (
           <>
             {options.map((option, index) => (
@@ -314,7 +359,13 @@ class CreateQuestion extends Component {
                   className="form-check-input"
                   checked={option.isCorrect}
                   disabled={isLeadingQuestion}
-                  onChange={() => this.toggleCorrectAnswer(index)}
+                  onChange={
+                    // Use specific onChange handler based on selectedOption,
+                    // as radio buttons don't suit a toggle operation
+                    selectedOption === 'multipleChoice' ? 
+                      () => this.selectOptionsRadio(index, !option.isCorrect) : 
+                      () => this.toggleCorrectAnswer(index)
+                  }
                 />
                 <div className="d-flex flex-grow-1 mx-2">
                   <input
@@ -488,6 +539,11 @@ class CreateQuestion extends Component {
         return (
           <>
             <div className="scrollable-table-container">
+            {validationErrors.grid && (
+                  <div style={{ color: 'red', fontSize: 12 }}>
+                    {validationErrors.grid}
+                  </div>
+                )}
               <table>
                 <thead>
                   <tr>
@@ -619,6 +675,14 @@ class CreateQuestion extends Component {
     }));
   };
 
+  selectOptionsRadio = (index, value) => {
+    this.setState((prevState) => ({
+        options: prevState.options.map((option, i) =>
+          i === index ? { ...option, isCorrect: value } : {...option, isCorrect: false}
+        )  
+    }));
+  };
+
   toggleCorrectAnswer = (index) => {
     const { selectedOption  } = this.state;
     if (selectedOption === 'multipleChoice' || selectedOption === 'checkbox') {
@@ -642,21 +706,36 @@ class CreateQuestion extends Component {
 
   toggleGridAnswer = (rowIndex, colIndex) => {
     const { selectedOption, gridOptions } = this.state;
-    let newAnswers = [...gridOptions.answers];
   
-    if (selectedOption === 'multipleChoiceGrid') {
-      const rowAnswers = newAnswers.filter(answer => answer.rowIndex !== rowIndex);
-      newAnswers = [...rowAnswers, { rowIndex, columnIndex: colIndex, isCorrect: true }];
-    } else if (selectedOption === 'checkboxGrid') {
-      const answerIndex = newAnswers.findIndex(answer => answer.rowIndex === rowIndex && answer.columnIndex === colIndex);
+    if (selectedOption === 'checkboxGrid') {
+      const answerIndex = gridOptions.answers.findIndex(
+        (answer) => answer.rowIndex === rowIndex && answer.columnIndex === colIndex
+      );
+    
+      // If answer exists, delete it
       if (answerIndex > -1) {
-        newAnswers[answerIndex].isCorrect = !newAnswers[answerIndex].isCorrect;
+        gridOptions.answers.splice(answerIndex, 1);
       } else {
-        newAnswers.push({ rowIndex, columnIndex: colIndex, isCorrect: true });
+        // If answer doesn't exist, add it
+        gridOptions.answers.push({ rowIndex, columnIndex: colIndex, isCorrect: true });
       }
-    }
+    
+      this.setState( { gridOptions } );
+
+    } else if (selectedOption === 'multipleChoiceGrid') {
+      // Find any existing answer for the same row and remove it
+      const answerIndex = gridOptions.answers.findIndex(
+        (answer) => answer.rowIndex === rowIndex
+      );
+      if (answerIndex > -1) {
+        gridOptions.answers.splice(answerIndex, 1);
+      }
   
-    this.setState({ gridOptions: { ...gridOptions, answers: newAnswers } });
+      // Add the new answer with isCorrect set to true
+      gridOptions.answers.push({ rowIndex, columnIndex: colIndex, isCorrect: true });
+  
+      this.setState( { gridOptions } );
+    }
   };
   
   handleCountryChange = (event) => {
@@ -692,12 +771,58 @@ class CreateQuestion extends Component {
   };
   
   validateOptions = () => {
-    const { options, selectedOption } = this.state;
+    const { options, selectedOption, isLeadingQuestion } = this.state;
     if (selectedOption === 'linear' || selectedOption === 'multipleChoiceGrid' || selectedOption === 'checkboxGrid') {
       return true;
     }
 
-    return options.length >= 2;
+    // Check a minimum of one selection is made
+    let minSelection = false;
+    // If leading question, then selection is disabled,
+    // hence cannot make minimum selection, 
+    // so in the else statement (isLeadingQuestion is true)
+    // make it so minSelection is set true
+    if (!isLeadingQuestion) {
+      for (let i=0; i<options.length; i++) {
+        if (options[i].isCorrect) {
+          return minSelection = true
+        }
+      }
+    } else {
+      minSelection = true
+    }
+  
+    return options.length >= 2 && minSelection === true;
+  };
+
+  validateGrid = () => {
+    
+    const { selectedOption, gridOptions, isLeadingQuestion } = this.state;
+
+    if (selectedOption === 'multipleChoiceGrid' || selectedOption === 'checkboxGrid') {
+        // Check a label has been assigned for each row
+      for (let i=0; i<gridOptions.row.length; i++) {
+        if (gridOptions.row[i].text === '') {
+          return false
+        }
+      }
+      // Check a label has been assigned for each column
+      for (let i=0; i<gridOptions.column.length; i++) {
+        if (gridOptions.column[i].text === '') {
+          return false
+        }
+      }
+      // Catch minimum number of answers is less than number of rows
+      // Applies when NOT a leading question
+      if (!isLeadingQuestion) {
+        if (gridOptions.answers.length < gridOptions.rows.length) {
+          return false
+        } else {
+          return true
+        }
+      }
+    }
+    return true;
   };
   
   validateMarks = () => {
@@ -743,20 +868,22 @@ class CreateQuestion extends Component {
     const isMarksValid = this.validateMarks();
     const isCountriesValid = this.validateCountries();
     const isExplanationValid = this.validateExplanation();
+    const isGridValid = this.validateGrid();
 
     this.setState({
       validationErrors: {
         questionType: isQuestionTypeValid ? '' : 'Select one question type',
         question: isQuestionValid ? '' : 'Enter the question',
         optionType: isOptionTypeValid ? '' : 'Select an option type',
-        options: isOptionsValid ? '' : 'Add at least two options for this question',
+        grid: isGridValid ? '' : 'Complete all grid data entry and ensure there is one selection per row',
+        options: isOptionsValid ? '' : 'Add at least two options and at least one selection',
         marks: isMarksValid ? '' : 'Enter the marks for this question',
         country: isCountriesValid ? '' : 'Select at least one country',
         explanation: isExplanationValid ? '' : (this.state.isLeadingQuestion ? 'Enter the recommendation for this question' : 'Enter the explanation for the correct answer'),
       },
     });
 
-    if (!isQuestionTypeValid || !isQuestionValid || !isOptionTypeValid || !isOptionsValid || !isMarksValid || !isCountriesValid || !isExplanationValid) {
+    if (!isQuestionTypeValid || !isQuestionValid || !isOptionTypeValid || !isOptionsValid || !isGridValid || !isMarksValid || !isCountriesValid || !isExplanationValid) {
       return;
     }
 

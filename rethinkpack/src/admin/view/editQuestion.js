@@ -422,6 +422,33 @@ class EditQuestion extends Component {
       }));
     }
   };
+
+  safeCheckMultipleChoice() {
+    const { questionList } = this.state
+    
+    // check for more than one isCorrect truths, should only have one isCorrect truth for radio buttons
+    let countIsCorrect = 0;
+        
+    for(let i=0; i<questionList.options.length; i++) {    
+      if(questionList.options[i].isCorrect === true) {
+        countIsCorrect ++
+      }
+    };
+
+    // clear the selection if more than one answer exists
+    if(countIsCorrect>1) {
+      console.log(`countIsCorrect greater than 1`)
+      this.setState((prevState) => ({
+        questionList: {
+          ...prevState.questionList,
+          options: prevState.questionList.options.map((option) => ({
+            ...option,
+            isCorrect: false, // Set isCorrect to false for each option
+          })),
+        },
+      }));
+    }
+  };
   
 
 //------------------ OPTIONS ----------------------------------  
@@ -461,27 +488,9 @@ class EditQuestion extends Component {
     switch (questionList.optionType) {
 //----------------------------- multiple choice ----------------------------
       case "multipleChoice":
-        // check for more than one isCorrect truths, should only have one isCorrect truth for radio buttons
-        let countIsCorrect = 0;
         
-        for(let i=0; i<questionList.options.length; i++) {    
-          if(questionList.options[i].isCorrect === true) {
-            countIsCorrect ++
-          }
-        }
-
-        if(countIsCorrect>1) {
-          console.log(`countIsCorrect greater than 1`)
-          this.setState((prevState) => ({
-            questionList: {
-              ...prevState.questionList,
-              options: prevState.questionList.options.map((option) => ({
-                ...option,
-                isCorrect: false, // Set isCorrect to false for each option
-              })),
-            },
-          }));
-        }
+        // Multiple choice check: clear selection if more than one answer exists
+        this.safeCheckMultipleChoice();
         
         return (
           <>
@@ -907,8 +916,9 @@ class EditQuestion extends Component {
         // If answer doesn't exist, add it
         gridOptions.answers.push({ rowIndex, columnIndex: colIndex, isCorrect: true });
       }
-    
+
       this.setState( { gridOptions } );
+        
     } else if (questionList.optionType === 'multipleChoiceGrid') {
       // Find any existing answer for the same row and remove it
       const answerIndex = gridOptions.answers.findIndex(
@@ -997,16 +1007,33 @@ class EditQuestion extends Component {
   };
   
   validateOptions = () => {
-    const { questionList } = this.state;
+    const { questionList, isLeadingQuestion } = this.state;
     if (questionList.optionType === 'linear' || questionList.optionType === 'multipleChoiceGrid' || questionList.optionType === 'checkboxGrid') {
       return true;
     }
-    return questionList.options.length >= 2;
+
+    // Check a minimum of one selection is made
+    let minSelection = false;
+    // If leading question, then selection is disabled,
+    // hence cannot make minimum selection, 
+    // so in the else statement (isLeadingQuestion is true)
+    // make it so minSelection is set true
+    if (!isLeadingQuestion) {
+      for (let i=0; i<questionList.options.length; i++) {
+        if (questionList.options[i].isCorrect) {
+          return minSelection = true
+        }
+      }
+    } else {
+      minSelection = true
+    }
+    
+    return questionList.options.length >= 2 && minSelection === true;
   };
 
   validateGrid = () => {
     
-    const { questionList, gridOptions } = this.state;
+    const { questionList, gridOptions, isLeadingQuestion } = this.state;
 
     if (questionList.optionType === 'multipleChoiceGrid' || questionList.optionType === 'checkboxGrid') {
         // Check a label has been assigned for each row
@@ -1021,9 +1048,14 @@ class EditQuestion extends Component {
           return false
         }
       }
-      // Check a minimum of one answer has been specified
-      if (gridOptions.answers.length < 1) {
-        return false
+      // Catch minimum number of answers is less than number of rows
+      // Applies when NOT a leading question
+      if (!isLeadingQuestion) {
+        if (gridOptions.answers.length < gridOptions.rows.length) {
+          return false
+        } else {
+          return true
+        }
       }
     }
     return true;
@@ -1074,7 +1106,6 @@ class EditQuestion extends Component {
     const isMarksValid = this.validateMarks();
     const isCountriesValid = this.validateCountries();
     const isExplanationValid = this.validateExplanation();
-    //
     const isGridValid = this.validateGrid();
 
 
@@ -1083,8 +1114,8 @@ class EditQuestion extends Component {
         questionType: isQuestionTypeValid ? '' : 'Select one question type',
         question: isQuestionValid ? '' : 'Enter the question',
         optionType: isOptionTypeValid ? '' : 'Select an option type',
-        grid: isGridValid ? '' : 'Complete all grid data entry',
-        options: isOptionsValid ? '' : 'Add at least two options for this question',
+        grid: isGridValid ? '' : 'Complete all grid data entry and ensure there is one selection per row',
+        options: isOptionsValid ? '' : 'Add at least two options and at least one selection',
         marks: isMarksValid ? '' : 'Enter the marks (an integer value) for this question',
         country: isCountriesValid ? '' : 'Select at least one country',
         explanation: isExplanationValid ? '' : (this.state.isLeadingQuestion ? 'Enter the recommendation for this question' : 'Enter the explanation for the correct answer'),
