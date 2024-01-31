@@ -13,6 +13,8 @@
         const [error, setError] = useState(null);
         const [questionsUpdated, setQuestionsUpdated] = useState(false);
         const [editUpdateToggle, setEditUpdateToggle] = useState(false);
+        //
+        const [clearNextQuestion, setClearNextQuestion] = useState([])
 
         // editQuestion.js refresh functionality
         const refreshQuestions = () => {
@@ -24,6 +26,115 @@
             }
         };
 
+        // const handleDelete = async () => {
+        //     // Loop through questions array
+        //     questions.forEach((question, index) => {
+        //         // This works
+        //         if (question._id === questionToDelete) {
+        //             console.log(`question: ${question.question}`);
+        //         }
+
+        //         // Search for all cases for nextQuestion
+        //         if (question.nextQuestion === questionToDelete) {
+        //             // debug
+        //             //console.log(`nextQuestion: ${question.question}`)
+                    
+        //             // clear logic
+        //             setClearNextQuestion(
+        //                 [
+        //                     ...clearNextQuestion,
+        //                     { 
+        //                         questionId: question._id,
+        //                         question: question.question,
+        //                         nextQuestion: '' 
+        //                     }   
+        //                 ]
+        //             )
+        //         }
+
+        //         // Search for optionsNextQuestion
+        //         if (question.options.length > 0) {
+        //             for(let i=0; i<question.options.length; i++) {
+        //                 if (question.options[i].optionsNextQuestion === questionToDelete) {
+        //                     // debug
+        //                     // console.log(`question option: ${question.question}`);
+        //                     // console.log(`optionsNextQuestion: ${question.options[i].text}`);
+        //                 }                        
+        //             }
+        //         }
+        //     });
+        //     console.log(`clearNextQuestion: ${JSON.stringify(this.state.clearNextQuestion)}`)
+
+        //     // (questions.map(async (question) => {
+        //     //     if (question.nextQuestion) {
+        //     //         const nextQuestionTitle = await fetchQuestionById(question.nextQuestion);
+        //     //         return { ...question, nextQuestionTitle };
+        //     //     }
+        //     //
+            
+        //     // Uncomment below when done
+        //     // if (questionToDelete) {
+        //     //     try {
+        //     //         const response = await fetch(`http://${destination}/api/deleteQuestion/${questionToDelete}`, { method: 'DELETE' });
+        //     //         if (!response.ok) {
+        //     //             throw new Error(`HTTP error! status: ${response.status}`);
+        //     //         }
+        //     //         setQuestions(questions.filter(question => question._id !== questionToDelete));
+        //     //         setQuestionToDelete(null);
+        //     //         setShowToast(true);
+        //     //         setTimeout(() => setShowToast(false), 5000);
+        //     //     } catch (error) {
+        //     //         console.error("Error deleting question:", error);
+        //     //     }
+        //     // }
+        // };
+
+        // const handleDelete = async () => {
+        //     // questions.forEach((question) => {
+        //     //     if (question.nextQuestion === questionToDelete) {
+        //     //         question.nextQuestion = '';
+        //     //         setQuestions((prevQuestions) => [...prevQuestions, question]);
+        //     //     }
+        //     // });
+
+        //     // questions.forEach((question) => {
+        //     //     if (question.options) {
+        //     //         question.options.forEach((option) => {
+        //     //             if (option.optionsNextQuestion === questionToDelete) {
+        //     //                 option.optionsNextQuestion = '';
+        //     //                 // Update the question with the modified option
+        //     //                 setQuestions((prevQuestions) =>
+        //     //                     prevQuestions.map((q) => q._id === question._id ? question : q)
+        //     //                 );
+        //     //             }
+        //     //         });
+        //     //     }
+        //     // });
+
+        //     try {
+        //         // Update the database for each question with cleared fields
+        //         for (const question of questions) {
+        //           if (question.nextQuestion === '' || question.options.some((option) => option.optionsNextQuestion === '')) {
+        //             const response = await fetch(`http://${destination}/api/updateQuestion/${question._id}`, {
+        //               method: 'PUT',
+        //               headers: { 'Content-Type': 'application/json' },
+        //               body: JSON.stringify({
+        //                 nextQuestion: question.nextQuestion,
+        //                 options: question.options, // Assuming optionsNextQuestion is within each option object
+        //               }),
+        //             });
+            
+        //             if (!response.ok) {
+        //               throw new Error(`Failed to update question ${question._id}: ${response.status}`);
+        //             }
+        //           }
+        //         }
+        //     } catch (error) {
+        //             console.error("Error updating or deleting question:", error);
+        //             // Handle the error appropriately
+        //     }
+        // };
+            
         const handleDelete = async () => {
             if (questionToDelete) {
                 try {
