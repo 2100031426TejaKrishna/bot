@@ -413,7 +413,6 @@ class EditQuestion extends Component {
     // For radio type, there is only one selection possible for each row
     // hence number of answers cannot be larger than the number of rows
     if (gridOptions.answers.length > gridOptions.rows.length){
-      console.log(`safeCheckMultipleChoiceGrid`)
       this.setState(prevState => ({
         gridOptions: {
           ...prevState.gridOptions,

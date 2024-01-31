@@ -264,7 +264,7 @@ class CreateQuestion extends Component {
     this.setState(prevState => {
       const updatedRow = prevState.gridOptions.row.map((option, i) => {
         if (i === index) {
-          return { ...option, label: newValue, value: newValue };
+          return { ...option, text: newValue, value: newValue };
         }
         return option;
       });
@@ -282,7 +282,7 @@ class CreateQuestion extends Component {
     this.setState(prevState => {
       const updatedColumn = prevState.gridOptions.column.map((option, i) => {
         if (i === index) {
-          return { ...option, label: newValue, value: newValue };
+          return { ...option, text: newValue, value: newValue };
         }
         return option;
       });
@@ -348,6 +348,7 @@ class CreateQuestion extends Component {
     switch (selectedOption) {
       case 'multipleChoice':
         this.safeCheckMultipleChoice();
+        /* falls through */
       case 'checkbox':
 
         return (
@@ -554,8 +555,9 @@ class CreateQuestion extends Component {
                           <input
                               type="text"
                               className="form-control"
-                              placeholder={`Column ${colIndex + 1}`}
+                              value={col.text}
                               onChange={(e) => this.handleColumnChange(colIndex, e)}
+                              placeholder={`Column ${colIndex + 1}`}
                           />
                           {gridOptions.column.length > 1 && (
                             <div className="delete-column-btn">
@@ -581,8 +583,9 @@ class CreateQuestion extends Component {
                         <input
                           type="text"
                           className="form-control"
-                          placeholder={`Row ${rowIndex + 1}`}
+                          value={row.text}
                           onChange={(e) => this.handleRowChange(rowIndex, e)}
+                          placeholder={`Row ${rowIndex + 1}`}
                         />
                       </td>
                       {gridOptions.column.map((_, colIndex) => {
@@ -815,7 +818,7 @@ class CreateQuestion extends Component {
       // Catch minimum number of answers is less than number of rows
       // Applies when NOT a leading question
       if (!isLeadingQuestion) {
-        if (gridOptions.answers.length < gridOptions.rows.length) {
+        if (gridOptions.answers.length < gridOptions.row.length) {
           return false
         } else {
           return true
