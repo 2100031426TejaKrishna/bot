@@ -15,24 +15,6 @@ const Questions = () => {
     // const destination = "localhost:5000";
     const destination = "rtp.dusky.bond:5000";
 
-    // useEffect(() => {
-    //     const fetchQuestions = async () => {
-    //         try {
-    //             const response = await fetch(`http://${destination}/api/displayQuestionsCustomer`);
-    //             if (!response.ok) {
-    //                 throw new Error(`HTTP error! status: ${response.status}`);
-    //             }
-    //             const data = await response.json();
-    //             setQuestions(data);
-    //             setIsLoading(false);
-    //         } catch (error) {
-    //             console.error("Error fetching questions:", error);
-    //         }
-    //     };
-
-    //     fetchQuestions();
-    // }, []);
-
     useEffect(() => {
         const fetchAllQuestions = async () => {
             try {
