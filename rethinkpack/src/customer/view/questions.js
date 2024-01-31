@@ -10,6 +10,7 @@ const Questions = () => {
     const [canProceed, setCanProceed] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [answers, setAnswers] = useState({});
+    const [currentQuestionId, setCurrentQuestionId] = useState(null);
 
     // const destination = "localhost:5000";
     const destination = "rtp.dusky.bond:5000";
@@ -33,38 +34,22 @@ const Questions = () => {
     // }, []);
 
     useEffect(() => {
-        const fetchFirstQuestion = async () => {
+        const fetchAllQuestions = async () => {
             try {
-                const response = await fetch(`http://${destination}/api/firstQuestion`);
+                const response = await fetch(`http://${destination}/api/fetchQuestions`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const data = await response.json();
-                console.log(data)
-                setQuestions([data]); 
+                setQuestions(data); 
                 setIsLoading(false);
             } catch (error) {
-                console.error("Error fetching first question:", error);
+                console.error("Error fetching all questions:", error);
             }
         };
     
-        fetchFirstQuestion();
+        fetchAllQuestions();
     }, []);
-    
-    const fetchNextQuestion = async (nextQuestionId) => {
-        try {
-            const response = await fetch(`http://${destination}/api/nextQuestion/${nextQuestionId}`);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const nextQuestion = await response.json();
-            console.log(nextQuestion)
-            setQuestions(prevQuestions => [...prevQuestions, nextQuestion]);
-            setCurrentQuestionIndex(prevIndex => prevIndex + 1);
-        } catch (error) {
-            console.error("Error fetching the next question:", error);
-        }
-    };
 
     useEffect(() => {
         const prevAnswer = answers[currentQuestionIndex];
@@ -157,13 +142,6 @@ const Questions = () => {
             }
         };
     
-        if (currentQuestion.requireResponse && !isAnswerSelected()) {
-            alert('Please select an answer.');
-            return;
-        } else {
-            fetchNextQuestion(questions[currentQuestionIndex].nextQuestion);
-        }
-
         const newAnswer = currentQuestion.optionType.includes('Grid') ? gridAnswers : currentQuestion.optionType === 'checkbox' ? selectedOptions : currentAnswer;
         updateAnswers(newAnswer);
     
@@ -173,9 +151,7 @@ const Questions = () => {
             setSelectedOptions([]);
             setGridAnswers({});
             setCanProceed(false);
-        } else {
-            fetchNextQuestion(questions[currentQuestionIndex].nextQuestion);
-        }
+        } 
     };
 
     const validateGridAnswers = () => {
