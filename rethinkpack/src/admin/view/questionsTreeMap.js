@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Tree } from 'react-tree-graph';
-import 'react-tree-graph/dist/style.css';
+import Tree from 'react-d3-tree';
 
-// const destination = "localhost:5000";
-const destination = "rtp.dusky.bond:5000";
+const destination = "localhost:5000";
 
 const QuestionsTreeMap = () => {
   const [data, setData] = useState(null);
@@ -62,47 +60,26 @@ const QuestionsTreeMap = () => {
     fetchQuestions();
   }, []); // This will run only once on component mount
 
+  const handleNodeClick = (nodeData) => {
+    console.log('Node Clicked:', nodeData);
+    // Handle your logic here, e.g., fetch additional data for the clicked node
+  };
+
   if (!data) {
     // Render loading state or placeholder while data is being fetched
     return <div>Loading...</div>;
   }
 
-  const nodeStyles = {
-    fill: '#ccc',
-    stroke: '#333',
-    strokeWidth: 1.5,
-  };
-
-  const linkStyles = {
-    fill: 'none',
-    stroke: '#333',
-    strokeWidth: 1.5,
-  };
-
   return (
-    <div style={{ textAlign: 'center', marginTop: '20px' }}>
+    <div style={{ width: '100%', height: '600px' }}>
       <Tree
-        animated
         data={data}
-        width={800}
-        height={600}
-        svgProps={{ style: { backgroundColor: 'lightgray', margin: 'auto' } }}
-        gProps={{
-          className: 'node',
-          onClick: (node) => console.log(node),
-          style: nodeStyles,
-        }}
-        linkProps={{ style: linkStyles }}
         orientation="vertical"
-        duration={500}
-        transitionDuration={500}
-        textProps={{ x: 0, y: 15, style: { textAnchor: 'middle' } }}
-        nodeOffset={50}
+        translate={{ x: 400, y: 50 }}
+        onClick={handleNodeClick}
       />
     </div>
   );
 };
 
 export default QuestionsTreeMap;
-
-// ----------------------------------------This is base line --------------------- --------------- --------------
