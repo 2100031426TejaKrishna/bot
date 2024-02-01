@@ -6,20 +6,43 @@ const Questions = mongoose.model('questions');
 
 const fetchQuestions = async () => {
     try {
-        let allQuestions = [];
-        let currentQuestion = await Questions.findOne({ firstQuestion: true });
+        let allQuestions = new Map();
+        let queue = [];
+        let firstQuestion = await Questions.findOne({ firstQuestion: true });
+        if (firstQuestion) {
+            queue.push(firstQuestion);
+        }
 
-        while (currentQuestion) {
-            allQuestions.push(currentQuestion);
+        while (queue.length > 0) {
+            let currentQuestion = queue.shift();
+            allQuestions.set(currentQuestion._id.toString(), currentQuestwion);
+
             if (currentQuestion.nextQuestion) {
-                const nextQuestionId = new mongoose.Types.ObjectId(currentQuestion.nextQuestion);
-                currentQuestion = await Questions.findById(nextQuestionId);
-            } else {
-                currentQuestion = null;
+                let nextQuestionId = new mongoose.Types.ObjectId(currentQuestion.nextQuestion);
+                if (!allQuestions.has(nextQuestionId.toString())) {
+                    let nextQuestion = await Questions.findById(nextQuestionId);
+                    if (nextQuestion) {
+                        queue.push(nextQuestion);
+                    }
+                }
+            }
+
+            if (currentQuestion.options && currentQuestion.options.length > 0) {
+                for (let option of currentQuestion.options) {
+                    if (option.optionsNextQuestion) {
+                        let optionNextQuestionId = new mongoose.Types.ObjectId(option.optionsNextQuestion);
+                        if (!allQuestions.has(optionNextQuestionId.toString())) {
+                            let optionNextQuestion = await Questions.findById(optionNextQuestionId);
+                            if (optionNextQuestion) {
+                                queue.push(optionNextQuestion);
+                            }
+                        }
+                    }
+                }
             }
         }
 
-        return allQuestions;
+        return Array.from(allQuestions.values());
     } catch (error) {
         console.error("Error fetching all questions:", error);
         throw error;

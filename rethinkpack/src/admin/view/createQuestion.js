@@ -377,7 +377,7 @@ class CreateQuestion extends Component {
                     placeholder={`Option ${index + 1}`}
                     style={{ flex: '1' }}
                   />
-                  {isLeadingQuestion && (
+                  {selectedOption === 'multipleChoice' && isLeadingQuestion && (
                     <select
                       className="form-select mx-2"
                       style={{ flex: '1' }}
@@ -413,7 +413,7 @@ class CreateQuestion extends Component {
                   Clear
                 </button>
               )}
-              {isLeadingQuestion && (
+              {selectedOption === 'multipleChoice' && isLeadingQuestion && (
                 <button className="btn btn-outline-danger ms-2" onClick={this.clearNextQuestionSelection}>
                   Clear Next Question
                 </button>
@@ -924,7 +924,7 @@ class CreateQuestion extends Component {
       nextQuestion: isLeadingQuestion ? undefined : nextQuestion
     };
 
-    if (selectedOption === 'multipleChoice' || selectedOption === 'checkbox' || selectedOption === 'dropdown') {
+    if (selectedOption === 'multipleChoice' || selectedOption === 'dropdown') {
       dataToInsert.options = options.map((option) => ({
         text: option.text,
         isCorrect: option.isCorrect || false,
@@ -983,7 +983,7 @@ class CreateQuestion extends Component {
   render() {
     const { questionType, selectedOption, showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, firstQuestion, validationErrors, allQuestions, nextQuestion } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
-    const showNextQuestion = (isLeadingQuestion && (selectedOption === 'linear' || selectedOption === 'multipleChoiceGrid' || selectedOption === 'checkboxGrid')) || !isLeadingQuestion;
+    const showNextQuestion = (isLeadingQuestion && (selectedOption === 'checkbox' || selectedOption === 'linear' || selectedOption === 'multipleChoiceGrid' || selectedOption === 'checkboxGrid')) || !isLeadingQuestion;
 
     return (
       <div>

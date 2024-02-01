@@ -10,7 +10,7 @@ const Questions = () => {
     const [canProceed, setCanProceed] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [answers, setAnswers] = useState({});
-    const [currentQuestionId, setCurrentQuestionId] = useState(null);
+    const [questionFlow, setQuestionFlow] = useState([]);
 
     // const destination = "localhost:5000";
     const destination = "rtp.dusky.bond:5000";
@@ -108,32 +108,40 @@ const Questions = () => {
     };
 
     const handleNextQuestion = () => {
-        const isAnswerSelected = () => {
-            switch (currentQuestion.optionType) {
-                case 'multipleChoice':
-                case 'dropdown':
-                case 'linear':
-                    return currentAnswer.trim() !== '';
-                case 'checkbox':
-                    return selectedOptions.length > 0;
-                case 'multipleChoiceGrid':
-                case 'checkboxGrid':
-                    return validateGridAnswers();
-                default:
-                    return false;
+        const currentQuestion = questions[currentQuestionIndex];
+        let nextQuestionIndex = currentQuestionIndex + 1;
+        let newAnswer;
+    
+        if ((currentQuestion.optionType === 'multipleChoice' || currentQuestion.optionType === 'dropdown') && currentQuestion.options) {
+            const selectedOption = currentQuestion.options.find(option => option.text === currentAnswer);
+            if (selectedOption && selectedOption.optionsNextQuestion) {
+                const nextQuestionId = selectedOption.optionsNextQuestion;
+                const nextQuestion = questions.find(question => question._id === nextQuestionId);
+                nextQuestionIndex = questions.indexOf(nextQuestion);
             }
-        };
+        }
     
-        const newAnswer = currentQuestion.optionType.includes('Grid') ? gridAnswers : currentQuestion.optionType === 'checkbox' ? selectedOptions : currentAnswer;
+        // Determine the answer based on the question type
+        if (currentQuestion.optionType === 'checkbox') {
+            newAnswer = selectedOptions;
+        } else if (currentQuestion.optionType.includes('Grid')) {
+            newAnswer = gridAnswers;
+        } else {
+            newAnswer = currentAnswer;
+        }
+    
         updateAnswers(newAnswer);
+        setQuestionFlow(prevFlow => [...prevFlow, questions[nextQuestionIndex]._id]);
     
-        if (currentQuestionIndex < questions.length - 1) {
-            setCurrentQuestionIndex(currentQuestionIndex + 1);
+        if (nextQuestionIndex < questions.length) {
+            setCurrentQuestionIndex(nextQuestionIndex);
             setCurrentAnswer('');
             setSelectedOptions([]);
             setGridAnswers({});
             setCanProceed(false);
-        } 
+        } else {
+            handleSubmit();
+        }
     };
 
     const validateGridAnswers = () => {
@@ -150,8 +158,18 @@ const Questions = () => {
     
     const handlePreviousQuestion = () => {
         if (currentQuestionIndex > 0) {
-            setCurrentQuestionIndex(currentQuestionIndex - 1);
-            setCurrentAnswer('');
+            const prevQuestionIndex = currentQuestionIndex - 1;
+            const prevQuestionAnswers = answers[prevQuestionIndex];
+    
+            setCurrentQuestionIndex(prevQuestionIndex);
+    
+            if (Array.isArray(prevQuestionAnswers)) {
+                setSelectedOptions(prevQuestionAnswers);
+            } else if (typeof prevQuestionAnswers === 'object' && prevQuestionAnswers !== null) {
+                setGridAnswers(prevQuestionAnswers);
+            } else {
+                setCurrentAnswer(prevQuestionAnswers || '');
+            }
             setCanProceed(true); 
         }
     };
