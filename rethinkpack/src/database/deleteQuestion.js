@@ -23,4 +23,51 @@ router.delete('/deleteQuestion/:id', async (req, res) => {
     }
 });
 
+// Update questions
+// clear all cases of nextQuestion and optionsNextQuestion 
+// that match with the deleted question
+router.patch('/clearNextQuestion', async (req, res) => {
+    console.log(`clearNextQuestion router executed`);
+    try {
+        const { questionId, clearNextQuestionArray, clearOptionsNextQuestionArray } = req.body;
+
+        // Update nextQuestion logic
+        const updateNextQuestion = await Questions.updateMany(
+            { _id: { $in: clearNextQuestionArray.map(item => item.questionId) } },
+            {
+                $set: {
+                    'nextQuestion': '',
+                    // Add more fields here if needed
+                }
+            }
+        );
+
+        // Update optionsNextQuestion logic for each index
+        const updateOptionsNextQuestionPromises = clearOptionsNextQuestionArray.map(async (item) => {
+            const { questionId, optionsIndex } = item;
+            return await Questions.updateMany(
+                { _id: questionId },
+                {
+                    $set: {
+                        [`options.${optionsIndex}.optionsNextQuestion`]: '',
+                    }
+                }
+            );
+        });
+
+        // Wait for all updates to complete
+        const updateOptionsNextQuestionResults = await Promise.all(updateOptionsNextQuestionPromises);
+
+        res.json({ updateNextQuestion, updateOptionsNextQuestionResults });
+    } catch (error) {
+        console.error('Error updating questions:', error);
+        res.status(500).json({ error: 'Internal Server Error', message: error.message });
+    }
+});
+
+
+
+
+  
+
 module.exports = router;
