@@ -46,5 +46,5 @@ router.get('/nextQuestion/:id', async (req, res) => {
     }
 });
 
-module.exports = { router};
+module.exports = { router };
 // -------------------------------------this is the base line-------------------------------------------- ----- -----

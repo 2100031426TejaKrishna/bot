@@ -3,11 +3,12 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const connectToDatabase = require('./database');
 const insertQuestionRoute = require('./insertQuestion');
-const { router: displayQuestionRoute, fetchQuestions } = require('./displayQuestion');
+const displayQuestionRoute = require('./displayQuestion');
+const displayCustomerQuestionRoute = require('./displayCustomerQuestion');
+const submitResponseRoute = require('./insertCustomerResponse');
 const { router: treeMapRouter} = require('./mongodb-utils');
 const editReadUpdateRoute = require('./editReadUpdate');
 const deleteQuestionRouter = require('./deleteQuestion'); 
-// const treeMapRouter = require('./mongodb-utils');
 
 
 const corsOptions = {
@@ -26,6 +27,8 @@ connectToDatabase().then(async () => {
   console.log("Database connected!");
   app.use('/api', insertQuestionRoute);
   app.use('/api', displayQuestionRoute);
+  app.use('/api', displayCustomerQuestionRoute);
+   app.use('/api', submitResponseRoute);
   app.use('/api', editReadUpdateRoute);
   app.use('/api', deleteQuestionRouter);
   app.use('/api', treeMapRouter);

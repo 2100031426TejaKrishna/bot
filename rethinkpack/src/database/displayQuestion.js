@@ -46,4 +46,4 @@ router.get('/question/:id', async (req, res) => {
     }
 });
 
-module.exports = { router, fetchQuestions };
+module.exports = router;

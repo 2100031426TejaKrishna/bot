@@ -15,7 +15,7 @@ const fetchQuestions = async () => {
 
         while (queue.length > 0) {
             let currentQuestion = queue.shift();
-            allQuestions.set(currentQuestion._id.toString(), currentQuestwion);
+            allQuestions.set(currentQuestion._id.toString(), currentQuestion);
 
             if (currentQuestion.nextQuestion) {
                 let nextQuestionId = new mongoose.Types.ObjectId(currentQuestion.nextQuestion);

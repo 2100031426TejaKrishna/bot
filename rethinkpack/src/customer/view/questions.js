@@ -109,19 +109,8 @@ const Questions = () => {
 
     const handleNextQuestion = () => {
         const currentQuestion = questions[currentQuestionIndex];
-        let nextQuestionIndex = currentQuestionIndex + 1;
         let newAnswer;
     
-        if ((currentQuestion.optionType === 'multipleChoice' || currentQuestion.optionType === 'dropdown') && currentQuestion.options) {
-            const selectedOption = currentQuestion.options.find(option => option.text === currentAnswer);
-            if (selectedOption && selectedOption.optionsNextQuestion) {
-                const nextQuestionId = selectedOption.optionsNextQuestion;
-                const nextQuestion = questions.find(question => question._id === nextQuestionId);
-                nextQuestionIndex = questions.indexOf(nextQuestion);
-            }
-        }
-    
-        // Determine the answer based on the question type
         if (currentQuestion.optionType === 'checkbox') {
             newAnswer = selectedOptions;
         } else if (currentQuestion.optionType.includes('Grid')) {
@@ -131,31 +120,39 @@ const Questions = () => {
         }
     
         updateAnswers(newAnswer);
-        setQuestionFlow(prevFlow => [...prevFlow, questions[nextQuestionIndex]._id]);
     
-        if (nextQuestionIndex < questions.length) {
+        if (currentQuestion.optionType === 'multipleChoice' || currentQuestion.optionType === 'dropdown') {
+            const selectedOption = currentQuestion.options.find(option => option.text === currentAnswer);
+            if (selectedOption && selectedOption.optionsNextQuestion) {
+                navigateToNextQuestion(selectedOption.optionsNextQuestion);
+            } else {
+                navigateToSequentialNextQuestion();
+            }
+        } else {
+            navigateToSequentialNextQuestion();
+        }
+    };
+    
+    const navigateToNextQuestion = (nextQuestionId) => {
+        const nextQuestionIndex = questions.findIndex(question => question._id === nextQuestionId);
+        if (nextQuestionIndex !== -1) {
+            setQuestionFlow(prevFlow => [...prevFlow, nextQuestionId]);
             setCurrentQuestionIndex(nextQuestionIndex);
-            setCurrentAnswer('');
-            setSelectedOptions([]);
-            setGridAnswers({});
-            setCanProceed(false);
+        } else {
+            console.error("Next question ID does not match any question.");
+        }
+    };
+    
+    const navigateToSequentialNextQuestion = () => {
+        let nextQuestionIndex = currentQuestionIndex + 1;
+        if (nextQuestionIndex < questions.length) {
+            setQuestionFlow(prevFlow => [...prevFlow, questions[nextQuestionIndex]._id]);
+            setCurrentQuestionIndex(nextQuestionIndex);
         } else {
             handleSubmit();
         }
     };
 
-    const validateGridAnswers = () => {
-        if (currentQuestion.optionType === 'multipleChoiceGrid' || currentQuestion.optionType === 'checkboxGrid') {
-            if (currentQuestion.requireResponse) {
-                return currentQuestion.grid.rows.every((_, rowIndex) => {
-                    const rowAnswers = gridAnswers[rowIndex] || [];
-                    return rowAnswers.length > 0;
-                });
-            }
-        }
-        return true;
-    };
-    
     const handlePreviousQuestion = () => {
         if (currentQuestionIndex > 0) {
             const prevQuestionIndex = currentQuestionIndex - 1;
