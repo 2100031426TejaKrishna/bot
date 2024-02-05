@@ -17,26 +17,28 @@ const fetchQuestions = async () => {
             let currentQuestion = queue.shift();
             allQuestions.set(currentQuestion._id.toString(), currentQuestion);
 
-            if (currentQuestion.nextQuestion) {
-                let nextQuestionId = new mongoose.Types.ObjectId(currentQuestion.nextQuestion);
+            // Function to handle adding next questions to the queue
+            const addNextQuestionToQueue = async (nextQuestionId) => {
                 if (!allQuestions.has(nextQuestionId.toString())) {
                     let nextQuestion = await Questions.findById(nextQuestionId);
                     if (nextQuestion) {
                         queue.push(nextQuestion);
                     }
                 }
+            };
+
+            // Check and enqueue the nextQuestion if not already processed
+            if (currentQuestion.nextQuestion) {
+                let nextQuestionId = new mongoose.Types.ObjectId(currentQuestion.nextQuestion);
+                await addNextQuestionToQueue(nextQuestionId);
             }
 
+            // Process options and their nextQuestions
             if (currentQuestion.options && currentQuestion.options.length > 0) {
                 for (let option of currentQuestion.options) {
                     if (option.optionsNextQuestion) {
                         let optionNextQuestionId = new mongoose.Types.ObjectId(option.optionsNextQuestion);
-                        if (!allQuestions.has(optionNextQuestionId.toString())) {
-                            let optionNextQuestion = await Questions.findById(optionNextQuestionId);
-                            if (optionNextQuestion) {
-                                queue.push(optionNextQuestion);
-                            }
-                        }
+                        await addNextQuestionToQueue(optionNextQuestionId);
                     }
                 }
             }
