@@ -19,47 +19,58 @@ const QuestionsTreeMap = () => {
     }
   };
 
-  const fetchQuestionsRecursively = async (questionId, visitedQuestions = new Set()) => {
-    if (visitedQuestions.has(questionId)) {
-      console.log("Already visited question:", questionId);
-      return null;
+const fetchQuestionsRecursively = async (questionId, visitedQuestions = new Set()) => {
+  if (visitedQuestions.has(questionId)) {
+    console.log("Already visited question:", questionId);
+    return null;
+  }
+
+  visitedQuestions.add(questionId);
+
+  const questionData = await fetchQuestion(questionId);
+
+  if (!questionData) {
+    return null;
+  }
+
+  const childrenData = [];
+
+  // Check if optionType is dropdown and send options to frontend
+  if (questionData.optionType === 'dropdown' && questionData.options) {
+    const dropdownOptions = questionData.options.map((option) => ({
+      name: option.text,
+    }));
+    childrenData.push(...dropdownOptions);
+  }
+
+  if (questionData.nextQuestion) {
+    console.log("Fetching question for nextQuestion:", questionData.nextQuestion);
+    const childData = await fetchQuestionsRecursively(questionData.nextQuestion, visitedQuestions);
+    if (childData) {
+      childrenData.push(childData);
     }
-
-    visitedQuestions.add(questionId);
-
-    const questionData = await fetchQuestion(questionId);
-
-    if (!questionData) {
-      return null;
-    }
-
-    const childrenData = [];
-
-    if (questionData.nextQuestion) {
-      console.log("Fetching question for nextQuestion:", questionData.nextQuestion);
-      const childData = await fetchQuestionsRecursively(questionData.nextQuestion, visitedQuestions);
-      if (childData) {
-        childrenData.push(childData);
-      }
-    } else if (questionData.options && questionData.options.length > 0) {
-      for (const option of questionData.options) {
-        if (option.optionsNextQuestion) {
-          console.log("Fetching question for optionsNextQuestion:", option.optionsNextQuestion);
-          const childData = await fetchQuestionsRecursively(option.optionsNextQuestion, visitedQuestions);
-          if (childData) {
-            childrenData.push(childData);
-          }
+  } else if (questionData.options && questionData.options.length > 0) {
+    for (const option of questionData.options) {
+      if (option.optionsNextQuestion) {
+        console.log("Fetching question for optionsNextQuestion:", option.optionsNextQuestion);
+        const childData = await fetchQuestionsRecursively(option.optionsNextQuestion, visitedQuestions);
+        if (childData) {
+          childrenData.push(childData);
         }
       }
     }
+  }
 
-    console.log("Processed question:", questionData);
+  console.log("Processed question:", questionData);
 
-    return {
-      name: questionData.question,
-      children: childrenData,
-    };
+  return {
+    name: questionData.question,
+    attributes: {
+      optionType: questionData.optionType,
+    },
+    children: childrenData, // Include children in the result
   };
+};
 
   const fetchQuestions = async () => {
     try {
@@ -91,6 +102,21 @@ const QuestionsTreeMap = () => {
     return <div>Loading...</div>;
   }
 
+  const renderCustomNode = ({ nodeDatum, toggleNode }) => {
+    const isDropdownOption = nodeDatum.attributes && nodeDatum.attributes.isDropdownOption;
+
+    return (
+      <div onClick={isDropdownOption ? null : () => toggleNode()}>
+        {nodeDatum.name}
+      </div>
+    );
+  };
+
+  if (!data) {
+    // Render loading state or placeholder while data is being fetched
+    return <div>Loading...</div>;
+  }
+
   return (
     <div style={{ width: '100%', height: '600px' }}>
       <Tree
@@ -98,6 +124,7 @@ const QuestionsTreeMap = () => {
         orientation="vertical"
         translate={{ x: 400, y: 50 }}
         onClick={handleNodeClick}
+        renderCustomNode={renderCustomNode}
       />
     </div>
   );
