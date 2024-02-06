@@ -3,8 +3,8 @@ import './questions.css';
 import EditQuestion from './editQuestion';
 
 // Switch URLs between Server and Local hosting here
-const destination = "localhost:5000";
-// const destination = "rtp.dusky.bond:5000";
+// const destination = "localhost:5000";
+const destination = "rtp.dusky.bond:5000";
 
 const Questions = ({ triggerRefresh }) => {
     const [questions, setQuestions] = useState([]);
@@ -27,138 +27,7 @@ const Questions = ({ triggerRefresh }) => {
         }
     };
 
-    // const deleteAction = async () => {
-    //     if (questionToDelete) {
-    //         try {
-    //             const response = await fetch(`http://${destination}/api/deleteQuestion/${questionToDelete}`, { method: 'DELETE' });
-    //             if (!response.ok) {
-    //                 throw new Error(`HTTP error! status: ${response.status}`);
-    //             }
-    //             setQuestions(questions.filter(question => question._id !== questionToDelete));
-    //             setQuestionToDelete(null);
-    //             setShowToast(true);
-    //             setTimeout(() => setShowToast(false), 5000);
-    //         } catch (error) {
-    //             console.error("Error deleting question:", error);
-    //         }
-    //     }
-    // }
-
-    // // handleDelete component
-    // // nextQuestion check
-    // useEffect(() => {
-    //     // declare object to contain nextQuestion and optionsNextQuestion cases
-    //     const dataToClear = {
-    //         questionId: questionToDelete,
-    //         clearNextQuestionArray: clearNextQuestion,
-    //         clearOptionsNextQuestionArray: clearOptionsNextQuestion
-    //     }
-
-    //     if (dataToClear.clearNextQuestionArray.length > 0 || dataToClear.clearOptionsNextQuestionArray.length > 0) {
-      
-    //         // debug
-    //         console.log(`useEffect dataToClear.clearNextQuestionArray: ${JSON.stringify(dataToClear.clearNextQuestionArray)}`)
-    //         console.log(`useEffect dataToClear.clearOptionsNextQuestionArray: ${JSON.stringify(dataToClear.clearOptionsNextQuestionArray)}`)
-        
-    //         // UPDATE request
-    //         const updateClearNextQuestion = async (dataToClear) => {
-    //         try {
-    //             const response = await fetch(`http://${destination}/api/clearNextQuestion`, {
-    //             method: 'PATCH',
-    //             headers: {
-    //                 'Content-Type': 'application/json',
-    //             },
-    //             body: JSON.stringify(dataToClear),
-    //             })
-    //             if (response.ok) {
-    //                 console.log('Data submitted successfully');
-    //                 setShowToast(true);
-    //                 setTimeout(() => setShowToast(false), 10000);
-        
-    //                 // Trigger re-fetch in parent component questions.js
-    //                 refreshQuestions();
-    //             } else {
-    //                 const errorData = await response.json();
-    //                 console.error('Server responded with an error:', response.status, response.statusText);
-    //                 console.error('Server error data:', errorData);
-    //             }
-    //         } catch (error) {
-    //             console.error('Network error:', error);
-    //         }
-        
-    //         // debug
-    //         // console.log(`questionList: ${JSON.stringify(this.state.questionList)}`)
-    //         };
-        
-    //         // Call the function to update the data in the database       
-    //         updateClearNextQuestion(dataToClear).then(deleteAction());
-    //     };
-    // }, [clearNextQuestion, clearOptionsNextQuestion, triggerRefresh]);
-      
-    // const handleDelete = () => {
-    //     // nextQuestion check
-    //     let nextQuestionCheck = false;
-        
-    //     // Ensures that state is reset on each operation
-    //     if (clearNextQuestion.length > 0 || clearOptionsNextQuestion.length > 0) {
-    //         setClearNextQuestion([]);
-    //         setClearOptionsNextQuestion([]);
-    //     };
-        
-    //     // Loop through questions array
-    //     questions.forEach((question) => {
-    //         // This works
-    //         if (question._id === questionToDelete) {
-    //             // console.log(`question: ${question.question}`);
-    //         }
-    //         // Search for all cases for nextQuestion match
-    //         if (question.nextQuestion === questionToDelete) {
-    //             // debug
-    //             console.log(`nextQuestion match: ${question.question}`)
-                
-    //             // clear logic
-    //             setClearNextQuestion( prevClearNextQuestion =>
-    //                 [
-    //                     ...prevClearNextQuestion,
-    //                     { 
-    //                         questionId: question._id
-    //                     }   
-    //                 ]
-    //             );
-    //             nextQuestionCheck = true;
-    //         }
-
-    //         // Search for all cases for optionsNextQuestion match
-    //         if (question.options.length > 0) {
-    //             for(let i=0; i<question.options.length; i++) {
-    //                 if (question.options[i].optionsNextQuestion === questionToDelete) {
-    //                     // debug
-    //                     console.log(`optionsNextQuestion match: ${question.question}`);
-
-    //                     // clear logic
-    //                     setClearOptionsNextQuestion( prevClearOptionsNextQuestion =>
-    //                         [
-    //                             ...prevClearOptionsNextQuestion,
-    //                             { 
-    //                                 questionId: question._id,
-    //                                 optionsIndex: i
-    //                             }   
-    //                         ]
-    //                     );
-    //                     nextQuestionCheck = true;
-    //                 }                        
-    //             }
-    //         }
-    //     });
-        
-    //     // If passes nextQuestionCheck (when = false), then can delete straight away
-    //     if (nextQuestionCheck === false) {
-    //         deleteAction();
-    //     }
-    // };
-
-    // Original Code
-    const handleDelete = async () => {
+    const deleteAction = async () => {
         if (questionToDelete) {
             try {
                 const response = await fetch(`http://${destination}/api/deleteQuestion/${questionToDelete}`, { method: 'DELETE' });
@@ -173,7 +42,138 @@ const Questions = ({ triggerRefresh }) => {
                 console.error("Error deleting question:", error);
             }
         }
+    }
+
+    // handleDelete component
+    // nextQuestion check
+    useEffect(() => {
+        // declare object to contain nextQuestion and optionsNextQuestion cases
+        const dataToClear = {
+            questionId: questionToDelete,
+            clearNextQuestionArray: clearNextQuestion,
+            clearOptionsNextQuestionArray: clearOptionsNextQuestion
+        }
+
+        if (dataToClear.clearNextQuestionArray.length > 0 || dataToClear.clearOptionsNextQuestionArray.length > 0) {
+      
+            // debug
+            console.log(`useEffect dataToClear.clearNextQuestionArray: ${JSON.stringify(dataToClear.clearNextQuestionArray)}`)
+            console.log(`useEffect dataToClear.clearOptionsNextQuestionArray: ${JSON.stringify(dataToClear.clearOptionsNextQuestionArray)}`)
+        
+            // UPDATE request
+            const updateClearNextQuestion = async (dataToClear) => {
+            try {
+                const response = await fetch(`http://${destination}/api/clearNextQuestion`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(dataToClear),
+                })
+                if (response.ok) {
+                    console.log('Data submitted successfully');
+                    setShowToast(true);
+                    setTimeout(() => setShowToast(false), 10000);
+        
+                    // Trigger re-fetch in parent component questions.js
+                    refreshQuestions();
+                } else {
+                    const errorData = await response.json();
+                    console.error('Server responded with an error:', response.status, response.statusText);
+                    console.error('Server error data:', errorData);
+                }
+            } catch (error) {
+                console.error('Network error:', error);
+            }
+        
+            // debug
+            // console.log(`questionList: ${JSON.stringify(this.state.questionList)}`)
+            };
+        
+            // Call the function to update the data in the database       
+            updateClearNextQuestion(dataToClear).then(deleteAction());
+        };
+    }, [clearNextQuestion, clearOptionsNextQuestion, triggerRefresh]);
+      
+    const handleDelete = () => {
+        // nextQuestion check
+        let nextQuestionCheck = false;
+        
+        // Ensures that state is reset on each operation
+        if (clearNextQuestion.length > 0 || clearOptionsNextQuestion.length > 0) {
+            setClearNextQuestion([]);
+            setClearOptionsNextQuestion([]);
+        };
+        
+        // Loop through questions array
+        questions.forEach((question) => {
+            // This works
+            if (question._id === questionToDelete) {
+                // console.log(`question: ${question.question}`);
+            }
+            // Search for all cases for nextQuestion match
+            if (question.nextQuestion === questionToDelete) {
+                // debug
+                console.log(`nextQuestion match: ${question.question}`)
+                
+                // clear logic
+                setClearNextQuestion( prevClearNextQuestion =>
+                    [
+                        ...prevClearNextQuestion,
+                        { 
+                            questionId: question._id
+                        }   
+                    ]
+                );
+                nextQuestionCheck = true;
+            }
+
+            // Search for all cases for optionsNextQuestion match
+            if (question.options.length > 0) {
+                for(let i=0; i<question.options.length; i++) {
+                    if (question.options[i].optionsNextQuestion === questionToDelete) {
+                        // debug
+                        console.log(`optionsNextQuestion match: ${question.question}`);
+
+                        // clear logic
+                        setClearOptionsNextQuestion( prevClearOptionsNextQuestion =>
+                            [
+                                ...prevClearOptionsNextQuestion,
+                                { 
+                                    questionId: question._id,
+                                    optionsIndex: i
+                                }   
+                            ]
+                        );
+                        nextQuestionCheck = true;
+                    }                        
+                }
+            }
+        });
+        
+        // If passes nextQuestionCheck (when = false), then can delete straight away
+        if (nextQuestionCheck === false) {
+            deleteAction();
+        }
     };
+
+    // Original Code
+    // const handleDelete = async () => {
+    //     if (questionToDelete) {
+    //         try {
+    //             const response = await fetch(`http://${destination}/api/deleteQuestion/${questionToDelete}`, { method: 'DELETE' });
+    //             if (!response.ok) {
+    //                 throw new Error(`HTTP error! status: ${response.status}`);
+    //             }
+    //             setQuestions(questions.filter(question => question._id !== questionToDelete));
+    //             setQuestionToDelete(null);
+    //             setShowToast(true);
+    //             setTimeout(() => setShowToast(false), 5000);
+    //         } catch (error) {
+    //             console.error("Error deleting question:", error);
+    //         }
+    //     }
+    // };
 
     const formatDate = (dateString) => {
         const options = { year: 'numeric', month: '2-digit', day: '2-digit'};
