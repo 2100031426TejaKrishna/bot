@@ -15,16 +15,25 @@ const fetchFirstQuestion = async () => {
     }
 };
 
-// Fetch the next question by ID
+// Fetch the next question by ID or optionsNextQuestion
 const fetchNextQuestion = async (nextQuestionId) => {
     try {
-        const question = await Questions.findById(nextQuestionId);
-        return question;
+      // Try to find the question by ID first
+      let question = await Questions.findById(nextQuestionId);
+  
+      if (!question) {
+        // If not found, check if it's an optionsNextQuestion
+        question = await Questions.findOne({
+          'options.optionsNextQuestion': mongoose.Types.ObjectId(nextQuestionId),
+        });
+      }
+  
+      return question;
     } catch (error) {
-        console.error("Error fetching the next question:", error);
-        throw error;
+      console.error("Error fetching the next question:", error);
+      throw error;
     }
-};
+  };
 
 // Endpoint to get the first question
 router.get('/firstQuestion', async (req, res) => {
@@ -46,5 +55,5 @@ router.get('/nextQuestion/:id', async (req, res) => {
     }
 });
 
-module.exports = { router };
+module.exports = { router};
 // -------------------------------------this is the base line-------------------------------------------- ----- -----
