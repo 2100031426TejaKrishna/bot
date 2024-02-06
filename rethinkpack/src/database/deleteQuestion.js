@@ -36,8 +36,7 @@ router.patch('/clearNextQuestion', async (req, res) => {
             { _id: { $in: clearNextQuestionArray.map(item => item.questionId) } },
             {
                 $set: {
-                    'nextQuestion': '',
-                    // Add more fields here if needed
+                    'nextQuestion': ''
                 }
             }
         );
@@ -64,10 +63,5 @@ router.patch('/clearNextQuestion', async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error', message: error.message });
     }
 });
-
-
-
-
-  
 
 module.exports = router;
