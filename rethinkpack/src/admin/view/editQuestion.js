@@ -82,7 +82,7 @@ class EditQuestion extends Component {
       // Additional variables
       questionIndex: props.index,
       questionId: props.questionId,
-      allQuestions: props.allQuestions,
+      allQuestions: [],
       questionList: {
         question: null, 
         questionType: '',
@@ -117,16 +117,10 @@ class EditQuestion extends Component {
 /*--------------onClick-----------------*/
 
   onEditClickHandler = (id) => {
-    this.fetchQuestion(id).then( () => {
-      this.setState(
-        { 
-          // isLeadingQuestion: (this.state.questionList.marks) ? false : true 
-        },
-        // Callback function
-        () => { 
-          localStorage.setItem("formData", this.state.questionList)
-        }
-      )}
+    // Load all questions
+    this.fetchQuestions().then(
+      // Load specific question
+      this.fetchQuestion(id)
     );
   }
 
@@ -145,6 +139,16 @@ class EditQuestion extends Component {
           isLeadingQuestion: (data.marks) ? false : true
         })
       }
+    } catch (error) {
+      console.error('Error fetching questions:', error);
+    }
+  };
+
+  fetchQuestions = async () => {
+    try {
+      const response = await fetch(`http://${destination}/api/displayAllQuestions`);
+      const questions = await response.json();
+      this.setState({ allQuestions: questions });
     } catch (error) {
       console.error('Error fetching questions:', error);
     }
@@ -231,11 +235,25 @@ class EditQuestion extends Component {
     }))
   }
 
+  // Original
   handleQuestionNextQuestion = (e) => {
     this.setState( (prevState) => ({
       questionList: { ...prevState.questionList, nextQuestion: e.target.value }
     }))
   }
+
+  // handleQuestionNextQuestion  = (index, nextQuestionId) => {
+  //   this.setState(prevState => {
+  //     const updatedOptions = prevState.options.map((option, i) => {
+  //       if (i === index) {
+  //         return { ...option, nextQuestion: nextQuestionId };
+  //       }
+  //       return option;
+  //     });
+  
+  //     return { options: updatedOptions };
+  //   });
+  // };
 
   addOption = (e) => {
     e.preventDefault();

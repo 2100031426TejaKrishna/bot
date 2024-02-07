@@ -157,24 +157,6 @@ const Questions = ({ triggerRefresh }) => {
         }
     };
 
-    // Original Code
-    // const handleDelete = async () => {
-    //     if (questionToDelete) {
-    //         try {
-    //             const response = await fetch(`http://${destination}/api/deleteQuestion/${questionToDelete}`, { method: 'DELETE' });
-    //             if (!response.ok) {
-    //                 throw new Error(`HTTP error! status: ${response.status}`);
-    //             }
-    //             setQuestions(questions.filter(question => question._id !== questionToDelete));
-    //             setQuestionToDelete(null);
-    //             setShowToast(true);
-    //             setTimeout(() => setShowToast(false), 5000);
-    //         } catch (error) {
-    //             console.error("Error deleting question:", error);
-    //         }
-    //     }
-    // };
-
     const formatDate = (dateString) => {
         const options = { year: 'numeric', month: '2-digit', day: '2-digit'};
         return new Date(dateString).toLocaleString('en-US', options);
@@ -461,7 +443,6 @@ const Questions = ({ triggerRefresh }) => {
                         <EditQuestion 
                             index = {index}
                             questionId = {question._id} 
-                            allQuestions = {questions}
                             refreshQuestions={refreshQuestions}
                         />
                         <button 
