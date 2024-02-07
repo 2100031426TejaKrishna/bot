@@ -454,7 +454,6 @@ class EditQuestion extends Component {
 
     // clear the selection if more than one answer exists
     if(countIsCorrect>1) {
-      console.log(`countIsCorrect greater than 1`)
       this.setState((prevState) => ({
         questionList: {
           ...prevState.questionList,
@@ -696,6 +695,10 @@ class EditQuestion extends Component {
         );
 //----------------------------- dropdown ----------------------------     
       case 'dropdown':
+
+        // Multiple choice check: clear selection if more than one answer exists
+        this.safeCheckMultipleChoice();
+
         return (
           <>
             {questionList.options.map((option, index) => (

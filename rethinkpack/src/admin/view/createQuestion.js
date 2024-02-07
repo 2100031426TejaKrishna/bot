@@ -163,7 +163,6 @@ class CreateQuestion extends Component {
 
     // clear the selection if more than one answer exists
     if(countIsCorrect>1) {
-      console.log(`countIsCorrect greater than 1`)
       this.setState((prevState) => ({
         options: prevState.options.map((option) => ({
           ...option,
@@ -469,6 +468,8 @@ class CreateQuestion extends Component {
         );
   
       case 'dropdown':
+        this.safeCheckMultipleChoice();
+        /* falls through */
         return (
           <>
             {options.map((option, index) => (
