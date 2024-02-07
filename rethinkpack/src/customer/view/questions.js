@@ -3,7 +3,6 @@ import './questions.css';
 
 const Questions = () => {
     const [questions, setQuestions] = useState([]);
-    const [currentQuestion, setCurrentQuestion] = useState(null);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [currentAnswer, setCurrentAnswer] = useState('');
     const [selectedOptions, setSelectedOptions] = useState([]);
@@ -19,41 +18,22 @@ const Questions = () => {
     const destination = "rtp.dusky.bond:5000";
 
     useEffect(() => {
-        const fetchFirstQuestion = async () => {
-            setIsLoading(true);
+        const fetchAllQuestions = async () => {
             try {
-                const response = await fetch(`http://${destination}/fetchFirstQuestion`);
+                const response = await fetch(`http://${destination}/api/fetchQuestions`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const data = await response.json();
-                setCurrentQuestion(data); 
+                setQuestions(data); 
                 setIsLoading(false);
             } catch (error) {
-                console.error("Error fetching the first question:", error);
+                console.error("Error fetching all questions:", error);
             }
         };
     
-        fetchFirstQuestion();
+        fetchAllQuestions();
     }, []);
-
-    // useEffect(() => {
-    //     const fetchAllQuestions = async () => {
-    //         try {
-    //             const response = await fetch(`http://${destination}/api/fetchQuestions`);
-    //             if (!response.ok) {
-    //                 throw new Error(`HTTP error! status: ${response.status}`);
-    //             }
-    //             const data = await response.json();
-    //             setQuestions(data); 
-    //             setIsLoading(false);
-    //         } catch (error) {
-    //             console.error("Error fetching all questions:", error);
-    //         }
-    //     };
-    
-    //     fetchAllQuestions();
-    // }, []);
 
     useEffect(() => {
         const prevAnswer = answers[currentQuestionIndex];
@@ -129,63 +109,42 @@ const Questions = () => {
         }));
     };
 
-    const handleNextQuestion = async () => {
-        if (!canProceed) return;
-
-        setIsLoading(true);
-        // Logic to determine nextQuestionId or selectedOptionId for dynamic fetching
-        let endpoint = `http://${destination}/fetchNextQuestion/${currentQuestion._id}`;
-        if (currentQuestion.optionType === 'checkbox' || currentQuestion.optionType.includes('Grid')) {
-            // For simplicity, assuming single selection for non-checkbox options to determine next question
-            const selectedOptionId = selectedOptions[0]; // Adjust based on your option handling
-            endpoint += `/${selectedOptionId}`;
+    const handleNextQuestion = () => {
+        const currentQuestion = questions[currentQuestionIndex];
+        let newAnswer;
+    
+        // Determine the new answer based on the question type
+        if (currentQuestion.optionType === 'checkbox') {
+            newAnswer = selectedOptions;
+        } else if (currentQuestion.optionType.includes('Grid')) {
+            newAnswer = gridAnswers;
+        } else {
+            newAnswer = currentAnswer;
         }
-
-        try {
-            const response = await fetch(endpoint);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+    
+        // Update answers state with the new answer
+        updateAnswers(newAnswer);
+    
+        let nextQuestionId = null;
+        if (currentQuestion.optionType === 'multipleChoice' || currentQuestion.optionType === 'dropdown') {
+            // Find the selected option
+            const selectedOption = currentQuestion.options.find(option => option.text === currentAnswer);
+            // Determine if there's a next question specific to the selected option
+            if (selectedOption && selectedOption.optionsNextQuestion) {
+                nextQuestionId = selectedOption.optionsNextQuestion;
             }
-            const nextQuestion = await response.json();
-            setCurrentQuestion(nextQuestion);
-            setIsLoading(false);
-            // resetAnswerState(); // Implement this function to reset your answer state
-        } catch (error) {
-            console.error("Error fetching the next question:", error);
-            setIsLoading(false);
+        }
+    
+        // Navigate based on the next question ID or the default path
+        if (nextQuestionId) {
+            navigateToNextQuestionById(nextQuestionId);
+        } else if (currentQuestion.nextQuestion) {
+            navigateToNextQuestionById(currentQuestion.nextQuestion);
+        } else {
+            // If there's no explicit next question, consider the path end and prepare for submission
+            handleSubmit(); // Adjusted to handle end-of-path scenario
         }
     };
-
-    // const handleNextQuestion = () => {
-    //     const currentQuestion = questions[currentQuestionIndex];
-    //     let newAnswer;
-    
-    //     if (currentQuestion.optionType === 'checkbox') {
-    //         newAnswer = selectedOptions;
-    //     } else if (currentQuestion.optionType.includes('Grid')) {
-    //         newAnswer = gridAnswers;
-    //     } else {
-    //         newAnswer = currentAnswer;
-    //     }
-    
-    //     updateAnswers(newAnswer);
-    
-    //     let nextQuestionId = null;
-    //     if (currentQuestion.optionType === 'multipleChoice' || currentQuestion.optionType === 'dropdown') {
-    //         const selectedOption = currentQuestion.options.find(option => option.text === currentAnswer);
-    //         if (selectedOption && selectedOption.optionsNextQuestion) {
-    //             nextQuestionId = selectedOption.optionsNextQuestion;
-    //         }
-    //     }
-
-    //     if (nextQuestionId) {
-    //         navigateToNextQuestionById(nextQuestionId);
-    //     } else if (currentQuestion.nextQuestion) {
-    //         navigateToNextQuestionById(currentQuestion.nextQuestion);
-    //     } else {
-    //         navigateToSequentialNextQuestion();
-    //     }
-    // };
     
     const navigateToNextQuestionById = (nextQuestionId) => {
         const nextQuestionIndex = questions.findIndex(question => question._id === nextQuestionId);
@@ -259,7 +218,7 @@ const Questions = () => {
         return <div>No questions available</div>;
     }
 
-    // const currentQuestion = questions[currentQuestionIndex];
+    const currentQuestion = questions[currentQuestionIndex];
 
     const handleSubmit = async () => {
         const lastAnswer = currentQuestion.optionType.includes('Grid') ? gridAnswers : currentQuestion.optionType === 'checkbox' ? selectedOptions : currentAnswer;
@@ -415,11 +374,11 @@ const Questions = () => {
                     {renderOptions(currentQuestion)}
                 </div>
             </div>
-            {/* <div className="survey-questions-progress-bar-container">
+            <div className="survey-questions-progress-bar-container">
                 <div className="survey-questions-progress-bar">
                     <div className="survey-questions-progress-bar-fill" style={{ width: `${(currentQuestionIndex + 1) / questions.length * 100}%` }}></div>
                 </div>
-            </div> */}
+            </div>
             <footer className="survey-questions-footer">
                 <div className="survey-questions-navigation-buttons">
                     {currentQuestionIndex > 0 && (
