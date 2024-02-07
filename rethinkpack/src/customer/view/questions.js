@@ -149,7 +149,7 @@ const Questions = () => {
             const nextQuestion = await response.json();
             setCurrentQuestion(nextQuestion);
             setIsLoading(false);
-            resetAnswerState(); // Implement this function to reset your answer state
+            // resetAnswerState(); // Implement this function to reset your answer state
         } catch (error) {
             console.error("Error fetching the next question:", error);
             setIsLoading(false);
