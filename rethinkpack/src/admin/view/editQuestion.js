@@ -2,6 +2,9 @@ import React, { Component } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
 import Modal from 'react-bootstrap/Modal';
+//
+import Form from 'react-bootstrap/Form';
+import InputGroup from 'react-bootstrap/InputGroup';
 
 // const destination = "localhost:5000";
 const destination = "rtp.dusky.bond:5000";
@@ -89,6 +92,7 @@ class EditQuestion extends Component {
         optionType: 'multipleChoice',
         options: [{ label: 'Option 1', value: 'Option 1', isCorrect: false, optionsNextQuestion: null }],
         linearScale: [],
+        openEndedText: '',
         marks: '',
         firstQuestion: false,
         nextQuestion: null
@@ -235,25 +239,11 @@ class EditQuestion extends Component {
     }))
   }
 
-  // Original
   handleQuestionNextQuestion = (e) => {
     this.setState( (prevState) => ({
       questionList: { ...prevState.questionList, nextQuestion: e.target.value }
     }))
   }
-
-  // handleQuestionNextQuestion  = (index, nextQuestionId) => {
-  //   this.setState(prevState => {
-  //     const updatedOptions = prevState.options.map((option, i) => {
-  //       if (i === index) {
-  //         return { ...option, nextQuestion: nextQuestionId };
-  //       }
-  //       return option;
-  //     });
-  
-  //     return { options: updatedOptions };
-  //   });
-  // };
 
   addOption = (e) => {
     e.preventDefault();
@@ -465,6 +455,12 @@ class EditQuestion extends Component {
       }));
     }
   };
+
+  handleOpenEndedText = (e) => {
+    this.setState( (prevState) => ({
+      questionList: { ...prevState.questionList, openEndedText: e.target.value }
+    }))
+  }
   
 
 //------------------ OPTIONS ----------------------------------  
@@ -875,6 +871,30 @@ class EditQuestion extends Component {
               </div>
           </>
         ); 
+
+
+      case "openEnded":
+
+        return (
+          <>
+
+            <label htmlFor="question" className="col-form-label">
+              Content:
+            </label>
+            <div>
+              <InputGroup>
+                <Form.Control 
+                  id="formOpenEnded"
+                  as="textarea" 
+                  aria-label="With textarea"
+                  value={this.state.questionList.openEndedText}
+                  onChange={this.handleOpenEndedText}
+                />
+              </InputGroup>
+            </div>
+          </>
+        );
+
       default:
         return null;
     }
@@ -1174,6 +1194,7 @@ class EditQuestion extends Component {
       options: this.state.questionList.options,
       grid: this.state.gridOptions,
       linearScale: this.state.questionList.linearScale,
+      openEndedText: this.state.questionList.openEndedText,
       marks: isLeadingQuestion ? undefined : parseFloat(this.state.questionList.marks),
       countries: showCountry ? selectedCountries : undefined,
       explanation: showExplanation ? explanation : undefined,
@@ -1338,6 +1359,7 @@ class EditQuestion extends Component {
                   <option value="linear">Linear Scale</option>
                   <option value="multipleChoiceGrid">Multiple Choice Grid</option>
                   <option value="checkboxGrid">Checkbox Grid</option>
+                  <option value="openEnded">Open-Ended</option>
                 </select>
                 {validationErrors.optionType && (
                   <div style={{ color: 'red', fontSize: 12 }}>
