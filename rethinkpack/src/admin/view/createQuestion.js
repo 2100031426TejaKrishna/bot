@@ -3,6 +3,8 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
 import { Modal } from 'bootstrap';
 import './createQuestion.css';
+import Form from 'react-bootstrap/Form';
+import InputGroup from 'react-bootstrap/InputGroup';
 
 // Switch URLs between Server and Local hosting here
 // const destination = "localhost:5000";
@@ -20,6 +22,9 @@ class CreateQuestion extends Component {
       selectedOption: 'multipleChoice',
       options: [{ text: '', value: 'Option 1', isCorrect: false }],
       gridOptions: { row: [{ label: 'Row 1', value: 'Row 1' }], column: [{ label: 'Column 1', value: 'Column 1' }], answers: [] },
+      openEndedText: '',
+      openEndedWordLimit: 500,
+      openEndedWordCount: 0,
       showCountry: false,
       countries: [
         "Afghanistan", "Albania", "Algeria", "Andorra", "Angola",
@@ -75,6 +80,7 @@ class CreateQuestion extends Component {
         question: '',
         optionType: '',
         options: '',
+        openEnded: '',
         marks: '',
         country: '',
         explanation: '',
@@ -327,8 +333,24 @@ class CreateQuestion extends Component {
     }));
   };
 
+  handleOpenEndedText = (e) => {
+    this.setState( () => ({
+      openEndedText: e.target.value,
+      openEndedWordCount: this.getWordCount(e.target.value), // Update word count on change
+    }),
+    () => {
+      localStorage.setItem("openEndedText", JSON.stringify(this.state.openEndedText))
+    })
+  };
+
+  getWordCount = (text) => {
+    // Split the text by whitespace and filter out empty strings
+    const words = text.trim().split(/\s+/).filter(Boolean);
+    return words.length;
+  };
+
   renderOptionsArea = () => {
-    const { selectedOption, options, gridOptions, requireResponse, isLeadingQuestion, allQuestions, validationErrors } = this.state;
+    const { selectedOption, options, gridOptions, requireResponse, isLeadingQuestion, allQuestions, openEndedText, openEndedWordCount, openEndedWordLimit, validationErrors } = this.state;
     const clearSelections = (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -642,7 +664,38 @@ class CreateQuestion extends Component {
               </div>
               </div>
           </>
-        );    
+        );
+        
+        case "openEnded":
+          return (
+            <>
+  
+              <label htmlFor="question" className="col-form-label">
+                Content:
+              </label>
+              <div>
+                <InputGroup>
+                  <Form.Control 
+                    id="formOpenEnded"
+                    as="textarea" 
+                    aria-label="With textarea"
+                    value={openEndedText}
+                    onChange={this.handleOpenEndedText}
+                  />
+                </InputGroup>
+                <p
+                  style={{ color: openEndedWordCount > openEndedWordLimit ? 'red' : 'inherit' }} // Set color based on condition
+                >
+                  Words: {openEndedWordCount}/{openEndedWordLimit}
+                </p>
+                {validationErrors.openEnded && (
+                    <div style={{ color: 'red', fontSize: 12 }}>
+                      {validationErrors.openEnded}
+                    </div>
+                  )}
+              </div>
+            </>
+          );
   
       default:
         return null;
@@ -776,7 +829,7 @@ class CreateQuestion extends Component {
   
   validateOptions = () => {
     const { options, selectedOption, isLeadingQuestion } = this.state;
-    if (selectedOption === 'linear' || selectedOption === 'multipleChoiceGrid' || selectedOption === 'checkboxGrid') {
+    if (selectedOption === 'linear' || selectedOption === 'multipleChoiceGrid' || selectedOption === 'checkboxGrid' || selectedOption === 'openEnded') {
       return true;
     }
 
@@ -828,6 +881,21 @@ class CreateQuestion extends Component {
     }
     return true;
   };
+
+  validateOpenEnded = () => {
+    const { openEndedWordCount, openEndedWordLimit, selectedOption } = this.state;
+
+    if (selectedOption === 'openEnded') {
+      // code below
+      if (openEndedWordCount > openEndedWordLimit) {
+        // case when openEndedWordCount GREATER THAN openEndedWordLimit
+        return false;
+      } else {
+        // case when openEndedWordCount LESS THAN OR EQUALS openEndedWordLimit
+        return true;
+      }
+    };
+  };
   
   validateMarks = () => {
     const { marks, isLeadingQuestion } = this.state;
@@ -869,6 +937,7 @@ class CreateQuestion extends Component {
     const isQuestionValid = this.validateQuestion();
     const isOptionTypeValid = this.validateOptionType();
     const isOptionsValid = this.validateOptions();
+    const isOpenEndedValid = this.validateOpenEnded();
     const isMarksValid = this.validateMarks();
     const isCountriesValid = this.validateCountries();
     const isExplanationValid = this.validateExplanation();
@@ -881,13 +950,14 @@ class CreateQuestion extends Component {
         optionType: isOptionTypeValid ? '' : 'Select an option type',
         grid: isGridValid ? '' : 'Complete all grid data entry and ensure there is one selection per row',
         options: isOptionsValid ? '' : 'Add at least two options and at least one selection',
+        openEnded: isOpenEndedValid  ? '' : 'Ensure entry is less than the word limit',
         marks: isMarksValid ? '' : 'Enter the marks for this question',
         country: isCountriesValid ? '' : 'Select at least one country',
         explanation: isExplanationValid ? '' : (this.state.isLeadingQuestion ? 'Enter the recommendation for this question' : 'Enter the explanation for the correct answer'),
       },
     });
 
-    if (!isQuestionTypeValid || !isQuestionValid || !isOptionTypeValid || !isOptionsValid || !isGridValid || !isMarksValid || !isCountriesValid || !isExplanationValid) {
+    if (!isQuestionTypeValid || !isQuestionValid || !isOptionTypeValid || !isOptionsValid || !isGridValid || !isOpenEndedValid || !isMarksValid || !isCountriesValid || !isExplanationValid) {
       return;
     }
 
@@ -915,6 +985,7 @@ class CreateQuestion extends Component {
       question,
       options,
       optionType: selectedOption,
+      openEndedText: this.state.openEndedText,
       marks: isLeadingQuestion ? undefined : parseFloat(marks),
       countries: showCountry ? selectedCountries : undefined,
       explanation: showExplanation ? explanation : undefined,
@@ -994,6 +1065,7 @@ class CreateQuestion extends Component {
               <a href="/landing" className="btn btn-dark d-none d-md-inline-block" data-bs-toggle="modal" data-bs-target="#createQuestion">
                 Create Question
               </a>
+              {/* Insert Create Title here? */}
               <a href="/landing" className="btn btn-dark d-md-none">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-house" viewBox="0 0 16 16">
                   <path d="M6 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H1s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C9.516 10.68 8.289 10 6 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z" />
@@ -1079,6 +1151,7 @@ class CreateQuestion extends Component {
                       <option value="linear">Linear Scale</option>
                       <option value="multipleChoiceGrid">Multiple Choice Grid</option>
                       <option value="checkboxGrid">Checkbox Grid</option>
+                      <option value="openEnded">Open-Ended</option>
                     </select>
                     {validationErrors.optionType && (
                       <div style={{ color: 'red', fontSize: 12 }}>
