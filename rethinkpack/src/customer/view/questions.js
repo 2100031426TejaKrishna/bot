@@ -10,9 +10,10 @@ const Questions = () => {
     const [canProceed, setCanProceed] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [answers, setAnswers] = useState({});
-    const [questionFlow, setQuestionFlow] = useState([]);
     const [uniqueQuestions, setUniqueQuestions] = useState([]);
     const [currentUniqueIndex, setCurrentUniqueIndex] = useState(0);
+    const [isLastQuestion, setIsLastQuestion] = useState(false);
+    const [navigationHistory, setNavigationHistory] = useState([]);
 
     // const destination = "localhost:5000";
     const destination = "rtp.dusky.bond:5000";
@@ -126,24 +127,25 @@ const Questions = () => {
         updateAnswers(newAnswer);
     
         let nextQuestionId = null;
+        // Determine if there's a next question specific to the selected option
         if (currentQuestion.optionType === 'multipleChoice' || currentQuestion.optionType === 'dropdown') {
-            // Find the selected option
             const selectedOption = currentQuestion.options.find(option => option.text === currentAnswer);
-            // Determine if there's a next question specific to the selected option
             if (selectedOption && selectedOption.optionsNextQuestion) {
                 nextQuestionId = selectedOption.optionsNextQuestion;
             }
         }
     
-        // Navigate based on the next question ID or the default path
+        setNavigationHistory((prevHistory) => [...prevHistory, currentQuestionIndex]);
+        
         if (nextQuestionId) {
             navigateToNextQuestionById(nextQuestionId);
         } else if (currentQuestion.nextQuestion) {
             navigateToNextQuestionById(currentQuestion.nextQuestion);
         } else {
-            // If there's no explicit next question, consider the path end and prepare for submission
-            handleSubmit(); // Adjusted to handle end-of-path scenario
+            // Set isLastQuestion to true if there are no further questions defined
+            setIsLastQuestion(true);
         }
+
     };
     
     const navigateToNextQuestionById = (nextQuestionId) => {
@@ -156,47 +158,85 @@ const Questions = () => {
             }
             setCurrentUniqueIndex(uniqueQuestions.indexOf(nextQuestionId));
             setCurrentQuestionIndex(nextQuestionIndex);
+            setIsLastQuestion(false); // Reset this flag when navigating to another question
         } else {
-            console.error("Next question ID does not match any question.");
+            // If the next question ID is invalid or doesn't exist, consider it the end of the survey
+            setIsLastQuestion(true);
         }
     };
     
-    const navigateToSequentialNextQuestion = () => {
-        let nextQuestionIndex = currentQuestionIndex + 1;
-        while (nextQuestionIndex < questions.length && uniqueQuestions.includes(questions[nextQuestionIndex]._id)) {
-            // Skip over questions already included in uniqueQuestions
-            nextQuestionIndex++;
-        }
-        if (nextQuestionIndex < questions.length) {
-            const nextQuestionId = questions[nextQuestionIndex]._id;
-            if (!uniqueQuestions.includes(nextQuestionId)) {
-                const updatedUniqueQuestions = [...uniqueQuestions, nextQuestionId];
-                setUniqueQuestions(updatedUniqueQuestions);
-            }
-            setCurrentUniqueIndex(uniqueQuestions.indexOf(nextQuestionId));
-            setCurrentQuestionIndex(nextQuestionIndex);
-        } else {
-            handleSubmit(); // Or navigate to an end screen, if all questions have been answered
-        }
-    };
+    // const navigateToSequentialNextQuestion = () => {
+    //     let nextQuestionIndex = currentQuestionIndex + 1;
+    //     while (nextQuestionIndex < questions.length && uniqueQuestions.includes(questions[nextQuestionIndex]._id)) {
+    //         // Skip over questions already included in uniqueQuestions
+    //         nextQuestionIndex++;
+    //     }
+    //     if (nextQuestionIndex < questions.length) {
+    //         const nextQuestionId = questions[nextQuestionIndex]._id;
+    //         if (!uniqueQuestions.includes(nextQuestionId)) {
+    //             const updatedUniqueQuestions = [...uniqueQuestions, nextQuestionId];
+    //             setUniqueQuestions(updatedUniqueQuestions);
+    //         }
+    //         setCurrentUniqueIndex(uniqueQuestions.indexOf(nextQuestionId));
+    //         setCurrentQuestionIndex(nextQuestionIndex);
+    //     } else {
+    //         handleSubmit(); // Or navigate to an end screen, if all questions have been answered
+    //     }
+    // };
 
     const handlePreviousQuestion = () => {
-        if (currentQuestionIndex > 0) {
-            const prevQuestionIndex = currentQuestionIndex - 1;
-            const prevQuestionAnswers = answers[prevQuestionIndex];
+        setNavigationHistory((prevHistory) => {
+            if (prevHistory.length > 1) {
+                const newHistory = [...prevHistory];
+                newHistory.pop(); // Remove the current question index from history
+                const prevQuestionIndex = newHistory[newHistory.length - 1]; // Get the previous question index
     
-            setCurrentQuestionIndex(prevQuestionIndex);
+                setCurrentQuestionIndex(prevQuestionIndex);
     
-            if (Array.isArray(prevQuestionAnswers)) {
-                setSelectedOptions(prevQuestionAnswers);
-            } else if (typeof prevQuestionAnswers === 'object' && prevQuestionAnswers !== null) {
-                setGridAnswers(prevQuestionAnswers);
-            } else {
-                setCurrentAnswer(prevQuestionAnswers || '');
+                // Restore previous answers to the UI
+                const prevQuestionAnswers = answers[prevQuestionIndex];
+                if (Array.isArray(prevQuestionAnswers)) {
+                    setSelectedOptions(prevQuestionAnswers);
+                } else if (typeof prevQuestionAnswers === 'object' && prevQuestionAnswers !== null) {
+                    setGridAnswers(prevQuestionAnswers);
+                } else {
+                    setCurrentAnswer(prevQuestionAnswers || '');
+                }
+    
+                // Determine if the previous question should show the "Next" or "Submit" button
+                const prevQuestion = questions[prevQuestionIndex];
+                const hasFollowingQuestion = prevQuestion.nextQuestion || (prevQuestionIndex < questions.length - 1 && newHistory.includes(prevQuestionIndex + 1));
+                setIsLastQuestion(!hasFollowingQuestion);
+                setCanProceed(true);
+    
+                return newHistory;
             }
-            setCanProceed(true); 
-        }
+            return prevHistory;
+        });
     };
+
+    // const handlePreviousQuestion = () => {
+    //     if (currentQuestionIndex > 0) {
+    //         const prevQuestionIndex = currentQuestionIndex - 1;
+    //         const prevQuestion = questions[prevQuestionIndex];
+    //         const prevQuestionAnswers = answers[prevQuestionIndex];
+    
+    //         setCurrentQuestionIndex(prevQuestionIndex);
+    
+    //         if (Array.isArray(prevQuestionAnswers)) {
+    //             setSelectedOptions(prevQuestionAnswers);
+    //         } else if (typeof prevQuestionAnswers === 'object' && prevQuestionAnswers !== null) {
+    //             setGridAnswers(prevQuestionAnswers);
+    //         } else {
+    //             setCurrentAnswer(prevQuestionAnswers || '');
+    //         }
+    
+    //         // Check if the previous question leads to another question or if it was the last one
+    //         const hasFollowingQuestion = prevQuestion.nextQuestion || questions[prevQuestionIndex + 1];
+    //         setIsLastQuestion(!hasFollowingQuestion);
+    //         setCanProceed(true);
+    //     }
+    // };
 
     const handleClearSelection = () => {
         if (currentQuestion.optionType === 'checkboxGrid' || currentQuestion.optionType === 'multipleChoiceGrid') {
@@ -374,22 +414,22 @@ const Questions = () => {
                     {renderOptions(currentQuestion)}
                 </div>
             </div>
-            <div className="survey-questions-progress-bar-container">
+            {/* <div className="survey-questions-progress-bar-container">
                 <div className="survey-questions-progress-bar">
                     <div className="survey-questions-progress-bar-fill" style={{ width: `${(currentQuestionIndex + 1) / questions.length * 100}%` }}></div>
                 </div>
-            </div>
+            </div> */}
             <footer className="survey-questions-footer">
                 <div className="survey-questions-navigation-buttons">
                     {currentQuestionIndex > 0 && (
                         <button className="survey-questions-button" onClick={handlePreviousQuestion}>Back</button>
                     )}
-                    {currentQuestionIndex < questions.length - 1 ? (
-                        <button className="survey-questions-button" onClick={handleNextQuestion} disabled={!canProceed}>Next</button>
+                    {isLastQuestion ? (
+                        <button className="survey-questions-button" onClick={handleSubmit} disabled={!canProceed}>Submit</button>
                     ) : (
-                        <button className="survey-questions-button" onClick={handleSubmit}>Submit</button>
+                        <button className="survey-questions-button" onClick={handleNextQuestion} disabled={!canProceed}>Next</button>
                     )}
-                </div>
+                    </div>
                 <button className="survey-questions-button text-button" onClick={handleClearSelection}>Clear</button>
             </footer>
         </div>
