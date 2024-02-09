@@ -11,6 +11,16 @@ class CreateTitle extends Component {
     super(props);
     // Declare all state variables to observe below
     this.state = {
+      //
+      title: {
+        titleLabel: '',
+        subTitle: [ 
+          {
+            subTitleLabel: '', nestedTitle: [ { nestedTitleLabel: '' } ]
+          }
+        ],
+      },
+      //
       question: '',
       marks: '',
       explanation: '',
@@ -21,48 +31,6 @@ class CreateTitle extends Component {
       defaultLinearArray: [ { scale: 1, label: 'Strongly Disagree' }, { scale: 5, label: 'Strongly Agree' },  ],
       gridOptions: { row: [{ label: 'Row 1', value: 'Row 1' }], column: [{ label: 'Column 1', value: 'Column 1' }], answers: [] },
       showCountry: false,
-      countries: [
-        "Afghanistan", "Albania", "Algeria", "Andorra", "Angola",
-        "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria",
-        "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh", "Barbados",
-        "Belarus", "Belgium", "Belize", "Benin", "Bhutan",
-        "Bolivia", "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei",
-        "Bulgaria", "Burkina Faso", "Burundi", "Cabo Verde", "Cambodia",
-        "Cameroon", "Canada", "Central African Republic", "Chad", "Chile",
-        "China", "Colombia", "Comoros", "Congo, Democratic Republic of the", "Congo, Republic of the",
-        "Costa Rica", "Cote d'Ivoire", "Croatia", "Cuba", "Cyprus",
-        "Czech Republic", "Denmark", "Djibouti", "Dominica", "Dominican Republic",
-        "East Timor (Timor-Leste)", "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea",
-        "Eritrea", "Estonia", "Eswatini", "Ethiopia", "Fiji",
-        "Finland", "France", "Gabon", "Gambia", "Georgia",
-        "Germany", "Ghana", "Greece", "Grenada", "Guatemala",
-        "Guinea", "Guinea-Bissau", "Guyana", "Haiti", "Honduras",
-        "Hungary", "Iceland", "India", "Indonesia", "Iran",
-        "Iraq", "Ireland", "Israel", "Italy", "Jamaica",
-        "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati",
-        "Korea, North", "Korea, South", "Kosovo", "Kuwait", "Kyrgyzstan",
-        "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia",
-        "Libya", "Liechtenstein", "Lithuania", "Luxembourg", "Madagascar",
-        "Malawi", "Malaysia", "Maldives", "Mali", "Malta",
-        "Marshall Islands", "Mauritania", "Mauritius", "Mexico", "Micronesia",
-        "Moldova", "Monaco", "Mongolia", "Montenegro", "Morocco",
-        "Mozambique", "Myanmar", "Namibia", "Nauru", "Nepal",
-        "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria",
-        "North Macedonia", "Norway", "Oman", "Pakistan", "Palau",
-        "Palestine", "Panama", "Papua New Guinea", "Paraguay", "Peru",
-        "Philippines", "Poland", "Portugal", "Qatar", "Romania",
-        "Russia", "Rwanda", "Saint Kitts and Nevis", "Saint Lucia", "Saint Vincent and the Grenadines",
-        "Samoa", "San Marino", "Sao Tome and Principe", "Saudi Arabia", "Senegal",
-        "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia",
-        "Slovenia", "Solomon Islands", "Somalia", "South Africa", "South Sudan",
-        "Spain", "Sri Lanka", "Sudan", "Suriname", "Sweden",
-        "Switzerland", "Syria", "Taiwan", "Tajikistan", "Tanzania",
-        "Thailand", "Togo", "Tonga", "Trinidad and Tobago", "Tunisia",
-        "Turkey", "Turkmenistan", "Tuvalu", "Uganda", "Ukraine",
-        "United Arab Emirates", "United Kingdom", "United States", "Uruguay", "Uzbekistan",
-        "Vanuatu", "Vatican City", "Venezuela", "Vietnam", "Yemen",
-        "Zambia", "Zimbabwe"
-      ],
       selectedCountries: [],
       isFirstQuestion: false,
       isLeadingQuestion: false,
@@ -270,633 +238,7 @@ class CreateTitle extends Component {
     }));
   };
   
-  addGridRow = (e) => {
-    e.preventDefault();
-    e.stopPropagation()
-    this.setState(prevState => ({
-      gridOptions: {
-        ...prevState.gridOptions,
-        rows: [
-          ...prevState.gridOptions.rows,
-          { text: ``, value: `Row ${prevState.gridOptions.rows.length + 1}` }
-        ]
-      }
-    }));
-  };
-  
-  addGridColumn = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    this.setState(prevState => {
-      return {
-        gridOptions: {
-          ...prevState.gridOptions,
-          columns: [
-            ...prevState.gridOptions.columns,
-            { text: ``, value: `Column ${prevState.gridOptions.columns.length + 1}` }
-          ]
-        }
-      };
-    });
-  };
-  
-  deleteGridRow = (index) => {
-    this.setState(prevState => ({
-      gridOptions: {
-        ...prevState.gridOptions,
-        rows: prevState.gridOptions.rows.filter((_, idx) => idx !== index)
-      }
-    }));
-  };
-  
-  deleteGridColumn = (index) => {
-    this.setState(prevState => ({
-      gridOptions: {
-        ...prevState.gridOptions,
-        columns: prevState.gridOptions.columns.filter((_, idx) => idx !== index)
-      }
-    }));
-  };
 
-  handleInputChange = (e) => {
-    if (e.target.id === "country") {
-      const options = e.target.options;
-      const selectedCountries = [];
-      for (let i = 0; i < options.length; i++) {
-        if (options[i].selected) {
-          selectedCountries.push(options[i].value);
-        }
-      }
-      this.setState({ selectedCountries });
-    } else {
-      this.setState({ [e.target.id]: e.target.value });
-    }
-  };
-
-  handleOptionChangeText = (index, value) => {
-    const { questionList } = this.state;
-    this.setState({ questionList: {
-      ...questionList,
-      options: questionList.options.map((option, i) =>
-      i === index ? { ...option, text: value } : option
-      ),
-    }}) 
-  };
-
-  handleRowChange = (index, e) => {
-    const newValue = e.target.value;
-    this.setState(prevState => {
-      const updatedRow = prevState.gridOptions.rows.map((option, i) => {
-        if (i === index) {
-          return { ...option, text: newValue, value: newValue };
-        }
-        return option;
-      });
-      return {
-        gridOptions: {
-          ...prevState.gridOptions,
-          rows: updatedRow
-        }
-      };
-    });
-  };
-
-  handleColumnChange = (index, e) => {
-    const newValue = e.target.value;
-    this.setState(prevState => {
-      const updatedColumn = prevState.gridOptions.columns.map((option, i) => {
-        if (i === index) {
-          return { ...option, text: newValue, value: newValue };
-        }
-        return option;
-      });
-      return {
-        gridOptions: {
-          ...prevState.gridOptions,
-          columns: updatedColumn
-        }
-      };
-    });
-  };
-
-  handleOptionsNextQuestionChange = (index, nextQuestionId) => {
-    const { questionList } = this.state;
-    this.setState({ 
-      questionList: {
-        ...questionList,
-        options: questionList.options.map((option, i) =>
-        i === index ? { ...option, optionsNextQuestion: nextQuestionId } : option
-        )
-    }})
-  };
-
-  handleLinearScaleLabelChange = (index, value) => {
-    const { questionList } = this.state;
-    this.setState({ questionList: {
-      ...questionList,
-      linearScale: questionList.linearScale.map((option, i) =>
-      i === index ? { ...option, label: value } : option
-      ),
-    }}) 
-  };
-
-  handleLinearScaleValue = (index, value) => {
-    const { questionList } = this.state;
-    this.setState({ questionList: {
-      ...questionList,
-      linearScale: questionList.linearScale.map((option, i) =>
-      i === index ? { ...option, scale: value } : option
-      ),
-    }}) 
-  };
-
-  clearGridSelections = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    this.setState(prevState => ({
-      gridOptions: {
-        ...prevState.gridOptions,
-        answers: []
-      }
-    }));
-  };
-
-  safeCheckMultipleChoiceGrid() {
-    const { gridOptions } = this.state;
-    // For radio type, there is only one selection possible for each row
-    // hence number of answers cannot be larger than the number of rows
-    if (gridOptions.answers.length > gridOptions.rows.length){
-      this.setState(prevState => ({
-        gridOptions: {
-          ...prevState.gridOptions,
-          answers: []
-        }
-      }));
-    }
-  };
-
-  safeCheckMultipleChoice() {
-    const { questionList } = this.state
-    
-    // check for more than one isCorrect truths, should only have one isCorrect truth for radio buttons
-    let countIsCorrect = 0;
-        
-    for(let i=0; i<questionList.options.length; i++) {    
-      if(questionList.options[i].isCorrect === true) {
-        countIsCorrect ++
-      }
-    };
-
-    // clear the selection if more than one answer exists
-    if(countIsCorrect>1) {
-      this.setState((prevState) => ({
-        questionList: {
-          ...prevState.questionList,
-          options: prevState.questionList.options.map((option) => ({
-            ...option,
-            isCorrect: false, // Set isCorrect to false for each option
-          })),
-        },
-      }));
-    }
-  };
-
-  handleOpenEndedText = (e) => {
-    this.setState({
-      questionList: { ...this.state.questionList, openEndedText: e.target.value },
-      openEndedWordCount: this.getWordCount(e.target.value), // Update word count on change
-    },
-    () => {
-      localStorage.setItem("openEndedText", JSON.stringify(this.state.openEndedText))
-    });
-  };
-
-  getWordCount = (text) => {
-    // Split the text by whitespace and filter out empty strings
-    const words = text.trim().split(/\s+/).filter(Boolean);
-    return words.length;
-  };
-  
-
-//------------------ OPTIONS ----------------------------------  
-//   renderOptionsArea = () => {
-//     const { options, gridOptions, requireResponse, isLeadingQuestion, questionList, allQuestions, validationErrors, openEndedWordLimit, openEndedWordCount } = this.state;
-//     const clearSelections = (e) => {
-//       e.preventDefault();
-//       e.stopPropagation();
-//       const clearedOptions = questionList.options.map((option) => ({
-//         ...option,
-//         text: '',
-//         isCorrect: false,
-//       }));
-//       this.setState({ questionList: {...this.state.questionList, options: clearedOptions} });
-//     };
-
-//     const clearOptionsNextQuestion = (e) => {
-//       e.preventDefault();
-//       e.stopPropagation();
-//       const clearedOptions = questionList.options.map((option) => ({
-//         ...option,
-//         optionsNextQuestion: '',
-//       }));
-//       this.setState({ 
-//         questionList: {
-//           ...questionList,
-//           options: clearedOptions
-//       }})
-//     };
-
-//     // Check when changing from a populated checkboxGrid to multipleChoiceGrid
-//     if (questionList.optionType === 'multipleChoiceGrid') {
-//       this.safeCheckMultipleChoiceGrid();
-//     };
-
-//     // Loading of Options
-//     switch (questionList.optionType) {
-// //----------------------------- multiple choice ----------------------------
-//       case "multipleChoice":
-        
-//         // Multiple choice check: clear selection if more than one answer exists
-//         this.safeCheckMultipleChoice();
-        
-//         return (
-//           <>
-            
-//             {/* Options label */}
-//             {questionList.options.map((option, index) => (
-//               <div key={index} className="d-flex align-items-center mb-2">
-//                 <input
-//                   type="radio"
-//                   name="options"
-//                   className="form-check-input"
-//                   id={`form-${option}Radio`}
-//                   value={`${option}`}
-//                   checked={option.isCorrect}
-//                   disabled={isLeadingQuestion}
-//                   onChange={() => this.selectOptionsRadio(index, !option.isCorrect)}
-//                 />
-//                 <div className="d-flex flex-grow-1 mx-2">
-//                   <input
-//                     type="text"
-//                     id={`formOptions-${index}`}
-//                     className="form-control mx-2"
-//                     value={questionList.options[index].text}
-//                     onChange={(e) => this.handleOptionChangeText(index, e.target.value)}
-//                     placeholder={`Option ${index + 1}`}
-//                     style={{ flex: '1' }}
-//                   />
-//                   {isLeadingQuestion && (
-//                       <select
-//                         className="form-select mx-2"
-//                         style={{ flex: '1' }}
-//                         value={questionList.options[index].optionsNextQuestion}
-//                         onChange={(e) => this.handleOptionsNextQuestionChange(index, e.target.value)}
-//                       >
-//                         <option value="">Select Next Question</option>
-//                         {allQuestions.map((question) => (
-//                           <option key={question._id} value={question._id}>
-//                             {question.question}
-//                           </option>
-//                         ))}
-//                       </select>
-//                     )}
-//                 </div>
-//                 {questionList.options.length > 1 && (
-//                   <button
-//                     className="btn btn-outline-secondary"
-//                     type="button"
-//                     onClick={() => this.deleteOption(index)}
-//                   >
-//                     &times;
-//                   </button>
-//                 )}
-//               </div>
-//             ))}
-//             <div className="d-flex align-items-center">
-//               <button className="btn btn-outline-dark" onClick={this.addOption}>
-//                 Add option
-//               </button>
-//               {options.length > 0 && (
-//                 <button className="btn btn-outline-danger ms-2" onClick={clearSelections}>
-//                   Clear
-//                 </button>
-//               )}
-//               {isLeadingQuestion && (
-//                   <button className="btn btn-outline-danger ms-2" onClick={clearOptionsNextQuestion}>
-//                     Clear Next Question
-//                   </button>
-//                 )}
-//             </div>
-//           </>
-//         );
-// //----------------------------- checkbox ----------------------------      
-//       case "checkbox":
-//         return (
-//           <>
-//             {/* Options label */}
-//             {questionList.options.map((option, index) => (
-//               <div key={index} className="d-flex align-items-center mb-2">
-//                 <input
-//                   type={'checkbox'}
-//                   className="form-check-input"
-//                   checked={option.isCorrect}
-//                   disabled={isLeadingQuestion}
-//                   onChange={() => this.toggleCorrectAnswer(index)}
-//                 />
-//                 <div className="d-flex flex-grow-1 mx-2">
-//                   <input
-//                     type="text"
-//                     id={`formOptions-${index}`}
-//                     className="form-control mx-2"
-//                     value={questionList.options[index].text}
-//                     onChange={(e) => this.handleOptionChangeText(index, e.target.value)}
-//                     placeholder={`Option ${index + 1}`}
-//                     style={{ flex: '1' }}
-//                   />
-//                   {isLeadingQuestion && (
-//                       <select
-//                         className="form-select mx-2"
-//                         style={{ flex: '1' }}
-//                         value={option.optionsNextQuestion}
-//                         onChange={(e) => this.handleOptionsNextQuestionChange(index, e.target.value)}
-//                       >
-//                         <option value="">Select Next Question</option>
-//                         {allQuestions.map((question) => (
-//                           <option key={question._id} value={question._id}>
-//                             {question.question}
-//                           </option>
-//                         ))}
-//                       </select>
-//                     )}
-//                 </div>
-//                 {questionList.options.length > 1 && (
-//                   <button
-//                     className="btn btn-outline-secondary"
-//                     type="button"
-//                     onClick={() => this.deleteOption(index)}
-//                   >
-//                     &times;
-//                   </button>
-//                 )}
-//               </div>
-//             ))}
-//             <div className="d-flex align-items-center">
-//               <button className="btn btn-outline-dark" onClick={this.addOption}>
-//                 Add option
-//               </button>
-//               {options.length > 0 && (
-//                 <button className="btn btn-outline-danger ms-2" onClick={clearSelections}>
-//                   Clear
-//                 </button>
-//               )}
-//               {isLeadingQuestion && (
-//                   <button className="btn btn-outline-danger ms-2" onClick={clearOptionsNextQuestion}>
-//                     Clear Next Question
-//                   </button>
-//                 )}
-//             </div>
-//           </>
-//         );
-//   // ---------------------------- linear scale ----------------------------
-//       case 'linear':
-
-//         return (
-//           <div>
-//             <div className="mb-3 d-flex align-items-center">
-//               <select
-//                 id="minScale"
-//                 className="form-select me-2"
-//                 value={questionList.linearScale[0].scale}
-//                 onChange={(e) => this.handleLinearScaleValue(0, e.target.value)}
-//               >
-//                 <option value="0">0</option>
-//                 <option value="1">1</option>
-//               </select>
-//               <span className="me-2">to</span>
-//               <select
-//                 id="maxScale"
-//                 className="form-select"
-//                 value={questionList.linearScale[1].scale}
-//                 onChange={(e) => this.handleLinearScaleValue(1, e.target.value)}
-//               >
-//                 {Array.from({ length: 9 }, (_, i) => (
-//                   <option key={i} value={i + 2}>
-//                     {i + 2}
-//                   </option>
-//                 ))}
-//               </select>
-//             </div>
-//             <div>
-//               {/* In the below map loop, the option parameter is required to compile */}
-//               {questionList.linearScale.map((option, index) => ( 
-//                 <div key={index} className="d-flex align-items-center mb-2">
-//                   <span className="mr-2">{questionList.linearScale[index].scale} </span>
-//                   <input
-//                     type="text"
-//                     id={`label${index}`}
-//                     className="form-control mx-2"
-//                     value={this.state.questionList.linearScale[index].label}
-//                     onChange={(e) => this.handleLinearScaleLabelChange(index, e.target.value)}
-//                     placeholder={`Labels (Optional)`}
-//                   />
-//                 </div>
-//               ))}
-//             </div>
-//           </div>
-//         );
-// //----------------------------- dropdown ----------------------------     
-//       case 'dropdown':
-
-//         // Multiple choice check: clear selection if more than one answer exists
-//         this.safeCheckMultipleChoice();
-
-//         return (
-//           <>
-//             {questionList.options.map((option, index) => (
-//               <div key={index} className="d-flex align-items-center mb-2">
-//                 <input
-//                   type="radio"
-//                   className="form-check-input mx-2"
-//                   disabled={isLeadingQuestion}
-//                   checked={option.isCorrect}
-//                   onChange={() => this.selectOptionsRadio(index, !option.isCorrect)}
-//                 />
-//                 <span className="mr-2">{index + 1}.</span>
-//                 <div className="d-flex flex-grow-1 mx-2">
-//                   <input
-//                     type="text"
-//                     className="form-control mx-2"
-//                     value={option.text}
-//                     onChange={(e) => this.handleOptionChangeText(index, e.target.value)}
-//                     placeholder={`Option ${index + 1}`}
-//                     style={{ flex: '1' }}
-//                   />
-//                   {isLeadingQuestion && (
-//                       <select
-//                         className="form-select mx-2"
-//                         style={{ flex: '1' }}
-//                         value={option.optionsNextQuestion}
-//                         onChange={(e) => this.handleOptionsNextQuestionChange(index, e.target.value)}
-//                       >
-//                         <option value="">Select Next Question</option>
-//                         {allQuestions.map((question) => (
-//                           <option key={question._id} value={question._id}>
-//                             {question.question}
-//                           </option>
-//                         ))}
-//                       </select>
-//                     )}
-//                 </div>
-//                 {questionList.options.length > 1 && (
-//                   <button
-//                     className="btn btn-outline-secondary"
-//                     type="button"
-//                     onClick={() => this.deleteOption(index)}
-//                   >
-//                     &times;
-//                   </button>
-//                 )}
-//               </div>
-//             ))}
-//             <div className="d-flex align-items-center">
-//               <button className="btn btn-outline-dark" onClick={this.addOption}>
-//                 Add option
-//               </button>
-//               {options.length > 0 && (
-//                 <button className="btn btn-outline-danger ms-2" onClick={clearSelections}>
-//                   Clear
-//                 </button>
-//               )}
-//               {isLeadingQuestion && (
-//                   <button className="btn btn-outline-danger ms-2" onClick={clearOptionsNextQuestion}>
-//                     Clear Next Question
-//                   </button>
-//                 )}
-//             </div>
-//           </>
-//         );
-//   // -------------------------------- Multiple choice grid / Checkbox grid ------------
-//       case 'multipleChoiceGrid':
-//       case 'checkboxGrid':
-     
-//         const isSingleRow = gridOptions.rows.length === 1;
-        
-//         return (
-//           <>
-//             <div className="scrollable-table-container">
-//             {validationErrors.grid && (
-//                   <div style={{ color: 'red', fontSize: 12 }}>
-//                     {validationErrors.grid}
-//                   </div>
-//                 )}
-//               <table>
-//                 <thead>
-//                   <tr>
-//                     <th>Row/Column</th>
-//                     {gridOptions.columns.map((col, colIndex) => (
-//                       <th key={colIndex} className="text-center">
-//                         <div className="d-flex justify-content-between align-items-center"> {}
-//                           <input
-//                               type="text"
-//                               className="form-control"
-//                               value={col.text}
-//                               onChange={(e) => this.handleColumnChange(colIndex, e)}
-//                               placeholder={`Column ${colIndex + 1}`}
-//                           />
-//                           {gridOptions.columns.length > 1 && (
-//                             <div className="delete-column-btn">
-//                               <button 
-//                                 className="btn btn-outline-secondary btn-sm"
-//                                 type="button"
-//                                 onClick={() => this.deleteGridColumn(colIndex)}
-//                               >
-//                                 &times;
-//                               </button>
-//                             </div>
-//                           )}
-//                         </div>
-//                       </th>
-//                     ))}
-//                     <th className={isSingleRow ? "last-column-no-space" : "last-column-space"}></th>
-//                   </tr>
-//                 </thead>
-//                 <tbody>
-//                   {gridOptions.rows.map((row, rowIndex) => (
-//                     <tr key={rowIndex} className="grid-row-spacing">
-//                       <td>
-//                         <input
-//                           type="text"
-//                           className="form-control"
-//                           value={row.text}
-//                           onChange={(e) => this.handleRowChange(rowIndex, e)}
-//                           placeholder={`Row ${rowIndex + 1}`}
-//                         />
-//                       </td>
-//                       {gridOptions.columns.map((_, colIndex) => {
-//                         const isCorrect = gridOptions.answers.some(answer => answer.rowIndex === rowIndex && answer.columnIndex === colIndex && answer.isCorrect);
-//                         return (
-//                           <td key={colIndex}>
-//                             <input
-//                               type={questionList.optionType === 'multipleChoiceGrid' ? 'radio' : 'checkbox'}
-//                               className="form-check-input"
-//                               name={`row-${rowIndex}`}
-//                               checked={isCorrect}
-//                               onChange={() => this.toggleGridAnswer(rowIndex, colIndex)}
-//                               disabled={isLeadingQuestion}
-//                             />
-//                           </td>
-//                         );
-//                       })}
-//                       <td className={isSingleRow ? "last-column-no-space" : "last-column-space"}>
-//                         {!isSingleRow && (
-//                           <button 
-//                             className="btn btn-outline-secondary btn-sm"
-//                             type="button"
-//                             onClick={() => this.deleteGridRow(rowIndex)}
-//                           >
-//                             &times;
-//                           </button>
-//                         )}
-//                       </td>
-//                     </tr>
-//                   ))}
-//                 </tbody>
-//               </table>
-//               <button className="btn btn-outline-dark" onClick={this.addGridRow}>
-//                 Add Row
-//               </button>
-//               <button className="btn btn-outline-dark mx-2" onClick={this.addGridColumn}>
-//                 Add Column
-//               </button>
-//               <button className="btn btn-outline-danger ms-2" onClick={this.clearGridSelections}>
-//                 Clear
-//               </button>
-//               <div className="form-check form-switch mt-3">
-//                 <input
-//                   className="form-check-input"
-//                   type="checkbox"
-//                   id="requireResponseSwitch"
-//                   checked={requireResponse}
-//                   onChange={this.toggleRequireResponse}
-//                 />
-//                 <label className="form-check-label" htmlFor="requireResponseSwitch">
-//                   Require a response in each row
-//                 </label>
-//               </div>
-//               </div>
-//           </>
-//         ); 
-
-//       default:
-//         return null;
-//     }
-//   };  
-
-  toggleCountryDropdown = () => {
-    this.setState(prevState => ({
-      showCountry: !prevState.showCountry
-    }));
-  };
 
   toggleFirstQuestion = () => {
     this.setState(prevState => ({
@@ -1188,7 +530,6 @@ class CreateTitle extends Component {
       linearScale: this.state.questionList.linearScale,
       openEndedText: this.state.questionList.openEndedText,
       marks: isLeadingQuestion ? undefined : parseFloat(this.state.questionList.marks),
-      countries: showCountry ? selectedCountries : undefined,
       explanation: showExplanation ? explanation : undefined,
       firstQuestion: this.state.questionList.firstQuestion,
       isLeadingQuestion,
@@ -1241,7 +582,7 @@ class CreateTitle extends Component {
 
   render() {
 
-    const { showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, validationErrors, questionId, questionIndex, allQuestions } = this.state;
+    const { showCountry, isLeadingQuestion, showExplanation, validationErrors, questionId, questionIndex, allQuestions } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
 
     return (
@@ -1249,7 +590,8 @@ class CreateTitle extends Component {
       <div>
         
         <button 
-          className="btn btn-primary" 
+          // className="btn btn-primary"
+          className="btn btn-dark d-none d-md-inline-block"
           id={`btEdit-${questionIndex}`}
           onClick={() => this.onEditClickHandler(questionId)}>
             Create Title
@@ -1275,48 +617,11 @@ class CreateTitle extends Component {
           </Modal.Header>
           <Modal.Body>
             <form>
-            <div className="mb-3">
-                <div className="d-flex">
-                  <div className="form-check form-check-inline">
-                    <input
-                      className="form-check-input"
-                      type="radio"
-                      name="questionType"
-                      id="formProductInfoRadio"
-                      value="productInfo"
-                      checked={this.state.questionList.questionType === 'productInfo'}
-                      onChange={this.handleQuestionTypeRadio}
-                    />
-                    <label className="form-check-label" htmlFor="productInfoRadio">
-                      Product Information
-                    </label>
-                  </div>
-                  <div className="form-check form-check-inline">
-                    <input
-                      className="form-check-input"
-                      type="radio"
-                      name="questionType"
-                      id="formPackagingInfoRadio"
-                      value="packagingInfo"
-                      checked={this.state.questionList.questionType === 'packagingInfo'}
-                      onChange={this.handleQuestionTypeRadio}
-                    />
-                    <label className="form-check-label" htmlFor="packagingInfoRadio">
-                      Packaging Information
-                    </label>
-                  </div>
-                </div>
-                {validationErrors.questionType && (
-                  <div style={{ color: 'red', fontSize: 12 }}>
-                    {validationErrors.questionType}
-                  </div>
-                )}
-              </div>
-              
-              {/* Question label */}
+            
+              {/* Title 0 */}
               <div className="mb-3">
                 <label htmlFor="question" className="col-form-label">
-                  Question:
+                  Title:
                 </label>
                 <div>
                   <input 
@@ -1334,8 +639,116 @@ class CreateTitle extends Component {
                 )}
               </div>
 
+              <ul>
+                <li>
+                  {/* Title 1 */}
+                  <div className="mb-3">
+                    <label htmlFor="question" className="col-form-label">
+                      Subtitle:
+                    </label>
+                    <div>
+                      <input 
+                        type="text" 
+                        className="form-control" 
+                        id="formQuestion" 
+                        value={this.state.questionList.question}
+                        onChange={this.handleQuestionText}
+                      />
+                    </div>
+                    {validationErrors.question && (
+                      <div style={{ color: 'red', fontSize: 12 }}>
+                        {validationErrors.question}
+                      </div>
+                    )}
+                  </div>
+                  {/* Add options */}
+                  <div className="d-flex align-items-center">
+                  <button className="btn btn-outline-dark" onClick={this.addOption}>
+                    Add subtitle
+                  </button>
+                  {this.state.title.subTitle.length > 0 && (
+                    <button 
+                    className="btn btn-outline-danger ms-2" 
+                    // onClick={clearSelections}
+                    >
+                      Clear subtitle
+                    </button>
+                  )}
+                  </div>
+
+                </li>
+                <ul>
+                  <li>
+                    {/* Title 2 */}
+                    <div className="mb-3">
+                      <label htmlFor="question" className="col-form-label">
+                        Nested Title:
+                      </label>
+                      <div>
+                        <input 
+                          type="text" 
+                          className="form-control" 
+                          id="formQuestion" 
+                          value={this.state.questionList.question}
+                          onChange={this.handleQuestionText}
+                        />
+                      </div>
+                      {validationErrors.question && (
+                        <div style={{ color: 'red', fontSize: 12 }}>
+                          {validationErrors.question}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Add options */}
+                    <div className="d-flex align-items-center">
+                    <button className="btn btn-outline-dark" onClick={this.addOption}>
+                      Add nested title
+                    </button>
+                    {this.state.title.subTitle.length > 0 && (
+                      <button 
+                      className="btn btn-outline-danger ms-2" 
+                      // onClick={clearSelections}
+                      >
+                        Clear nested title
+                      </button>
+                    )}
+                    </div>
+
+                  </li>
+
+                </ul>
+
+              </ul>
+              
+              
+
+              
+
+
+              {/* Question label */}
+              {/* <div className="mb-3">
+                <label htmlFor="question" className="col-form-label">
+                  Question:
+                </label>
+                <div>
+                  <input 
+                    type="text" 
+                    className="form-control" 
+                    id="formQuestion" 
+                    value={this.state.questionList.question}
+                    onChange={this.handleQuestionText}
+                  />
+                </div>
+                {validationErrors.question && (
+                  <div style={{ color: 'red', fontSize: 12 }}>
+                    {validationErrors.question}
+                  </div>
+                )}
+              </div> */}
+
               {/* Options Type */}
-              <div className="mb-3">
+              {/* <div className="mb-3">
                 <label htmlFor="optionsType" className="col-form-label">
                   Options Types:
                 </label>
@@ -1358,33 +771,13 @@ class CreateTitle extends Component {
                     {validationErrors.optionType}
                   </div>
                 )}
-              </div>
+              </div> */}
               
-              {/* Options */}
-              <div className="mb-3" id="optionsArea">
-                {this.renderOptionsArea()}
-                {validationErrors.options && (
-                  <div style={{ color: 'red', fontSize: 12 }}>
-                    {validationErrors.options}
-                  </div>
-                )}
-              </div>
-              {showExplanation && (
-                <div className="mb-3">
-                  <label htmlFor="explanation" className="col-form-label">
-                    {explanationLabel}:
-                  </label>
-                  <textarea className="form-control" id="explanation" value={this.state.explanation} onChange={this.handleInputChange}></textarea>
-                  {validationErrors.explanation && (
-                    <div style={{ color: 'red', fontSize: 12 }}>
-                      {validationErrors.explanation}
-                    </div>
-                  )}
-                </div>
-              )}
+             
+              
 
               {/* Marks */}
-              {!isLeadingQuestion && (
+              {/* {!isLeadingQuestion && (
                 <div className="mb-3">
                   <label htmlFor="mark" className="col-form-label">
                     Marks:
@@ -1402,37 +795,9 @@ class CreateTitle extends Component {
                     </div>
                   )}
                 </div>
-              )}
+              )} */}
               
-              {/* Country */}
-              {showCountry && (
-                <div className="mb-3">
-                  <label className="col-form-label">Country:</label>
-                  <div style={{ maxHeight: '130px', overflowY: 'auto'}}>
-                    {countries.map((country, index) => (
-                      <div key={index} className="form-check">
-                        <input
-                          type="checkbox"
-                          id={country}
-                          value={country}
-                          checked={selectedCountries.includes(country)}
-                          onChange={this.handleCountryChange}
-                          className="form-check-input"
-                          size={5}
-                        />
-                        <label htmlFor={country} className="form-check-label">
-                          {country}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                  {validationErrors.country && (
-                    <div style={{ color: 'red', fontSize: 12 }}>
-                      {validationErrors.country}
-                    </div>
-                  )} 
-                </div>
-              )}
+              
               
               {/* Next Question */}
                   {!isLeadingQuestion && (
@@ -1457,49 +822,9 @@ class CreateTitle extends Component {
         </Modal.Body>
         <Modal.Footer>
           <div className="d-flex justify-content-between w-100">
-            <div>
-              <div className="form-check form-switch form-check-inline">
-                <input
-                  className="form-check-input"
-                  type="checkbox"
-                  role="switch"
-                  id="specific"
-                  checked={showCountry}
-                  onChange={this.toggleCountryDropdown}
-                />
-                <label className="form-check-label" htmlFor="specific">
-                  Specific Country
-                </label>
-              </div>
-              <div className="form-check form-switch form-check-inline">
-                <input
-                  className="form-check-input"
-                  type="checkbox"
-                  role="switch"
-                  id="leading"
-                  checked={isLeadingQuestion}
-                  onChange={this.toggleLeadingQuestion}
-                />
-                <label className="form-check-label" htmlFor="leading">
-                  Leading Question
-                </label>
-              </div>
-              <div className="form-check form-switch form-check-inline">
-                <input
-                  className="form-check-input"
-                  type="checkbox"
-                  role="switch"
-                  id="explanationCheck"
-                  checked={showExplanation}
-                  onChange={this.toggleExplanation}
-                />
-                <label className="form-check-label" htmlFor="explanationCheck">
-                  {explanationLabel}
-                </label>
-              </div>
-            </div>
+            
             <div className="form-check form-switch form-check-inline">
-                    <input
+                    {/* <input
                       className="form-check-input"
                       type="checkbox"
                       role="switch"
@@ -1509,7 +834,7 @@ class CreateTitle extends Component {
                     />
                     <label className="form-check-label" htmlFor="firstQuestionCheck">
                       First Question
-                    </label>
+                    </label> */}
               </div>
             <button type="button" className="btn btn-dark" onClick={this.handleSubmit}>
             Submit
@@ -1534,4 +859,4 @@ class CreateTitle extends Component {
   }
 }
 
-export default EditQuestion;
+export default CreateTitle;
