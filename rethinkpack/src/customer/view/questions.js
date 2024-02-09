@@ -14,6 +14,50 @@ const Questions = () => {
     const [currentUniqueIndex, setCurrentUniqueIndex] = useState(0);
     const [isLastQuestion, setIsLastQuestion] = useState(false);
     const [navigationHistory, setNavigationHistory] = useState([]);
+    const [showModal, setShowModal] = useState(false);
+    const [selectedCountries, setSelectedCountries] = useState([]);
+    const countries = [
+        "Afghanistan", "Albania", "Algeria", "Andorra", "Angola",
+        "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria",
+        "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh", "Barbados",
+        "Belarus", "Belgium", "Belize", "Benin", "Bhutan",
+        "Bolivia", "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei",
+        "Bulgaria", "Burkina Faso", "Burundi", "Cabo Verde", "Cambodia",
+        "Cameroon", "Canada", "Central African Republic", "Chad", "Chile",
+        "China", "Colombia", "Comoros", "Congo, Democratic Republic of the", "Congo, Republic of the",
+        "Costa Rica", "Cote d'Ivoire", "Croatia", "Cuba", "Cyprus",
+        "Czech Republic", "Denmark", "Djibouti", "Dominica", "Dominican Republic",
+        "East Timor (Timor-Leste)", "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea",
+        "Eritrea", "Estonia", "Eswatini", "Ethiopia", "Fiji",
+        "Finland", "France", "Gabon", "Gambia", "Georgia",
+        "Germany", "Ghana", "Greece", "Grenada", "Guatemala",
+        "Guinea", "Guinea-Bissau", "Guyana", "Haiti", "Honduras",
+        "Hungary", "Iceland", "India", "Indonesia", "Iran",
+        "Iraq", "Ireland", "Israel", "Italy", "Jamaica",
+        "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati",
+        "Korea, North", "Korea, South", "Kosovo", "Kuwait", "Kyrgyzstan",
+        "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia",
+        "Libya", "Liechtenstein", "Lithuania", "Luxembourg", "Madagascar",
+        "Malawi", "Malaysia", "Maldives", "Mali", "Malta",
+        "Marshall Islands", "Mauritania", "Mauritius", "Mexico", "Micronesia",
+        "Moldova", "Monaco", "Mongolia", "Montenegro", "Morocco",
+        "Mozambique", "Myanmar", "Namibia", "Nauru", "Nepal",
+        "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria",
+        "North Macedonia", "Norway", "Oman", "Pakistan", "Palau",
+        "Palestine", "Panama", "Papua New Guinea", "Paraguay", "Peru",
+        "Philippines", "Poland", "Portugal", "Qatar", "Romania",
+        "Russia", "Rwanda", "Saint Kitts and Nevis", "Saint Lucia", "Saint Vincent and the Grenadines",
+        "Samoa", "San Marino", "Sao Tome and Principe", "Saudi Arabia", "Senegal",
+        "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia",
+        "Slovenia", "Solomon Islands", "Somalia", "South Africa", "South Sudan",
+        "Spain", "Sri Lanka", "Sudan", "Suriname", "Sweden",
+        "Switzerland", "Syria", "Taiwan", "Tajikistan", "Tanzania",
+        "Thailand", "Togo", "Tonga", "Trinidad and Tobago", "Tunisia",
+        "Turkey", "Turkmenistan", "Tuvalu", "Uganda", "Ukraine",
+        "United Arab Emirates", "United Kingdom", "United States", "Uruguay", "Uzbekistan",
+        "Vanuatu", "Vatican City", "Venezuela", "Vietnam", "Yemen",
+        "Zambia", "Zimbabwe"
+    ];
 
     // const destination = "localhost:5000";
     const destination = "rtp.dusky.bond:5000";
@@ -165,25 +209,6 @@ const Questions = () => {
         }
     };
     
-    // const navigateToSequentialNextQuestion = () => {
-    //     let nextQuestionIndex = currentQuestionIndex + 1;
-    //     while (nextQuestionIndex < questions.length && uniqueQuestions.includes(questions[nextQuestionIndex]._id)) {
-    //         // Skip over questions already included in uniqueQuestions
-    //         nextQuestionIndex++;
-    //     }
-    //     if (nextQuestionIndex < questions.length) {
-    //         const nextQuestionId = questions[nextQuestionIndex]._id;
-    //         if (!uniqueQuestions.includes(nextQuestionId)) {
-    //             const updatedUniqueQuestions = [...uniqueQuestions, nextQuestionId];
-    //             setUniqueQuestions(updatedUniqueQuestions);
-    //         }
-    //         setCurrentUniqueIndex(uniqueQuestions.indexOf(nextQuestionId));
-    //         setCurrentQuestionIndex(nextQuestionIndex);
-    //     } else {
-    //         handleSubmit(); // Or navigate to an end screen, if all questions have been answered
-    //     }
-    // };
-
     const handlePreviousQuestion = () => {
         setNavigationHistory((prevHistory) => {
             if (prevHistory.length > 1) {
@@ -215,32 +240,33 @@ const Questions = () => {
         });
     };
 
-    // const handlePreviousQuestion = () => {
-    //     if (currentQuestionIndex > 0) {
-    //         const prevQuestionIndex = currentQuestionIndex - 1;
-    //         const prevQuestion = questions[prevQuestionIndex];
-    //         const prevQuestionAnswers = answers[prevQuestionIndex];
-    
-    //         setCurrentQuestionIndex(prevQuestionIndex);
-    
-    //         if (Array.isArray(prevQuestionAnswers)) {
-    //             setSelectedOptions(prevQuestionAnswers);
-    //         } else if (typeof prevQuestionAnswers === 'object' && prevQuestionAnswers !== null) {
-    //             setGridAnswers(prevQuestionAnswers);
+    // const handleCountrySelectionChange = (country) => {
+    //     setSelectedCountries((prevSelectedCountries) => {
+    //         if (prevSelectedCountries.includes(country)) {
+    //             return prevSelectedCountries.filter(c => c !== country);
     //         } else {
-    //             setCurrentAnswer(prevQuestionAnswers || '');
+    //             return [...prevSelectedCountries, country];
     //         }
-    
-    //         // Check if the previous question leads to another question or if it was the last one
-    //         const hasFollowingQuestion = prevQuestion.nextQuestion || questions[prevQuestionIndex + 1];
-    //         setIsLastQuestion(!hasFollowingQuestion);
-    //         setCanProceed(true);
-    //     }
+    //     });
     // };
 
     const handleClearSelection = () => {
         if (currentQuestion.optionType === 'checkboxGrid' || currentQuestion.optionType === 'multipleChoiceGrid') {
-            setGridAnswers({});
+            // Initialize an empty object to reset gridAnswers
+            const resetGridAnswers = {};
+            // If it's a multipleChoiceGrid, we need to reset each row's answer
+            if (currentQuestion.optionType === 'multipleChoiceGrid') {
+                currentQuestion.grid.rows.forEach((_, rowIndex) => {
+                    // For multipleChoiceGrid, reset each row's selection to an empty array or null
+                    resetGridAnswers[rowIndex] = []; // or you might set it to null, depending on your validation logic
+                });
+            } else {
+                // For checkboxGrid, a simple reset is enough, but kept inside for future customization
+                currentQuestion.grid.rows.forEach((_, rowIndex) => {
+                    resetGridAnswers[rowIndex] = [];
+                });
+            }
+            setGridAnswers(resetGridAnswers);
         } else if (currentQuestion.optionType === 'checkbox') {
             setSelectedOptions([]);
         } else {
@@ -258,9 +284,19 @@ const Questions = () => {
         return <div>No questions available</div>;
     }
 
+    // if (!selectedCountries.length) {
+    //     return renderCountrySelection();
+    // }
+
     const currentQuestion = questions[currentQuestionIndex];
 
-    const handleSubmit = async () => {
+    const handleSubmit = () => {
+        setShowModal(true);
+      };
+
+    const handleConfirmSubmit = async () => {
+        setShowModal(false);
+
         const lastAnswer = currentQuestion.optionType.includes('Grid') ? gridAnswers : currentQuestion.optionType === 'checkbox' ? selectedOptions : currentAnswer;
         updateAnswers(lastAnswer); 
 
@@ -292,6 +328,31 @@ const Questions = () => {
             console.error("Error submitting response:", error);
         }
     };    
+
+    // const renderCountrySelection = () => {
+    //     return (
+    //         <div className="country-selection-card">
+    //             <h4>Select Countries</h4>
+    //             <div className="country-options-container">
+    //                 {countries.map((country, index) => (
+    //                     <div key={index} className="form-check">
+    //                         <input
+    //                             className="form-check-input"
+    //                             type="checkbox"
+    //                             value={country}
+    //                             id={`country-${index}`}
+    //                             onChange={() => handleCountrySelectionChange(country)}
+    //                             checked={selectedCountries.includes(country)}
+    //                         />
+    //                         <label className="form-check-label" htmlFor={`country-${index}`}>
+    //                             {country}
+    //                         </label>
+    //                     </div>
+    //                 ))}
+    //             </div>
+    //         </div>
+    //     );
+    // };
 
     const renderOptions = (question) => {
         switch (question.optionType) {
@@ -419,6 +480,25 @@ const Questions = () => {
                     <div className="survey-questions-progress-bar-fill" style={{ width: `${(currentQuestionIndex + 1) / questions.length * 100}%` }}></div>
                 </div>
             </div> */}
+            {showModal && (
+                <div className="modal show" style={{ display: "block" }} tabIndex="-1">
+                    <div className="modal-dialog modal-dialog-centered">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                        <h5 className="modal-title">Confirm Submission</h5>
+                        <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close" onClick={() => setShowModal(false)}></button>
+                        </div>
+                        <div className="modal-body">
+                        <p>Are you sure you want to submit your answers?</p>
+                        </div>
+                        <div className="modal-footer">
+                        <button type="button" className="btn btn-secondary" data-bs-dismiss="modal" onClick={() => setShowModal(false)}>Close</button>
+                        <button type="button" className="btn btn-primary" onClick={handleConfirmSubmit}>Confirm</button>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+            )}
             <footer className="survey-questions-footer">
                 <div className="survey-questions-navigation-buttons">
                     {currentQuestionIndex > 0 && (
