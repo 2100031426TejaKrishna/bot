@@ -114,3 +114,12 @@
     text-align: center; 
     margin-bottom: 5px;
 }
+
+.options-container-fixed-height {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.search-input {
+    margin-bottom: 20px;
+}

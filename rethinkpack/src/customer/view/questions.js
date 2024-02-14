@@ -1,5 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import './questions.css';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 const Questions = () => {
     const [questions, setQuestions] = useState([]);
@@ -16,6 +18,7 @@ const Questions = () => {
     const [navigationHistory, setNavigationHistory] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [selectedCountries, setSelectedCountries] = useState([]);
+    const [showCountrySelection, setShowCountrySelection] = useState(true);
     const countries = [
         "Afghanistan", "Albania", "Algeria", "Andorra", "Angola",
         "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria",
@@ -58,6 +61,11 @@ const Questions = () => {
         "Vanuatu", "Vatican City", "Venezuela", "Vietnam", "Yemen",
         "Zambia", "Zimbabwe"
     ];
+    const [searchQuery, setSearchQuery] = useState('');
+    const countryRefs = useRef(countries.reduce((acc, country) => {
+        acc[country] = React.createRef();
+        return acc;
+    }, {}));
 
     // const destination = "localhost:5000";
     const destination = "rtp.dusky.bond:5000";
@@ -240,16 +248,6 @@ const Questions = () => {
         });
     };
 
-    // const handleCountrySelectionChange = (country) => {
-    //     setSelectedCountries((prevSelectedCountries) => {
-    //         if (prevSelectedCountries.includes(country)) {
-    //             return prevSelectedCountries.filter(c => c !== country);
-    //         } else {
-    //             return [...prevSelectedCountries, country];
-    //         }
-    //     });
-    // };
-
     const handleClearSelection = () => {
         if (currentQuestion.optionType === 'checkboxGrid' || currentQuestion.optionType === 'multipleChoiceGrid') {
             // Initialize an empty object to reset gridAnswers
@@ -283,10 +281,6 @@ const Questions = () => {
     if (!questions.length) {
         return <div>No questions available</div>;
     }
-
-    // if (!selectedCountries.length) {
-    //     return renderCountrySelection();
-    // }
 
     const currentQuestion = questions[currentQuestionIndex];
 
@@ -327,32 +321,7 @@ const Questions = () => {
         } catch (error) {
             console.error("Error submitting response:", error);
         }
-    };    
-
-    // const renderCountrySelection = () => {
-    //     return (
-    //         <div className="country-selection-card">
-    //             <h4>Select Countries</h4>
-    //             <div className="country-options-container">
-    //                 {countries.map((country, index) => (
-    //                     <div key={index} className="form-check">
-    //                         <input
-    //                             className="form-check-input"
-    //                             type="checkbox"
-    //                             value={country}
-    //                             id={`country-${index}`}
-    //                             onChange={() => handleCountrySelectionChange(country)}
-    //                             checked={selectedCountries.includes(country)}
-    //                         />
-    //                         <label className="form-check-label" htmlFor={`country-${index}`}>
-    //                             {country}
-    //                         </label>
-    //                     </div>
-    //                 ))}
-    //             </div>
-    //         </div>
-    //     );
-    // };
+    };
 
     const renderOptions = (question) => {
         switch (question.optionType) {
@@ -462,6 +431,108 @@ const Questions = () => {
                 return null;
         }
     };
+
+    const handleCountrySelect = (country) => {
+        if (selectedCountries.includes(country)) {
+            setSelectedCountries(selectedCountries.filter(selectedCountry => selectedCountry !== country));
+        } else {
+            setSelectedCountries([...selectedCountries, country]);
+        }
+    };
+
+    // Function to confirm country selection and proceed to questions
+    const handleCountrySelectionConfirm = () => {
+        if (selectedCountries.length > 0) {
+            setShowCountrySelection(false);
+            // Optionally, store the selected countries as an answer to a "country selection" question
+            updateAnswers({ ...answers, countrySelection: selectedCountries });
+        } else {
+            alert("Please select at least one country.");
+        }
+    };
+
+    const handleSearchChange = (event) => {
+        const query = event.target.value.toLowerCase();
+        setSearchQuery(query);
+    
+        // Assuming countries are unique and directly mapping to their refs
+        const matchedCountry = countries.find(country =>
+            country.toLowerCase().startsWith(query)
+        );
+    
+        console.log("Matched Country:", matchedCountry);
+    
+        if (matchedCountry) {
+            scrollToCountry(matchedCountry);
+        }
+    };
+    
+    const scrollToCountry = (countryName) => {
+        const countryRef = countryRefs.current[countryName];
+        console.log("Scrolling to:", countryName, countryRef); 
+    
+        if (countryRef && countryRef.current) {
+            countryRef.current.scrollIntoView({
+                behavior: "smooth",
+                block: "nearest"
+            });
+        }
+    };
+
+    const handleClearSearch = () => {
+        setSearchQuery('');
+    };
+
+    if (showCountrySelection) {
+        return (
+            <div className="survey-questions-container">
+                <div className="survey-questions-card">
+                    <h5>Select which countries to export</h5>
+                    <div className="input-group mb-3 search-input-group">
+                        <span className="input-group-text" id="basic-addon1"><FontAwesomeIcon icon={faSearch} className="search-icon" /></span>
+                        <input 
+                            type="text" 
+                            className="form-control" 
+                            placeholder="Type to search..." 
+                            aria-label="Search"
+                            aria-describedby="basic-addon1"
+                            onChange={handleSearchChange} 
+                            value={searchQuery}
+                        />
+                        {searchQuery && (
+                            <button className="btn btn-outline-secondary" type="button" id="button-clear" onClick={() => setSearchQuery('')}>
+                                <FontAwesomeIcon icon={faTimes} />
+                            </button>
+                        )}
+                    </div>
+                    <div className="options-container options-container-fixed-height">
+                        {countries.map((country, index) => (
+                            <div key={index} ref={countryRefs.current[country]}>
+                            <input
+                                type="checkbox"
+                                id={`country_${country}`} 
+                                value={country}
+                                onChange={() => handleCountrySelect(country)}
+                                checked={selectedCountries.includes(country)}
+                                className="form-check-input"
+                            />
+                            <label htmlFor={`country_${country}`}>{country}</label>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+                <footer className="survey-questions-footer">
+                    <button 
+                        className="survey-questions-button" 
+                        onClick={handleCountrySelectionConfirm}
+                        disabled={selectedCountries.length === 0}
+                    >
+                        Confirm
+                    </button>
+                </footer>
+            </div>
+        );
+    }
 
     return (
         <div className="survey-questions-container">
