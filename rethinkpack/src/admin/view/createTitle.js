@@ -22,20 +22,6 @@ class CreateTitle extends Component {
       },
       //
       question: '',
-      marks: '',
-      explanation: '',
-      nextQuestion: '',
-      questionType: '',
-      selectedOption: 'multipleChoice',
-      options: [{ label: 'Option 1', value: 'Option 1', isCorrect: false }],
-      defaultLinearArray: [ { scale: 1, label: 'Strongly Disagree' }, { scale: 5, label: 'Strongly Agree' },  ],
-      gridOptions: { row: [{ label: 'Row 1', value: 'Row 1' }], column: [{ label: 'Column 1', value: 'Column 1' }], answers: [] },
-      showCountry: false,
-      selectedCountries: [],
-      isFirstQuestion: false,
-      isLeadingQuestion: false,
-      showExplanation: false,
-      showToast: false,
       validationErrors: {
         questionType: '',
         question: '',
@@ -71,9 +57,6 @@ class CreateTitle extends Component {
 
     this.initialState = { ...this.state };
     this.resetState = this.resetState.bind(this);
-    // Modal ref
-    this.editQuestionModalRef = React.createRef();
-    // bind API?
     this.fetchQuestion = this.fetchQuestion.bind(this);
     this.onEditClickHandler = this.onEditClickHandler.bind(this);
     this.updateQuestion = this.updateQuestion.bind(this);
@@ -161,50 +144,83 @@ class CreateTitle extends Component {
 /*-------------MODAL-----------------*/
 
   componentDidMount() {
-    // reset
-    const editQuestionModal = document.getElementById("editQuestion");
-    editQuestionModal.addEventListener('hidden.bs.modal', this.resetState);
+    
   }
 
   componentWillUnmount() {
-    const editQuestionModal = document.getElementById("editQuestion");
-    editQuestionModal.removeEventListener('hidden.bs.modal', this.resetState);
+
   }
 
 /*----------- function helpers ----------------------*/
 
-  handleQuestionTypeRadio = (e) => {
+  //
+  handleTitleLabel = (e) => {
     this.setState( (prevState) => ({
-      questionList: { ...prevState.questionList, questionType: e.target.value }
+      title: { ...prevState.title, titleLabel: e.target.value }
     }))
-  }
+  };
 
-  handleQuestionText = (e) => {
-    this.setState( (prevState) => ({
-      questionList: { ...prevState.questionList, question: e.target.value }
-    }))
-  }
-
-  handleQuestionOptionType = (e) => {
+  handleSubTitleLabel = (index, value) => {
+    const { title } = this.state;
     this.setState((prevState) => ({
-      questionList: {
-        ...prevState.questionList,
-        optionType: e.target.value,
-        // Condition check for linearScale array
-        // If array is empty, set default array
-        // If array is not empty, use fetched values
-        linearScale:
-          prevState.questionList.linearScale.length === 0
-            ? this.state.defaultLinearArray
-            : prevState.questionList.linearScale,
-        // Condition check for openEnded field
-        openEndedText:
-          prevState.questionList.openEndedText === undefined
-            ? ''
-            : prevState.questionList.openEndedText
-      }
+      title: {
+        ...prevState.title,
+        subTitle: title.subTitle.map((subTitleElem, i) =>
+            i === index ? { ...subTitleElem, subTitleLabel: value } : subTitleElem
+        ),
+      },
     }));
   };
+
+  // handleNestedTitleLabel = (index_sub, index_nest, value) => {
+  //   const { title } = this.state;
+  //   this.setState((prevState) => ({
+  //     title: {
+  //       ...prevState.title,
+  //       ...prevState.title.subTitle[index_sub],
+  //       nestedTitle: title.subTitle[index_sub].nestedTitle.map((nestedTitleElem, i) =>
+  //           i === index_nest ? { ...nestedTitleElem, nestedTitleLabel: value } : nestedTitleElem
+  //       ),
+  //     },
+  //   }),
+  //     () => {
+  //       console.log(`nestedLabel [0][0]: ${title.subTitle[0].nestedTitle[0].nestedTitleLabel}`)
+  //       // console.log(`nestedLabel [0][1]: ${title.subTitle[0].nestedTitle[1].nestedTitleLabel}`)
+  //       // console.log(`nestedLabel [1][0]: ${title.subTitle[1].nestedTitle[0].nestedTitleLabel}`)
+  //       // console.log(`nestedLabel [1][1]: ${title.subTitle[1].nestedTitle[1].nestedTitleLabel}`)
+  //     }
+  //   );
+  // };
+
+  handleNestedTitleLabel = (index_sub, index_nest, value) => {
+    const { title } = this.state;
+    this.setState((prevState) => ({
+      title: {
+        ...prevState.title,
+        subTitle: prevState.title.subTitle.map((subTitleElem, nestedTitleElem, i) =>
+          i === index_sub
+            ? {
+                ...subTitleElem,
+                nestedTitle: subTitleElem.nestedTitle.map((nestedTitleElem, j) =>
+                  j === index_nest ? { ...nestedTitleElem, nestedTitleLabel: value } : nestedTitleElem
+                ),
+              }
+            : nestedTitleElem
+        ),
+      },
+    }),
+     () => {
+            console.log(`nestedLabel [0][0]: ${title.subTitle[0].nestedTitle[0].nestedTitleLabel}`)
+            // console.log(`nestedLabel [0][1]: ${title.subTitle[0].nestedTitle[1].nestedTitleLabel}`)
+            // console.log(`nestedLabel [1][0]: ${title.subTitle[1].nestedTitle[0].nestedTitleLabel}`)
+            // console.log(`nestedLabel [1][1]: ${title.subTitle[1].nestedTitle[1].nestedTitleLabel}`)
+          }
+    );
+  };
+
+
+
+  //
 
   handleQuestionMarks = (e) => {
     this.setState( (prevState) => ({
@@ -218,150 +234,38 @@ class CreateTitle extends Component {
     }))
   }
 
-  addOption = (e) => {
+  addSubTitle = (e) => {
     e.preventDefault();
     e.stopPropagation()
     this.setState((prevState) => ({
-      questionList: {
-        ...prevState.questionList,
-        options: [
-          ...prevState.questionList.options,
-          { text: "" , isCorrect: false }
+      title: {
+        ...prevState.title,
+        subTitle: [
+          ...prevState.title.subTitle,
+          { subTitleLabel: "", nestedTitle: [ { nestedTitleLabel: '' } ] }
         ]
       }
     }));
   };
 
-  deleteOption = (index) => {
+  deleteSubTitle = (index) => {
     this.setState(prevState => ({
-      questionList: { ...prevState.questionList, options: prevState.questionList.options.filter((_, i) => i !== index) }
-    }));
-  };
-  
-
-
-  toggleFirstQuestion = () => {
-    this.setState(prevState => ({
-      questionList: { ...prevState.questionList, firstQuestion: !prevState.questionList.firstQuestion }
+      title: { ...prevState.title, subTitle: prevState.title.subTitle.filter((_, i) => i !== index) }
     }));
   };
 
-  toggleLeadingQuestion = () => {
-    this.setState(prevState => ({
-      isLeadingQuestion: !prevState.isLeadingQuestion
-    }));
-  };
-
-  toggleExplanation = () => {
+  addNestedTitle = (index, e) => {
+    e.preventDefault();
+    e.stopPropagation()
     this.setState((prevState) => ({
-      showExplanation: !prevState.showExplanation,
+      title: {
+        ...prevState.title,
+        ...prevState.title.subTitle[index],
+        nestedTitle: [ { nestedTitleLabel: '' } ]
+      }
     }));
   };
-
-  toggleRequireResponse = () => {
-    this.setState(prevState => ({
-      requireResponse: !prevState.requireResponse,
-    }));
-  };
-
-  selectOptionsRadio = (index, value) => {
-    this.setState((prevState) => ({
-      questionList: {
-        ...prevState.questionList,
-        options: prevState.questionList.options.map((option, i) =>
-          i === index ? { ...option, isCorrect: value } : {...option, isCorrect: false}
-        ),
-      },
-    }));
-  }
-
-  toggleGridAnswer = (rowIndex, colIndex) => {
-    const { questionList, gridOptions } = this.state;
   
-    if (questionList.optionType === 'checkboxGrid') {
-      const answerIndex = gridOptions.answers.findIndex(
-        (answer) => answer.rowIndex === rowIndex && answer.columnIndex === colIndex
-      );
-    
-      // If answer exists, delete it
-      if (answerIndex > -1) {
-        gridOptions.answers.splice(answerIndex, 1);
-      } else {
-        // If answer doesn't exist, add it
-        gridOptions.answers.push({ rowIndex, columnIndex: colIndex, isCorrect: true });
-      }
-
-      this.setState( { gridOptions } );
-        
-    } else if (questionList.optionType === 'multipleChoiceGrid') {
-      // Find any existing answer for the same row and remove it
-      const answerIndex = gridOptions.answers.findIndex(
-        (answer) => answer.rowIndex === rowIndex
-      );
-      if (answerIndex > -1) {
-        gridOptions.answers.splice(answerIndex, 1);
-      }
-  
-      // Add the new answer with isCorrect set to true
-      gridOptions.answers.push({ rowIndex, columnIndex: colIndex, isCorrect: true });
-  
-      this.setState( { gridOptions } );
-    }
-  };
- 
-  toggleCorrectAnswer = (index) => {
-    const { questionList } = this.state;
-  
-    if (questionList.optionType === 'checkbox') {
-      this.setState(prevState => ({
-        questionList: {
-          ...prevState.questionList,
-          options: prevState.questionList.options.map((option, i) => {
-            if (i === index) {
-              return { ...option, isCorrect: !option.isCorrect };
-            }
-            return option;
-          })
-        }
-      }));
-    } else if (questionList.optionType === 'dropdown') {
-      this.setState(prevState => ({
-        options: prevState.options.map((option, i) => ({
-          ...option,
-          isCorrect: i === index,
-        })),
-      }));
-    } else if (questionList.optionType === 'multipleChoiceGrid' || questionList.optionType === 'checkboxGrid') {
-      this.setState((prevState) => ({
-        gridOptions: {
-          ...prevState.gridOptions,
-          column: prevState.gridOptions.columns.map((col, i) => {
-            if (i === index) {
-              return { ...col, isCorrect: !col.isCorrect };
-            }
-            return col;
-          }),
-        },
-      }));
-    }
-  };
-
-  handleCountryChange = (event) => {
-    const { value } = event.target;
-    this.setState((prevState) => {
-      if (prevState.selectedCountries.includes(value)) {
-        return {
-          selectedCountries: prevState.selectedCountries.filter(
-            (country) => country !== value
-          ),
-        };
-      } else {
-        return {
-          selectedCountries: [...prevState.selectedCountries, value],
-        };
-      }
-    });
-  };
 
   // --------------- VALIDATIONS---------------------------------
 
@@ -379,77 +283,6 @@ class CreateTitle extends Component {
     const { questionList } = this.state;
     return questionList.optionType !== '';
   };
-  
-  validateOptions = () => {
-    const { questionList, isLeadingQuestion } = this.state;
-    if (questionList.optionType === 'linear' || questionList.optionType === 'multipleChoiceGrid' || questionList.optionType === 'checkboxGrid') {
-      return true;
-    }
-
-    // Check a minimum of one selection is made
-    let minSelection = false;
-    // If leading question, then selection is disabled,
-    // hence cannot make minimum selection, 
-    // so in the else statement (isLeadingQuestion is true)
-    // make it so minSelection is set true
-    if (!isLeadingQuestion) {
-      for (let i=0; i<questionList.options.length; i++) {
-        if (questionList.options[i].isCorrect) {
-          return minSelection = true
-        }
-      }
-    } else {
-      minSelection = true
-    }
-    
-    return questionList.options.length >= 2 && minSelection === true;
-  };
-
-  validateGrid = () => {
-    
-    const { questionList, gridOptions, isLeadingQuestion } = this.state;
-
-    if (questionList.optionType === 'multipleChoiceGrid' || questionList.optionType === 'checkboxGrid') {
-        // Check a label has been assigned for each row
-      for (let i=0; i<gridOptions.rows.length; i++) {
-        if (gridOptions.rows[i].text === '') {
-          return false
-        }
-      }
-      // Check a label has been assigned for each column
-      for (let i=0; i<gridOptions.columns.length; i++) {
-        if (gridOptions.columns[i].text === '') {
-          return false
-        }
-      }
-      // Catch minimum number of answers is less than number of rows
-      // Applies when NOT a leading question
-      if (!isLeadingQuestion) {
-        if (gridOptions.answers.length < gridOptions.rows.length) {
-          return false
-        } else {
-          return true
-        }
-      }
-    }
-    return true;
-  };
-
-  
-  validateMarks = () => {
-    const { questionList, isLeadingQuestion } = this.state;
-    return isLeadingQuestion || (questionList.marks !== '' && !isNaN(questionList.marks));
-  };
-  
-  validateCountries = () => {
-    const { selectedCountries, showCountry } = this.state;
-    return !showCountry || (selectedCountries.length > 0);
-  };
-  
-  validateExplanation = () => {
-    const { explanation, showExplanation } = this.state;
-    return !showExplanation || explanation.trim() !== '';
-  };  
   
   renderToast() {
     if (this.state.showToast) {
@@ -474,115 +307,78 @@ class CreateTitle extends Component {
   handleSubmit = async (e) => {
     e.preventDefault();
 
-    const isQuestionTypeValid = this.validateQuestionType();
-    const isQuestionValid = this.validateQuestion();
-    const isOptionTypeValid = this.validateOptionType();
-    const isOptionsValid = this.validateOptions();
-    const isMarksValid = this.validateMarks();
-    const isCountriesValid = this.validateCountries();
-    const isExplanationValid = this.validateExplanation();
-    const isGridValid = this.validateGrid();
+    const { title } = this.state
 
-    this.setState({
-      validationErrors: {
-        questionType: isQuestionTypeValid ? '' : 'Select one question type',
-        question: isQuestionValid ? '' : 'Enter the question',
-        optionType: isOptionTypeValid ? '' : 'Select an option type',
-        grid: isGridValid ? '' : 'Complete all grid data entry and ensure there is one selection per row',
-        options: isOptionsValid ? '' : 'Add at least two options and at least one selection',
-        marks: isMarksValid ? '' : 'Enter the marks (an integer value) for this question',
-        country: isCountriesValid ? '' : 'Select at least one country',
-        explanation: isExplanationValid ? '' : (this.state.isLeadingQuestion ? 'Enter the recommendation for this question' : 'Enter the explanation for the correct answer'),
-      },
-    });
+    // const isQuestionTypeValid = this.validateQuestionType();
+    // const isQuestionValid = this.validateQuestion();
+    // const isOptionTypeValid = this.validateOptionType();
+    // const isOptionsValid = this.validateOptions();
+    // const isMarksValid = this.validateMarks();
+    // const isCountriesValid = this.validateCountries();
+    // const isExplanationValid = this.validateExplanation();
+    // const isGridValid = this.validateGrid();
 
-    if (
-      !isQuestionTypeValid || 
-      !isQuestionValid || 
-      !isOptionTypeValid || 
-      !isGridValid || 
-      !isOptionsValid || 
-      !isMarksValid || 
-      !isCountriesValid || 
-      !isExplanationValid
-    ) {
-      return;
-    }
+    // this.setState({
+    //   validationErrors: {
+    //     questionType: isQuestionTypeValid ? '' : 'Select one question type',
+    //     question: isQuestionValid ? '' : 'Enter the question',
+    //     optionType: isOptionTypeValid ? '' : 'Select an option type',
+    //     grid: isGridValid ? '' : 'Complete all grid data entry and ensure there is one selection per row',
+    //     options: isOptionsValid ? '' : 'Add at least two options and at least one selection',
+    //     marks: isMarksValid ? '' : 'Enter the marks (an integer value) for this question',
+    //     country: isCountriesValid ? '' : 'Select at least one country',
+    //     explanation: isExplanationValid ? '' : (this.state.isLeadingQuestion ? 'Enter the recommendation for this question' : 'Enter the explanation for the correct answer'),
+    //   },
+    // });
 
-    const {
-      gridOptions,
-      isLeadingQuestion,
-      showCountry,
-      selectedCountries,
-      explanation,
-      showExplanation,
-      requireResponse,
-      questionList,
-      questionId
-    } = this.state;
+    // if (
+    //   !isQuestionTypeValid || 
+    //   !isQuestionValid || 
+    //   !isOptionTypeValid || 
+    //   !isGridValid || 
+    //   !isOptionsValid || 
+    //   !isMarksValid || 
+    //   !isCountriesValid || 
+    //   !isExplanationValid
+    // ) {
+    //   return;
+    // }
 
-    const dataToUpdate = {
-      questionType: this.state.questionList.questionType,
-      question: this.state.questionList.question,
-      optionType: this.state.questionList.optionType,
-      options: this.state.questionList.options,
-      grid: this.state.gridOptions,
-      linearScale: this.state.questionList.linearScale,
-      openEndedText: this.state.questionList.openEndedText,
-      marks: isLeadingQuestion ? undefined : parseFloat(this.state.questionList.marks),
-      explanation: showExplanation ? explanation : undefined,
-      firstQuestion: this.state.questionList.firstQuestion,
-      isLeadingQuestion,
-      showCountry,
-      requireResponse,
-      nextQuestion: isLeadingQuestion ? undefined : this.state.questionList.nextQuestion
-    };
+    // const {
+    //   // isLeadingQuestion,
+    // } = this.state;
 
-    // Leading Question Marks check
-    if (isLeadingQuestion === true) {
-      // Case when isLeadingQuestion is true, set marks to null
-      dataToUpdate.marks = null
-    }
+    // const dataToUpdate = {
+    //   questionType: this.state.questionList.questionType,
+    //   question: this.state.questionList.question,
+    //   optionType: this.state.questionList.optionType,
+    //   options: this.state.questionList.options,
+    // };
 
-    // Case: multiple choce / checkbox / dropdown
-    if (questionList.optionType === 'multipleChoice' || questionList.optionType === 'checkbox' || questionList.optionType === 'dropdown') {
-      dataToUpdate.options = questionList.options.map((option) => ({
-        text: option.text,
-        isCorrect: option.isCorrect || false,
-        optionsNextQuestion: (isLeadingQuestion) ? option.optionsNextQuestion : null 
-      }));
-    }
-  
-    if (questionList.optionType === 'linear') {
-      dataToUpdate.linearScale = questionList.linearScale.map((option) => ({
-        scale: option.scale,
-        label: option.label
-      }));
-    } else {
-      // clear linearScale
-      dataToUpdate.linearScale = []
-    }
-
-    if (questionList.optionType === 'multipleChoiceGrid' || questionList.optionType === 'checkboxGrid') {
-      dataToUpdate.grid = {
-        rows: gridOptions.rows.map(rows => ({ text: rows.text })),
-        columns: gridOptions.columns.map(columns => ({ text: columns.text })),
-        answers: gridOptions.answers.filter(answer => answer.isCorrect)
-      };
-    } else {
-      // clear grid
-      dataToUpdate.grid = { rows: [], columns: [], answers: [] }
-    }
+    // // Leading Question Marks check
+    // if (isLeadingQuestion === true) {
+    //   // Case when isLeadingQuestion is true, set marks to null
+    //   dataToUpdate.marks = null
+    // }
     
     // Update database server API
-    this.updateQuestion(questionId, dataToUpdate)
+    // this.updateQuestion(questionId, dataToUpdate)
+
+    // debug
+    // print title label
+    console.log(`titleLabel: ${this.state.title.titleLabel}`)
+
+    // print subtitle labels
+    for (let i=0; i<title.subTitle.length; i++) {
+      console.log(`subtitleLabel: ${title.subTitle[i].subTitleLabel}`)
+    }
   };
 
 /*---------------------RENDER----------------------------------*/
 
   render() {
 
-    const { showCountry, isLeadingQuestion, showExplanation, validationErrors, questionId, questionIndex, allQuestions } = this.state;
+    const { showCountry, isLeadingQuestion, showExplanation, validationErrors, questionId, questionIndex, allQuestions, title } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
 
     return (
@@ -599,9 +395,12 @@ class CreateTitle extends Component {
 
         <Modal
           show={this.state.showModal === true}
-          onHide={() => this.setState({ showModal: false })}
+          onHide={() => {
+            this.setState({ showModal: false },
+            this.resetState
+            )}
+          }
           className="modal-lg"
-          ref={this.editQuestionModalRef}
         >
           {/* Modal content */}
           <Modal.Header 
@@ -617,7 +416,6 @@ class CreateTitle extends Component {
           </Modal.Header>
           <Modal.Body>
             <form>
-            
               {/* Title 0 */}
               <div className="mb-3">
                 <label htmlFor="question" className="col-form-label">
@@ -628,8 +426,8 @@ class CreateTitle extends Component {
                     type="text" 
                     className="form-control" 
                     id="formQuestion" 
-                    value={this.state.questionList.question}
-                    onChange={this.handleQuestionText}
+                    value={this.state.title.titleLabel}
+                    onChange={this.handleTitleLabel}
                   />
                 </div>
                 {validationErrors.question && (
@@ -638,21 +436,58 @@ class CreateTitle extends Component {
                   </div>
                 )}
               </div>
-
+              {this.state.title.subTitle.map((subTitleElem, index) => (
+              <ul>
+                {/* Title 1 */}
+                
+                  <li key={index}>
+                    <div className="mb-3 d-flex align-items-center mb-2">
+                      <label htmlFor="question" className="col-form-label">
+                        Subtitle:
+                      </label>
+                      <div className="d-flex flex-grow-1 mx-2">
+                        <input 
+                          type="text"
+                          className="form-control mx-2"
+                          id="formQuestion" 
+                          value={title.subTitle[index].subTitleLabel}
+                          onChange={(e) => this.handleSubTitleLabel(index, e.target.value)}
+                        />
+                      
+                      {/* {validationErrors.question && (
+                        <div style={{ color: 'red', fontSize: 12 }}>
+                          {validationErrors.question}
+                        </div>
+                      )} */}
+                      </div>
+                      {title.subTitle.length > 1 && (
+                      <button
+                        className="btn btn-outline-secondary"
+                        type="button"
+                        onClick={() => this.deleteSubTitle(index)}
+                      >
+                        &times;
+                      </button>
+                      )}
+                    </div>
+                  </li>
+                
+                
+              {this.state.title.subTitle[index].nestedTitle.map((nestedTitleElem, index_nest) => (
               <ul>
                 <li>
-                  {/* Title 1 */}
-                  <div className="mb-3">
+                  {/* Title 2 */}
+                  <div className="mb-3 d-flex align-items-center mb-2">
                     <label htmlFor="question" className="col-form-label">
-                      Subtitle:
+                      Nested Title:
                     </label>
-                    <div>
+                    <div className="d-flex flex-grow-1 mx-2">
                       <input 
                         type="text" 
                         className="form-control" 
                         id="formQuestion" 
                         value={this.state.questionList.question}
-                        onChange={this.handleQuestionText}
+                        onChange={(e) => this.handleNestedTitleLabel(index, index_nest, e.target.value)}
                       />
                     </div>
                     {validationErrors.question && (
@@ -661,92 +496,37 @@ class CreateTitle extends Component {
                       </div>
                     )}
                   </div>
-                  {/* Add options */}
+
+                  {/* Add nestedTitle */}
                   <div className="d-flex align-items-center">
-                  <button className="btn btn-outline-dark" onClick={this.addOption}>
+                  <button className="btn btn-outline-dark" onClick={this.addNestedTitle}>
+                    Add nested title
+                  </button>
+                  </div>
+
+                </li>
+
+              </ul>
+              ))}
+
+            </ul>
+            ))}
+
+            {/* Add subTitle */}
+            <div className="d-flex align-items-center">
+                  <button className="btn btn-outline-dark" onClick={this.addSubTitle}>
                     Add subtitle
                   </button>
-                  {this.state.title.subTitle.length > 0 && (
+                  {/* {this.state.title.subTitle.length > 0 && (
                     <button 
                     className="btn btn-outline-danger ms-2" 
                     // onClick={clearSelections}
                     >
                       Clear subtitle
                     </button>
-                  )}
-                  </div>
-
-                </li>
-                <ul>
-                  <li>
-                    {/* Title 2 */}
-                    <div className="mb-3">
-                      <label htmlFor="question" className="col-form-label">
-                        Nested Title:
-                      </label>
-                      <div>
-                        <input 
-                          type="text" 
-                          className="form-control" 
-                          id="formQuestion" 
-                          value={this.state.questionList.question}
-                          onChange={this.handleQuestionText}
-                        />
-                      </div>
-                      {validationErrors.question && (
-                        <div style={{ color: 'red', fontSize: 12 }}>
-                          {validationErrors.question}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Add options */}
-                    <div className="d-flex align-items-center">
-                    <button className="btn btn-outline-dark" onClick={this.addOption}>
-                      Add nested title
-                    </button>
-                    {this.state.title.subTitle.length > 0 && (
-                      <button 
-                      className="btn btn-outline-danger ms-2" 
-                      // onClick={clearSelections}
-                      >
-                        Clear nested title
-                      </button>
-                    )}
-                    </div>
-
-                  </li>
-
-                </ul>
-
-              </ul>
-              
-              
-
-              
-
-
-              {/* Question label */}
-              {/* <div className="mb-3">
-                <label htmlFor="question" className="col-form-label">
-                  Question:
-                </label>
-                <div>
-                  <input 
-                    type="text" 
-                    className="form-control" 
-                    id="formQuestion" 
-                    value={this.state.questionList.question}
-                    onChange={this.handleQuestionText}
-                  />
+                  )} */}
                 </div>
-                {validationErrors.question && (
-                  <div style={{ color: 'red', fontSize: 12 }}>
-                    {validationErrors.question}
-                  </div>
-                )}
-              </div> */}
-
+              
               {/* Options Type */}
               {/* <div className="mb-3">
                 <label htmlFor="optionsType" className="col-form-label">
@@ -772,52 +552,8 @@ class CreateTitle extends Component {
                   </div>
                 )}
               </div> */}
+            
               
-             
-              
-
-              {/* Marks */}
-              {/* {!isLeadingQuestion && (
-                <div className="mb-3">
-                  <label htmlFor="mark" className="col-form-label">
-                    Marks:
-                  </label>
-                  <input 
-                    type="text" 
-                    className="form-control" 
-                    id="formMarks" 
-                    value={this.state.questionList.marks}
-                    onChange={this.handleQuestionMarks} 
-                  />
-                  {validationErrors.marks && (
-                    <div style={{ color: 'red', fontSize: 12 }}>
-                      {validationErrors.marks}
-                    </div>
-                  )}
-                </div>
-              )} */}
-              
-              
-              
-              {/* Next Question */}
-                  {!isLeadingQuestion && (
-                    <div className="mb-3">
-                      <label htmlFor="nextQuestion" className="col-form-label">Next Question:</label>
-                      <select
-                        className="form-select"
-                        id="nextQuestion"
-                        value={this.state.questionList.nextQuestion}
-                        onChange={this.handleQuestionNextQuestion}
-                      >
-                        <option value="">Select Next Question</option>
-                        {allQuestions.map((question) => (
-                          <option key={question._id} value={question._id}>
-                            {question.question}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
             </form>
         </Modal.Body>
         <Modal.Footer>
@@ -851,7 +587,6 @@ class CreateTitle extends Component {
           tabIndex="-1" 
           aria-labelledby="editQuestionLabel" 
           aria-hidden="true" 
-          ref={this.editQuestionModalRef}
         >
         </div>
       </div>
