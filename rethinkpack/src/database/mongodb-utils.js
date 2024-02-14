@@ -1,5 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const { ObjectId } = mongoose.Types; // Destructuring ObjectId from mongoose.Types
 const Questions = mongoose.model('questions');
 const router = express.Router();
 
@@ -35,6 +36,33 @@ const fetchNextQuestion = async (nextQuestionId) => {
     }
   };
 
+  // Function to fetch option text by ID
+  const fetchOptionText = async (optionId) => {
+    try {
+      console.log("Fetching option text for ID:", optionId);
+  
+      const question = await Questions.findOne({ "options._id": new mongoose.Types.ObjectId(optionId) });
+  
+      if (question && question.options) {
+        const selectedOption = question.options.find(option => option._id.equals(new mongoose.Types.ObjectId(optionId)));
+  
+        if (selectedOption) {
+          const optionText = selectedOption.text;
+          console.log("Found option text:", optionText);
+          return optionText;
+        } else {
+          console.error("Selected option not found for ID:", optionId);
+          throw new Error("Option not found");
+        }
+      } else {
+        console.error("Question not found or has no options for ID:", optionId);
+        throw new Error("Question not found or has no options");
+      }
+    } catch (error) {
+      console.error("Error fetching option text:", error);
+      throw error;
+    }
+  };
 // Endpoint to get the first question
 router.get('/firstQuestion', async (req, res) => {
   try {
@@ -53,6 +81,21 @@ router.get('/nextQuestion/:id', async (req, res) => {
     } catch (error) {
         res.status(500).send("Unable to fetch the next question");
     }
+});
+
+// Endpoint to get option text by ID
+router.get('/optionText/:id', async (req, res) => {
+  try {
+    const optionId = req.params.id;
+    const optionText = await fetchOptionText(optionId);
+
+    console.log("Found option text:", optionText);
+    res.json({ texts: optionText }); // Return the text property in the correct format
+  } catch (error) {
+    const errorMessage = error.message || "Internal Server Error";
+    console.error("Error fetching option text:", errorMessage);
+    res.status(500).json({ error: errorMessage });
+  }
 });
 
 module.exports = { router};
