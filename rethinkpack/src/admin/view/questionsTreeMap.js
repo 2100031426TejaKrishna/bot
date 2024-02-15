@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Tree from 'react-d3-tree';
 
-// const destination = "localhost:5000";
-const destination = "rtp.dusky.bond:5000";
+const destination = "localhost:5000";
+// const destination = "rtp.dusky.bond:5000";
 
 const QuestionsTreeMap = () => {
   const [data, setData] = useState(null);
@@ -38,59 +38,82 @@ const QuestionsTreeMap = () => {
   const fetchQuestionsRecursively = async (questionId, visitedQuestions = new Set()) => {
     if (visitedQuestions.has(questionId)) {
       console.log("Already visited question:", questionId);
-      return null;
+      return [];
     }
-
+  
     visitedQuestions.add(questionId);
-
-    const questionData = await fetchQuestion(questionId);
-
+  
+    // Update questionData here
+    let questionData = await fetchQuestion(questionId);
+  
     if (!questionData) {
-      return null;
+      return [];
     }
-
+  
     const childrenData = [];
-
+  
     // Check if optionType is dropdown and send options to frontend
-    if (['dropdown', 'multipleChoice', 'checkboxGrid', 'linear', 'multipleChoiceGrid'].includes(questionData.optionType) && questionData.options) {
+    if (questionData.optionType === 'checkboxGrid') {
+      // Fetch 'text' values from 'rows' and 'columns' arrays
+      const rowTexts = questionData.grid.rows.map(row => row.text);
+      const columnTexts = questionData.grid.columns.map(column => column.text);
+      const mergedTexts = [...rowTexts, ...columnTexts].join(',');
+  
+      console.log("Merged checkboxGrid texts:", mergedTexts);
+  
+      // Include the 'text' property for the main question
+      const checkboxGridNode = {
+        name: questionData.question,
+        attributes: {
+          text: mergedTexts,
+        },
+      };
+  
+      // Fetch and include children data for checkboxGrid if nextQuestion is defined
+      if (questionData.nextQuestion) {
+        const childData = await fetchQuestionsRecursively(questionData.nextQuestion, visitedQuestions);
+        // Ensure that children is an array, even if there are no children
+        checkboxGridNode.children = Array.isArray(childData) && childData.length > 0 ? childData : [];
+      }
+  
+      childrenData.push(checkboxGridNode);
+    } else if (['dropdown', 'multipleChoice', 'linear', 'multipleChoiceGrid'].includes(questionData.optionType) && questionData.options) {
       const optionTexts = await Promise.all(questionData.options.map(option => fetchOptionText(option._id)));
-      const mergedText = optionTexts.join(', ');
-
+      const mergedText = optionTexts.join(',');
+  
       console.log("Merged option texts:", mergedText);
-
+  
+      // Fetch and include children data for optionsNextQuestion if defined
       if (questionData.optionsNextQuestion) {
         console.log("Fetching question for optionsNextQuestion:", questionData.optionsNextQuestion);
         const childData = await fetchQuestionsRecursively(questionData.optionsNextQuestion, visitedQuestions);
-        if (childData) {
-          childrenData.push(childData);
+        if (childData.length > 0) {
+          childrenData.push(...childData);
         }
+      } else {
+        // No optionsNextQuestion, directly include the text property for the main question
+        childrenData.push({
+          name: questionData.question,
+          attributes: {
+            text: mergedText,
+          },
+          children: await fetchQuestionsRecursively(questionData.nextQuestion, visitedQuestions),
+        });
       }
-
+    } else {
+      // Regular node, include the 'text' field if it exists
       childrenData.push({
-        name: `${questionData.question} - ${mergedText}`,
+        name: questionData.question,
         attributes: {
-          text: mergedText,
+          text: questionData.text || "",
         },
+        children: await fetchQuestionsRecursively(questionData.nextQuestion, visitedQuestions),
       });
     }
-
-    if (questionData.nextQuestion) {
-      console.log("Fetching question for nextQuestion:", questionData.nextQuestion);
-      const childData = await fetchQuestionsRecursively(questionData.nextQuestion, visitedQuestions);
-      if (childData) {
-        childrenData.push(childData);
-      }
-    }
-
+  
     console.log("Processed question:", questionData);
-
-    return {
-      name: questionData.question,
-      attributes: {
-        text: questionData.text || "", // Include the text property for the main question
-      },
-      children: childrenData,
-    };
+  
+    return childrenData;
   };
 
   const fetchQuestions = async () => {
@@ -123,26 +146,6 @@ const QuestionsTreeMap = () => {
     }
   };
 
-  const renderCustomNode = ({ nodeDatum, toggleNode }) => {
-    console.log("Rendering node:", nodeDatum);
-
-    return (
-      <div onClick={() => toggleNode()}>
-        {/* Render question text */}
-        <div>{nodeDatum.attributes && nodeDatum.attributes.text || nodeDatum.name}</div>
-
-        {/* Render option values below the question */}
-        {nodeDatum.children && (
-          <div style={{ marginLeft: '20px' }}>
-            {nodeDatum.children.map((child) => (
-              <div key={child.name}>{child.attributes.text}</div>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  };
-
   if (!data) {
     // Render loading state or placeholder while data is being fetched
     return <div>Loading...</div>;
@@ -155,7 +158,6 @@ const QuestionsTreeMap = () => {
         orientation="vertical"
         translate={{ x: 400, y: 50 }}
         onClick={handleNodeClick}
-        renderCustomNode={renderCustomNode}
       />
     </div>
   );

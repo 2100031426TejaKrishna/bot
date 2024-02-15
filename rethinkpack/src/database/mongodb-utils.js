@@ -75,12 +75,19 @@ router.get('/firstQuestion', async (req, res) => {
 
 // Endpoint to get the next question
 router.get('/nextQuestion/:id', async (req, res) => {
-    try {
-        const question = await fetchNextQuestion(req.params.id);
-        res.json(question);
-    } catch (error) {
-        res.status(500).send("Unable to fetch the next question");
+  try {
+    const nextQuestionId = req.params.id;
+
+    // Check if nextQuestionId is a valid ObjectId
+    if (!ObjectId.isValid(nextQuestionId)) {
+      throw new Error('Invalid ObjectId');
     }
+
+    const question = await fetchNextQuestion(nextQuestionId);
+    res.json(question);
+  } catch (error) {
+    res.status(500).send("Unable to fetch the next question");
+  }
 });
 
 // Endpoint to get option text by ID
