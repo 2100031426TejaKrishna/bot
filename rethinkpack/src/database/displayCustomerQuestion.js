@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 
 const Questions = mongoose.model('questions');
 
-const fetchQuestions = async () => {
+const fetchQuestions = async (selectedCountries = []) => {
     try {
         let allQuestions = new Map();
         let queue = [];
@@ -15,30 +15,28 @@ const fetchQuestions = async () => {
 
         while (queue.length > 0) {
             let currentQuestion = queue.shift();
-            allQuestions.set(currentQuestion._id.toString(), currentQuestion);
+            // Filter based on selected countries
+            if (currentQuestion.countries.length === 0 || currentQuestion.countries.some(country => selectedCountries.includes(country))) {
+                allQuestions.set(currentQuestion._id.toString(), currentQuestion);
 
-            // Function to handle adding next questions to the queue
-            const addNextQuestionToQueue = async (nextQuestionId) => {
-                if (!allQuestions.has(nextQuestionId.toString())) {
-                    let nextQuestion = await Questions.findById(nextQuestionId);
-                    if (nextQuestion) {
-                        queue.push(nextQuestion);
+                const addNextQuestionToQueue = async (nextQuestionId) => {
+                    if (!allQuestions.has(nextQuestionId.toString())) {
+                        let nextQuestion = await Questions.findById(nextQuestionId);
+                        if (nextQuestion) {
+                            queue.push(nextQuestion);
+                        }
                     }
+                };
+
+                if (currentQuestion.nextQuestion) {
+                    await addNextQuestionToQueue(currentQuestion.nextQuestion);
                 }
-            };
 
-            // Check and enqueue the nextQuestion if not already processed
-            if (currentQuestion.nextQuestion) {
-                let nextQuestionId = new mongoose.Types.ObjectId(currentQuestion.nextQuestion);
-                await addNextQuestionToQueue(nextQuestionId);
-            }
-
-            // Process options and their nextQuestions
-            if (currentQuestion.options && currentQuestion.options.length > 0) {
-                for (let option of currentQuestion.options) {
-                    if (option.optionsNextQuestion) {
-                        let optionNextQuestionId = new mongoose.Types.ObjectId(option.optionsNextQuestion);
-                        await addNextQuestionToQueue(optionNextQuestionId);
+                if (currentQuestion.options && currentQuestion.options.length > 0) {
+                    for (let option of currentQuestion.options) {
+                        if (option.optionsNextQuestion) {
+                            await addNextQuestionToQueue(option.optionsNextQuestion);
+                        }
                     }
                 }
             }
@@ -53,7 +51,8 @@ const fetchQuestions = async () => {
 
 router.get('/fetchQuestions', async (req, res) => {
     try {
-        const questions = await fetchQuestions();
+        const selectedCountries = req.query.countries ? req.query.countries.split(',') : [];
+        const questions = await fetchQuestions(selectedCountries);
         res.json(questions);
     } catch (error) {
         res.status(500).send("Unable to fetch all questions");

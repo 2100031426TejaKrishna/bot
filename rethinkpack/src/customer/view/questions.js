@@ -73,7 +73,8 @@ const Questions = () => {
     useEffect(() => {
         const fetchAllQuestions = async () => {
             try {
-                const response = await fetch(`http://${destination}/api/fetchQuestions`);
+                const selectedCountriesParam = selectedCountries.join(',');
+                const response = await fetch(`http://${destination}/api/fetchQuestions?countries=${selectedCountriesParam}`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
@@ -82,11 +83,14 @@ const Questions = () => {
                 setIsLoading(false);
             } catch (error) {
                 console.error("Error fetching all questions:", error);
+                setIsLoading(false);
             }
         };
     
-        fetchAllQuestions();
-    }, []);
+        if (!showCountrySelection) {
+            fetchAllQuestions();
+        }
+    }, [showCountrySelection, selectedCountries]);
 
     useEffect(() => {
         const prevAnswer = answers[currentQuestionIndex];
@@ -444,8 +448,7 @@ const Questions = () => {
     const handleCountrySelectionConfirm = () => {
         if (selectedCountries.length > 0) {
             setShowCountrySelection(false);
-            // Optionally, store the selected countries as an answer to a "country selection" question
-            updateAnswers({ ...answers, countrySelection: selectedCountries });
+            // The useEffect hook will automatically fetch the questions based on the selected countries.
         } else {
             alert("Please select at least one country.");
         }
@@ -477,10 +480,6 @@ const Questions = () => {
                 block: "nearest"
             });
         }
-    };
-
-    const handleClearSearch = () => {
-        setSearchQuery('');
     };
 
     if (showCountrySelection) {
