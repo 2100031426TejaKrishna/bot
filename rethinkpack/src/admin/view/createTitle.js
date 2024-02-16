@@ -3,8 +3,8 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
 import Modal from 'react-bootstrap/Modal';
 
-// const destination = "localhost:5000";
-const destination = "rtp.dusky.bond:5000";
+const destination = "localhost:5000";
+// const destination = "rtp.dusky.bond:5000";
 
 class CreateTitle extends Component {
   constructor(props) {
@@ -20,45 +20,18 @@ class CreateTitle extends Component {
           }
         ],
       },
-      question: '',
       validationErrors: {
-        questionType: '',
-        question: '',
-        optionType: '',
-        grid: '',
-        options: '',
-        openEnded: '',
-        marks: '',
-        country: '',
-        explanation: '',
+        titleLabel: '',
+        subTitleLabel: '',
+        nestedTitleLabel: ''
       },
-      requireResponse: false,
-      // Additional variables
-      questionIndex: props.index,
-      questionId: props.questionId,
-      allQuestions: [],
-      questionList: {
-        question: null,
-        questionType: '',
-        optionType: 'multipleChoice',
-        options: [{ label: 'Option 1', value: 'Option 1', isCorrect: false, optionsNextQuestion: null }],
-        linearScale: [],
-        openEndedText: '',
-        marks: '',
-        firstQuestion: false,
-        nextQuestion: null
-      },
-      openEndedWordLimit: 500,
-      openEndedWordCount: 0,
-      stateQuestionId: '',
       showModal: false,
     };
 
     this.initialState = { ...this.state };
     this.resetState = this.resetState.bind(this);
-    this.fetchQuestion = this.fetchQuestion.bind(this);
     this.onEditClickHandler = this.onEditClickHandler.bind(this);
-    this.updateQuestion = this.updateQuestion.bind(this);
+    this.insertTitle = this.insertTitle.bind(this);
   }
 
   resetState() {
@@ -70,74 +43,37 @@ class CreateTitle extends Component {
 
   /*--------------onClick-----------------*/
 
-  onEditClickHandler = (id) => {
-    // Load all questions
-    this.fetchQuestions().then(
-      // Load specific question
-      this.fetchQuestion(id)
-    );
-  }
+  onEditClickHandler = () => {
+    this.setState( { showModal: true } )
+  };
 
   /*--------------API-----------------*/
 
-  fetchQuestion = async (questionId) => {
+  insertTitle = async (dataToInsert) => {
     try {
-      const response = await fetch(`http://${destination}/api/read/${questionId}`);
-      const data = await response.json();
-      if (data) {
-        this.setState({
-          showModal: true,
-          questionList: data,
-          selectedOption: data.optionType,
-          gridOptions: data.grid,
-          isLeadingQuestion: (data.marks) ? false : true
-        })
-      }
-    } catch (error) {
-      console.error('Error fetching questions:', error);
-    }
-  };
-
-  fetchQuestions = async () => {
-    try {
-      const response = await fetch(`http://${destination}/api/displayAllQuestions`);
-      const questions = await response.json();
-      this.setState({ allQuestions: questions });
-    } catch (error) {
-      console.error('Error fetching questions:', error);
-    }
-  };
-
-  updateQuestion = async (questionId, dataToUpdate) => {
-    try {
-      const response = await fetch(`http://${destination}/api/update/${questionId}`, {
-        method: 'PATCH',
+      const response = await fetch(`http://${destination}/api/insertTitle`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(dataToUpdate),
-      })
+        body: JSON.stringify(dataToInsert),
+      });
+
       if (response.ok) {
         console.log('Data submitted successfully');
-        this.setState({
-          showModal: false,
-          showToast: true
-        });
-        setTimeout(() => this.setState({ showToast: false }), 10000);
-
-        // Trigger re-fetch in parent component questions.js
-        this.props.refreshQuestions();
-
+        console.log(dataToInsert);
+        
+        // refresh here
+        this.setState({ showToast: true });
+        setTimeout(() => this.setState({ showToast: false }), 5000);
       } else {
         console.error('Server responded with an error:', response.status, response.statusText);
         const responseData = await response.json();
         console.error('Server error data:', responseData);
       }
     } catch (error) {
-      console.error('Network error:', error);
+        console.error('Network error:', error);
     }
-    // debug
-    // console.log(`questionList: ${JSON.stringify(this.state.questionList)}`)
   };
 
   /*-------------MODAL-----------------*/
@@ -172,7 +108,7 @@ class CreateTitle extends Component {
   };
 
   handleNestedTitleLabel = (index_sub, index_nest, value) => {
-    const { title } = this.state;
+    // const { title } = this.state;
     this.setState((prevState) => ({
       title: {
         ...prevState.title,
@@ -248,19 +184,37 @@ class CreateTitle extends Component {
 
   // --------------- VALIDATIONS---------------------------------
 
-  validateQuestionType = () => {
-    const { questionList } = this.state;
-    return questionList.questionType !== '';
+  validateTitleLabel = () => {
+    const { title } = this.state;
+    return title.titleLabel.trim() !== '';
+  };
+  
+  validateSubTitleLabel = () => {
+    const { title } = this.state;
+
+    for (let i=0; i<title.subTitle.length; i++) {
+      // case when field is empty
+      if (title.subTitle[i].subTitleLabel.trim() === '') {
+        return false;
+      }
+    };
+    // case when all fields are not empty
+    return true;
   };
 
-  validateQuestion = () => {
-    const { questionList } = this.state;
-    return questionList.question.trim() !== '';
-  };
+  validateNestedTitleLabel = () => {
+    const { title } = this.state;
 
-  validateOptionType = () => {
-    const { questionList } = this.state;
-    return questionList.optionType !== '';
+    for (let i=0; i<title.subTitle.length; i++) {
+      for (let j=0; j<title.subTitle[i].nestedTitle.length; j++) {
+        // case when field is empty
+        if (title.subTitle[i].nestedTitle[j].nestedTitleLabel.trim() === '') {
+          return false;
+        }
+      }
+    };
+    // case when all fields are not empty
+    return true;
   };
 
   renderToast() {
@@ -270,7 +224,7 @@ class CreateTitle extends Component {
           <div className="toast show bg-dark text-white">
             <div className="d-flex justify-content-between">
               <div className="toast-body">
-                Edited question successfully!
+                Created title successfully!
               </div>
               <button type="button" className="btn-close btn-close-white me-2 m-auto" onClick={() => this.setState({ showToast: false })}></button>
             </div>
@@ -288,63 +242,60 @@ class CreateTitle extends Component {
 
     const { title } = this.state
 
-    // const isQuestionTypeValid = this.validateQuestionType();
-    // const isQuestionValid = this.validateQuestion();
+    const isTitleLabelValid = this.validateTitleLabel();
+    const isSubTitleLabelValid = this.validateSubTitleLabel();
+    const isNestedTitleLabelValid = this.validateNestedTitleLabel();
 
-    // this.setState({
-    //   validationErrors: {
-    //     questionType: isQuestionTypeValid ? '' : 'Select one question type',
-    //     question: isQuestionValid ? '' : 'Enter the question'
-    //   },
-    // });
+    this.setState({
+      validationErrors: {
+        titleLabel: isTitleLabelValid ? '' : 'Enter the title',
+        subTitleLabel: isSubTitleLabelValid ? '' : 'Enter all subtitles',
+        nestedTitleLabel: isNestedTitleLabelValid ? '' : 'Enter all nested titles'
+      },
+    });
 
-    // if (
-    //   !isQuestionTypeValid || 
-    //   !isQuestionValid || 
-    //   !isOptionTypeValid || 
-    //   !isGridValid || 
-    //   !isOptionsValid || 
-    //   !isMarksValid || 
-    //   !isCountriesValid || 
-    //   !isExplanationValid
-    // ) {
-    //   return;
-    // }
+    if (
+      !isTitleLabelValid  || 
+      !isSubTitleLabelValid || 
+      !isNestedTitleLabelValid
+    ) {
+      // exit out of handleSubmit
+      return;
+    }
 
-    // const dataToUpdate = {
-    //   questionType: this.state.questionList.questionType,
-    //   question: this.state.questionList.question,
-    //   optionType: this.state.questionList.optionType,
-    //   options: this.state.questionList.options,
-    // };
-
-    // Update database server API
-    // this.updateQuestion(questionId, dataToUpdate)
+    const dataToInsert = {
+      title: title
+    };
 
     // debug
     // print title label
-    console.log(`titleLabel: ${this.state.title.titleLabel}`)
+    // console.log(`titleLabel: ${this.state.title.titleLabel}`)
 
-    // print labels
-    for (let i = 0; i < title.subTitle.length; i++) {
+    // // print labels
+    // for (let i = 0; i < title.subTitle.length; i++) {
 
-      // subtitle labels
-      console.log(`subtitleLabel[${i}]: ${title.subTitle[i].subTitleLabel}`)
+    //   // subtitle labels
+    //   console.log(`subtitleLabel[${i}]: ${title.subTitle[i].subTitleLabel}`)
 
-      // nested title labels
-      for (let j = 0; j < title.subTitle[i].nestedTitle.length; j++) {
-        console.log(`nestedLabel[${i}][${j}]: ${title.subTitle[i].nestedTitle[j].nestedTitleLabel}`)
-      }
-    }
+    //   // nested title labels
+    //   for (let j = 0; j < title.subTitle[i].nestedTitle.length; j++) {
+    //     console.log(`nestedLabel[${i}][${j}]: ${title.subTitle[i].nestedTitle[j].nestedTitleLabel}`)
+    //   }
+    // }
     //
+
+    // Insert database server API
+    this.insertTitle(dataToInsert);
+
+    // close modal
+    this.setState( { showModal: false } )
   };
 
   /*---------------------RENDER----------------------------------*/
 
   render() {
 
-    const { showCountry, isLeadingQuestion, showExplanation, validationErrors, questionId, questionIndex, allQuestions, title } = this.state;
-    const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
+    const { validationErrors, questionIndex, title } = this.state;
 
     return (
 
@@ -354,7 +305,7 @@ class CreateTitle extends Component {
           // className="btn btn-primary"
           className="btn btn-dark d-none d-md-inline-block"
           id={`btEdit-${questionIndex}`}
-          onClick={() => this.onEditClickHandler(questionId)}>
+          onClick={() => this.onEditClickHandler()}>
           Create Title
         </button>
 
@@ -375,7 +326,7 @@ class CreateTitle extends Component {
           >
             <Modal.Title
               className="modal-title fs-5"
-              id="editQuestionLabel"
+              id="createTitleLabel"
             >
               Create Title
             </Modal.Title>
@@ -396,9 +347,9 @@ class CreateTitle extends Component {
                     onChange={this.handleTitleLabel}
                   />
                 </div>
-                {validationErrors.question && (
+                {validationErrors.titleLabel && (
                   <div style={{ color: 'red', fontSize: 12 }}>
-                    {validationErrors.question}
+                    {validationErrors.titleLabel}
                   </div>
                 )}
               </div>
@@ -419,11 +370,6 @@ class CreateTitle extends Component {
                           value={title.subTitle[index].subTitleLabel}
                           onChange={(e) => this.handleSubTitleLabel(index, e.target.value)}
                         />
-                        {/* {validationErrors.question && (
-                        <div style={{ color: 'red', fontSize: 12 }}>
-                          {validationErrors.question}
-                        </div>
-                      )} */}
                       </div>
                       {title.subTitle.length > 1 && (
                         <button
@@ -454,11 +400,6 @@ class CreateTitle extends Component {
                               onChange={(e) => this.handleNestedTitleLabel(index, index_nest, e.target.value)}
                             />
                           </div>
-                          {/* {validationErrors.question && (
-                      <div style={{ color: 'red', fontSize: 12 }}>
-                        {validationErrors.question}
-                      </div>
-                    )} */}
                           {/* Delete nestedTitle */}
                           {title.subTitle[index].nestedTitle.length > 1 && (
                             <button
@@ -490,30 +431,42 @@ class CreateTitle extends Component {
                   Add subtitle
                 </button>
               </div>
+              {/* {validationErrors.subTitleLabel && (
+                <div style={{ color: 'red', fontSize: 12 }}>
+                  {validationErrors.subTitleLabel}
+                </div>
+              )} */}
             </form>
           </Modal.Body>
           <Modal.Footer>
             <div className="d-flex justify-content-between w-100">
 
               <div className="form-check form-switch form-check-inline">
+              {/* {validationErrors.nestedTitleLabel && (
+                <div style={{ color: 'red', fontSize: 12 }}>
+                  {validationErrors.nestedTitleLabel}
+                </div>
+              )} */}
               </div>
               <button type="button" className="btn btn-dark" onClick={this.handleSubmit}>
                 Submit
               </button>
             </div>
+            {/* Subtitle validation */}
+            {validationErrors.subTitleLabel && (
+              <div style={{ color: 'red', fontSize: 12 }}>
+                {validationErrors.subTitleLabel}
+              </div>
+            )}
+            {/* Nested title validation */}
+            {validationErrors.nestedTitleLabel && (
+              <div style={{ color: 'red', fontSize: 12 }}>
+                {validationErrors.nestedTitleLabel}
+              </div>
+            )}
           </Modal.Footer>
         </Modal>
-
         {this.renderToast()}
-
-        <div
-          className="modal fade"
-          id={`editQuestion`}
-          tabIndex="-1"
-          aria-labelledby="editQuestionLabel"
-          aria-hidden="true"
-        >
-        </div>
       </div>
     );
   }

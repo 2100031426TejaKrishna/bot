@@ -8,7 +8,8 @@ const displayCustomerQuestionRoute = require('./displayCustomerQuestion');
 const submitResponseRoute = require('./insertCustomerResponse');
 const { router: treeMapRouter} = require('./mongodb-utils');
 const editReadUpdateRoute = require('./editReadUpdate');
-const deleteQuestionRouter = require('./deleteQuestion'); 
+const deleteQuestionRouter = require('./deleteQuestion');
+const insertTitlesRoute = require('./insertTitles');
 
 
 const corsOptions = {
@@ -32,6 +33,7 @@ connectToDatabase().then(async () => {
   app.use('/api', editReadUpdateRoute);
   app.use('/api', deleteQuestionRouter);
   app.use('/api', treeMapRouter);
+  app.use('/api', insertTitlesRoute);
 
   const PORT = 5000;
 
