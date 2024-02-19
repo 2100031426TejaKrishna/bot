@@ -89,28 +89,6 @@ const Questions = () => {
         fetchAllQuestions();
     }, []);
 
-    // const fetchAllQuestions = async (selectedCountries) => {
-    //     setIsLoading(true); // Make sure to set loading state to true at the start
-    //     try {
-    //         const response = await fetch(`http://${destination}/api/fetchQuestions`, {
-    //             method: 'POST', // Assuming your server is set up to handle POST requests here
-    //             headers: {
-    //                 'Content-Type': 'application/json',
-    //             },
-    //             body: JSON.stringify({ selectedCountries }), // Send the selected countries as JSON
-    //         });
-    //         if (!response.ok) {
-    //             throw new Error(`HTTP error! status: ${response.status}`);
-    //         }
-    //         const data = await response.json();
-    //         setQuestions(data); // Update the questions state with the fetched data
-    //         setIsLoading(false); // Set loading state to false after fetching
-    //     } catch (error) {
-    //         console.error("Error fetching all questions:", error);
-    //         setIsLoading(false); // Ensure loading state is set to false even if there's an error
-    //     }
-    // };
-
     useEffect(() => {
         const prevAnswer = answers[currentQuestionIndex];
         if (prevAnswer) {
@@ -461,12 +439,29 @@ const Questions = () => {
     };
 
     // Function to confirm country selection and proceed to questions
-    const handleCountrySelectionConfirm = () => {
+    const handleCountrySelectionConfirm = async () => {
         if (selectedCountries.length > 0) {
             setShowCountrySelection(false);
-            // Optionally, store the selected countries as an answer to a "country selection" question
             updateAnswers({ ...answers, countrySelection: selectedCountries });
-            // fetchAllQuestions(selectedCountries);
+    
+            // try {
+            //     const response = await fetch(`http://${destination}/api/selectedCountries`, {
+            //         method: 'POST',
+            //         headers: {
+            //             'Content-Type': 'application/json',
+            //         },
+            //         body: JSON.stringify({ countries: selectedCountries }),
+            //     });
+                
+            //     if (!response.ok) {
+            //         throw new Error(`HTTP error! status: ${response.status}`);
+            //     }
+    
+            //     console.log("Selected countries sent successfully to the backend.");
+    
+            // } catch (error) {
+            //     console.error("Error sending selected countries to the backend:", error);
+            // }
         } else {
             alert("Please select at least one country.");
         }

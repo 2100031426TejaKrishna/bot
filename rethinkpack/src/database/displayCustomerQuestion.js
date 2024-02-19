@@ -44,12 +44,6 @@ const fetchQuestions = async () => {
             }
         }
 
-        // let filteredQuestions = Array.from(allQuestions.values()).filter(question => {
-        //     // Include the question if it's not country-specific or if it matches one of the selected countries
-        //     return !question.countries || question.countries.some(country => selectedCountries.includes(country));
-        // });
-
-        // return filteredQuestions;
         return Array.from(allQuestions.values());
     } catch (error) {
         console.error("Error fetching all questions:", error);
@@ -59,8 +53,6 @@ const fetchQuestions = async () => {
 
 router.get('/fetchQuestions', async (req, res) => {
     try {
-        // const selectedCountries = req.body.selectedCountries || [];
-        // const questions = await fetchQuestions(selectedCountries);
         const questions = await fetchQuestions();
         res.json(questions);
     } catch (error) {
