@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Tree from 'react-d3-tree';
 
-// const destination = "localhost:5000";
-const destination = "rtp.dusky.bond:5000";
+const destination = "localhost:5000";
+// const destination = "rtp.dusky.bond:5000";
 
 const QuestionsTreeMap = () => {
   const [data, setData] = useState(null);
@@ -97,15 +97,16 @@ const QuestionsTreeMap = () => {
         children: [],
       };
 
+      console.log("SHOW HERE", questionData);
       if (Array.isArray(questionData.options)) {
         try {
           const optionsNextQuestionArray = questionData.options;
-
+            console.log("SHOW", optionsNextQuestionArray);
           for (const option of optionsNextQuestionArray) {
             if (option.optionsNextQuestion) {
               const optionsNextQuestionData = await fetchQuestionsRecursively(option.optionsNextQuestion, visitedQuestions);
-
-              if (optionsNextQuestionData && optionsNextQuestionData.length > 0) {
+                console.log("SHOW", optionsNextQuestionData);
+              if (optionsNextQuestionData && optionsNextQuestionArray.length > 0) {
                 mainQuestionNode.children = [...mainQuestionNode.children, ...optionsNextQuestionData];
 
                 for (const child of optionsNextQuestionData) {
@@ -180,7 +181,7 @@ const QuestionsTreeMap = () => {
   if (!data) {
     return <div>Loading...</div>;
   }
-
+  console.log("all data", data);
   return (
     <div style={{ width: '100%', height: '600px' }}>
       <Tree
