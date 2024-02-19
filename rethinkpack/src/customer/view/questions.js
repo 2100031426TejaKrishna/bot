@@ -73,8 +73,7 @@ const Questions = () => {
     useEffect(() => {
         const fetchAllQuestions = async () => {
             try {
-                const selectedCountriesParam = selectedCountries.join(',');
-                const response = await fetch(`http://${destination}/api/fetchQuestions?countries=${selectedCountriesParam}`);
+                const response = await fetch(`http://${destination}/api/fetchQuestions`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
@@ -86,11 +85,31 @@ const Questions = () => {
                 setIsLoading(false);
             }
         };
-    
-        if (!showCountrySelection) {
-            fetchAllQuestions();
-        }
-    }, [showCountrySelection, selectedCountries]);
+
+        fetchAllQuestions();
+    }, []);
+
+    // const fetchAllQuestions = async (selectedCountries) => {
+    //     setIsLoading(true); // Make sure to set loading state to true at the start
+    //     try {
+    //         const response = await fetch(`http://${destination}/api/fetchQuestions`, {
+    //             method: 'POST', // Assuming your server is set up to handle POST requests here
+    //             headers: {
+    //                 'Content-Type': 'application/json',
+    //             },
+    //             body: JSON.stringify({ selectedCountries }), // Send the selected countries as JSON
+    //         });
+    //         if (!response.ok) {
+    //             throw new Error(`HTTP error! status: ${response.status}`);
+    //         }
+    //         const data = await response.json();
+    //         setQuestions(data); // Update the questions state with the fetched data
+    //         setIsLoading(false); // Set loading state to false after fetching
+    //     } catch (error) {
+    //         console.error("Error fetching all questions:", error);
+    //         setIsLoading(false); // Ensure loading state is set to false even if there's an error
+    //     }
+    // };
 
     useEffect(() => {
         const prevAnswer = answers[currentQuestionIndex];
@@ -165,7 +184,7 @@ const Questions = () => {
             [currentQuestionIndex]: newAnswer
         }));
     };
-
+    
     const handleNextQuestion = () => {
         const currentQuestion = questions[currentQuestionIndex];
         let newAnswer;
@@ -201,7 +220,6 @@ const Questions = () => {
             // Set isLastQuestion to true if there are no further questions defined
             setIsLastQuestion(true);
         }
-
     };
     
     const navigateToNextQuestionById = (nextQuestionId) => {
@@ -290,14 +308,12 @@ const Questions = () => {
 
     const handleSubmit = () => {
         setShowModal(true);
-      };
+    };
 
     const handleConfirmSubmit = async () => {
         setShowModal(false);
-
         const lastAnswer = currentQuestion.optionType.includes('Grid') ? gridAnswers : currentQuestion.optionType === 'checkbox' ? selectedOptions : currentAnswer;
         updateAnswers(lastAnswer); 
-
         console.log("Submitted Answers:", {
             ...answers, 
             [currentQuestionIndex]: lastAnswer 
@@ -448,7 +464,9 @@ const Questions = () => {
     const handleCountrySelectionConfirm = () => {
         if (selectedCountries.length > 0) {
             setShowCountrySelection(false);
-            // The useEffect hook will automatically fetch the questions based on the selected countries.
+            // Optionally, store the selected countries as an answer to a "country selection" question
+            updateAnswers({ ...answers, countrySelection: selectedCountries });
+            // fetchAllQuestions(selectedCountries);
         } else {
             alert("Please select at least one country.");
         }
@@ -458,7 +476,6 @@ const Questions = () => {
         const query = event.target.value.toLowerCase();
         setSearchQuery(query);
     
-        // Assuming countries are unique and directly mapping to their refs
         const matchedCountry = countries.find(country =>
             country.toLowerCase().startsWith(query)
         );
