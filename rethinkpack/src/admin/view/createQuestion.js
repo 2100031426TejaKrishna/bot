@@ -895,7 +895,9 @@ class CreateQuestion extends Component {
         // case when openEndedWordCount LESS THAN OR EQUALS openEndedWordLimit
         return true;
       }
-    };
+    } else {
+      return true;
+    }
   };
   
   validateMarks = () => {
