@@ -18,23 +18,34 @@ const fetchFirstQuestion = async () => {
 
 // Fetch the next question by ID or optionsNextQuestion
 const fetchNextQuestion = async (nextQuestionId) => {
-    try {
-      // Try to find the question by ID first
-      let question = await Questions.findById(nextQuestionId);
-  
-      if (!question) {
-        // If not found, check if it's an optionsNextQuestion
-        question = await Questions.findOne({
-          'options.optionsNextQuestion': mongoose.Types.ObjectId(nextQuestionId),
-        });
+  try {
+    // Try to find the question by ID first
+    let question = await Questions.findById(nextQuestionId);
+
+    if (!question) {
+      // If not found, check if it's an optionsNextQuestion
+      question = await Questions.findOne({
+        'options._id': mongoose.Types.ObjectId(nextQuestionId),
+      });
+      
+      // Populate the optionsNextQuestion field if found
+      if (question && question.options) {
+        const selectedOption = question.options.find(option =>
+          option._id.equals(new mongoose.Types.ObjectId(nextQuestionId))
+        );
+        
+        if (selectedOption && selectedOption.optionsNextQuestion) {
+          question.optionsNextQuestion = selectedOption.optionsNextQuestion;
+        }
       }
-  
-      return question;
-    } catch (error) {
-      console.error("Error fetching the next question:", error);
-      throw error;
     }
-  };
+
+    return question;
+  } catch (error) {
+    console.error("Error fetching the next question:", error);
+    throw error;
+  }
+};
 
   // Function to fetch option text by ID
   const fetchOptionText = async (optionId) => {
