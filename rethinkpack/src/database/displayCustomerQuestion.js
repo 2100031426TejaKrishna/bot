@@ -51,12 +51,53 @@ const fetchQuestions = async () => {
     }
 };
 
+const fetchQuestionsByCountries = async (selectedCountries) => {
+    try {
+        const questions = await Questions.find({
+            countries: { $in: selectedCountries }
+        });
+
+        return questions;
+    } catch (error) {
+        console.error("Error fetching questions by countries:", error);
+        throw error;
+    }
+};
+
 router.get('/fetchQuestions', async (req, res) => {
     try {
         const questions = await fetchQuestions();
         res.json(questions);
     } catch (error) {
         res.status(500).send("Unable to fetch all questions");
+    }
+});
+
+router.post('/selectedCountries', async (req, res) => {
+    const { countries } = req.body; 
+    try {
+        console.log('Selected countries:', countries); 
+
+        res.status(200).json({ message: 'Selected countries received and processed' });
+    } catch (error) {
+        console.error("Error processing selected countries:", error);
+        res.status(500).json({ message: "Error processing selected countries" });
+    }
+});
+
+router.post('/fetchQuestionsByCountries', async (req, res) => {
+    const { countries } = req.body;
+
+    if (!countries || !countries.length) {
+        return res.status(400).json({ message: "No countries provided" });
+    }
+
+    try {
+        const questions = await fetchQuestionsByCountries(countries);
+        console.log("Questions for country:" questions);
+        res.json(questions);
+    } catch (error) {
+        res.status(500).send("Unable to fetch questions by selected countries");
     }
 });
 

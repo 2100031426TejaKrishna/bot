@@ -442,26 +442,45 @@ const Questions = () => {
     const handleCountrySelectionConfirm = async () => {
         if (selectedCountries.length > 0) {
             setShowCountrySelection(false);
-            updateAnswers({ ...answers, countrySelection: selectedCountries });
+            console.log(selectedCountries);
     
-            // try {
-            //     const response = await fetch(`http://${destination}/api/selectedCountries`, {
-            //         method: 'POST',
-            //         headers: {
-            //             'Content-Type': 'application/json',
-            //         },
-            //         body: JSON.stringify({ countries: selectedCountries }),
-            //     });
-                
-            //     if (!response.ok) {
-            //         throw new Error(`HTTP error! status: ${response.status}`);
-            //     }
+            try {
+                // First, send selected countries to the backend
+                let response = await fetch(`http://${destination}/api/selectedCountries`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ countries: selectedCountries }),
+                });
     
-            //     console.log("Selected countries sent successfully to the backend.");
+                if (!response.ok) {
+                    throw new Error(`HTTP error on selectedCountries endpoint! status: ${response.status}`);
+                }
     
-            // } catch (error) {
-            //     console.error("Error sending selected countries to the backend:", error);
-            // }
+                console.log("Selected countries sent successfully to the backend.");
+    
+                // Next, fetch questions related to the selected countries
+                response = await fetch(`http://${destination}/api/fetchQuestionsByCountries`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ countries: selectedCountries }),
+                });
+    
+                if (!response.ok) {
+                    throw new Error(`HTTP error on fetchQuestionsByCountries endpoint! status: ${response.status}`);
+                }
+    
+                const countrySpecificQuestions = await response.json();
+    
+                setQuestions(prevQuestions => [...prevQuestions, ...countrySpecificQuestions]);
+                setIsLoading(false);
+    
+            } catch (error) {
+                console.error("Error processing countries or fetching related questions:", error);
+            }
         } else {
             alert("Please select at least one country.");
         }
