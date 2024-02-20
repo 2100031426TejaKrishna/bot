@@ -2,7 +2,28 @@ import React, { useState, useEffect } from 'react';
 import Tree from 'react-d3-tree';
 
 const destination = "localhost:5000";
-// const destination = "rtp.dusky.bond:5000";
+
+// Define CustomLabel component
+const CustomLabel = ({ nodeData }) => (
+  <text
+    x="0"
+    y="0"
+    dy=".35em"
+    textAnchor="middle"
+    fill={nodeData.children ? 'black' : 'green'}
+  >
+    {nodeData.name}
+  </text>
+);
+
+// Define customNodeShape component
+const customNodeShape = {
+  shape: 'circle',
+  shapeProps: {
+    r: 10, // Adjust the radius as needed
+    fill: 'red', // Set the fill color for leading question nodes
+  },
+};
 
 const QuestionsTreeMap = () => {
   const [data, setData] = useState(null);
@@ -97,15 +118,14 @@ const QuestionsTreeMap = () => {
         children: [],
       };
 
-      console.log("SHOW HERE", questionData);
       if (Array.isArray(questionData.options)) {
         try {
           const optionsNextQuestionArray = questionData.options;
-            console.log("SHOW", optionsNextQuestionArray);
+
           for (const option of optionsNextQuestionArray) {
             if (option.optionsNextQuestion) {
               const optionsNextQuestionData = await fetchQuestionsRecursively(option.optionsNextQuestion, visitedQuestions);
-                console.log("SHOW", optionsNextQuestionData);
+
               if (optionsNextQuestionData && optionsNextQuestionArray.length > 0) {
                 mainQuestionNode.children = [...mainQuestionNode.children, ...optionsNextQuestionData];
 
@@ -181,13 +201,19 @@ const QuestionsTreeMap = () => {
   if (!data) {
     return <div>Loading...</div>;
   }
-  console.log("all data", data);
+
   return (
     <div style={{ width: '100%', height: '600px' }}>
       <Tree
         data={data}
         orientation="vertical"
-        translate={{ x: 400, y: 50 }}
+        nodeLabelComponent={{ render: <CustomLabel />, foreignObjectWrapper: { y: 24 } }}
+        pathFunc="straight"
+        separation={{ siblings: 2, nonSiblings: 10 }}
+        collapsible={false}
+        transitionDuration={0}
+        nodeSvgShape={(nodeData) => (nodeData.attributes && nodeData.attributes.leadingQuestion ? customNodeShape : null)}
+        linkShape={{ stroke: 'blue' }}
         onClick={handleNodeClick}
       />
     </div>
