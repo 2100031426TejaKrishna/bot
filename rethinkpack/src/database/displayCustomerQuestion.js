@@ -94,7 +94,7 @@ router.post('/fetchQuestionsByCountries', async (req, res) => {
 
     try {
         const questions = await fetchQuestionsByCountries(countries);
-        console.log("Questions for country:" questions);
+        console.log("Questions for country:", questions);
         res.json(questions);
     } catch (error) {
         res.status(500).send("Unable to fetch questions by selected countries");
