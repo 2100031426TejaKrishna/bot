@@ -101,4 +101,4 @@ router.post('/fetchQuestionsByCountries', async (req, res) => {
     }
 });
 
-module.exports = { fetchQuestions, router };
+module.exports = router;

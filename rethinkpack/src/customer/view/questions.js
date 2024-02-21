@@ -19,6 +19,7 @@ const Questions = () => {
     const [showModal, setShowModal] = useState(false);
     const [selectedCountries, setSelectedCountries] = useState([]);
     const [showCountrySelection, setShowCountrySelection] = useState(true);
+    const [countrySpecificQuestions, setCountrySpecificQuestions] = useState([]);
     const countries = [
         "Afghanistan", "Albania", "Algeria", "Andorra", "Angola",
         "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria",
@@ -195,8 +196,14 @@ const Questions = () => {
         } else if (currentQuestion.nextQuestion) {
             navigateToNextQuestionById(currentQuestion.nextQuestion);
         } else {
-            // Set isLastQuestion to true if there are no further questions defined
-            setIsLastQuestion(true);
+            if (countrySpecificQuestions.length > 0 && questions.length === currentQuestionIndex + 1) {
+                setQuestions(questions.concat(countrySpecificQuestions));
+                setCountrySpecificQuestions([]); // Clear country-specific questions to avoid re-appending
+                setCurrentQuestionIndex(currentQuestionIndex + 1); // Move to the first country-specific question
+            } else {
+                // Set isLastQuestion to true if there are no further questions defined
+                setIsLastQuestion(true);
+            }
         }
     };
     
@@ -458,8 +465,6 @@ const Questions = () => {
                     throw new Error(`HTTP error on selectedCountries endpoint! status: ${response.status}`);
                 }
     
-                console.log("Selected countries sent successfully to the backend.");
-    
                 // Next, fetch questions related to the selected countries
                 response = await fetch(`http://${destination}/api/fetchQuestionsByCountries`, {
                     method: 'POST',
@@ -474,8 +479,9 @@ const Questions = () => {
                 }
     
                 const countrySpecificQuestions = await response.json();
+                console.log("Specific country question:", countrySpecificQuestions);
     
-                setQuestions(prevQuestions => [...prevQuestions, ...countrySpecificQuestions]);
+                setCountrySpecificQuestions(countrySpecificQuestions);
                 setIsLoading(false);
     
             } catch (error) {

@@ -4,7 +4,7 @@ const cors = require('cors');
 const connectToDatabase = require('./database');
 const insertQuestionRoute = require('./insertQuestion');
 const displayQuestionRoute = require('./displayQuestion');
-const { router: displayCustomerQuestionRoute, fetchQuestions  } = require('./displayCustomerQuestion');
+const displayCustomerQuestionRoute = require('./displayCustomerQuestion');
 const submitResponseRoute = require('./insertCustomerResponse');
 const { router: treeMapRouter} = require('./mongodb-utils');
 const editReadUpdateRoute = require('./editReadUpdate');
@@ -34,7 +34,6 @@ connectToDatabase().then(async () => {
   app.use('/api', deleteQuestionRouter);
   app.use('/api', treeMapRouter);
   app.use('/api', insertTitlesRoute);
-  await fetchQuestions();
 
   const PORT = 5000;
 
