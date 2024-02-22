@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Tree from 'react-d3-tree';
 
-// const destination = "localhost:5000";
-const destination = "rtp.dusky.bond:5000";
+const destination = "localhost:5000";
+// const destination = "rtp.dusky.bond:5000";
 
 // Define CustomLabel component
 const CustomLabel = ({ nodeData }) => (
@@ -47,9 +47,9 @@ const QuestionsTreeMap = () => {
   const nextQuestionNodesMap = {};
 
   // Recursive function to fetch questions and build tree structure
-  const fetchQuestionsRecursively = async (questionId, visitedQuestions = new Set()) => {
+  const fetchQuestionsRecursively = async (questionId, visitedQuestions = new Set(), parentNodes = []) => {
     if (visitedQuestions.has(questionId)) {
-      console.log("Already visited question:", questionId);
+      console.log("Revisiting question:", questionId);
       return null;
     }
 
@@ -62,123 +62,134 @@ const QuestionsTreeMap = () => {
 
     const childrenData = [];
 
-  if (questionData.optionType === 'checkboxGrid') {
-    // Handle checkboxGrid type
-    const rowTexts = questionData.grid.rows.map(row => row.text);
-    const columnTexts = questionData.grid.columns.map(column => column.text);
-    const mergedTexts = [...rowTexts, ...columnTexts].join(',');
+    if (questionData.optionType === 'checkboxGrid') {
+      // Handle checkboxGrid type
+      const rowTexts = questionData.grid.rows.map(row => row.text);
+      const columnTexts = questionData.grid.columns.map(column => column.text);
+      const mergedTexts = [...rowTexts, ...columnTexts].join(',');
 
-    const checkboxGridNode = {
-      name: questionData.question,
-      attributes: {
-        text: mergedTexts,
-      },
-    };
+      const checkboxGridNode = {
+        name: questionData.question,
+        attributes: {
+          text: mergedTexts,
+        },
+      };
 
-    if (questionData.nextQuestion) {
-      const childData = await fetchQuestionsRecursively(questionData.nextQuestion, visitedQuestions);
-      checkboxGridNode.children = Array.isArray(childData) && childData.length > 0 ? childData : [];
-    }
+      if (questionData.nextQuestion) {
+        const childData = await fetchQuestionsRecursively(questionData.nextQuestion, visitedQuestions);
+        checkboxGridNode.children = Array.isArray(childData) && childData.length > 0 ? childData : [];
+      }
 
-    childrenData.push(checkboxGridNode);
-  } else if (['dropdown', 'multipleChoice', 'linear', 'multipleChoiceGrid'].includes(questionData.optionType) && questionData.options) {
-    // Handle dropdown, multipleChoice, linear, multipleChoiceGrid types
-    const optionTexts = await Promise.all(questionData.options.map(option =>
-      fetchOptionText(option._id).catch(error => {
-        console.error(`Error fetching option text for option ${option._id}:`, error);
-        return ''; // Provide a default value or handle the error as needed
-      })
-    ));
+      childrenData.push(checkboxGridNode);
+    } else if (['dropdown', 'multipleChoice', 'linear', 'multipleChoiceGrid'].includes(questionData.optionType) && questionData.options) {
+      // Handle dropdown, multipleChoice, linear, multipleChoiceGrid types
+      const optionTexts = await Promise.all(questionData.options.map(option =>
+        fetchOptionText(option._id).catch(error => {
+          console.error(`Error fetching option text for option ${option._id}:`, error);
+          return ''; // Provide a default value or handle the error as needed
+        })
+      ));
 
-    const mergedText = optionTexts.join(',');
+      const mergedText = optionTexts.join(',');
 
-    const mainQuestionNode = {
-      name: questionData.question,
-      attributes: {
-        text: mergedText,
-      },
-      children: [],
-    };
+      const mainQuestionNode = {
+        name: questionData.question,
+        attributes: {
+          text: mergedText,
+        },
+        children: [],
+      };
 
-    if (Array.isArray(questionData.options)) {
-      try {
-        const optionsNextQuestionArray = questionData.options;
+      if (Array.isArray(questionData.options)) {
+        try {
+          const optionsNextQuestionArray = questionData.options;
 
-        for (const option of optionsNextQuestionArray) {
-          if (option.optionsNextQuestion) {
-            const optionsNextQuestionData = await fetchQuestionsRecursively(option.optionsNextQuestion, visitedQuestions);
+          for (const option of optionsNextQuestionArray) {
+            if (option.optionsNextQuestion) {
+              const optionsNextQuestionData = await fetchQuestionsRecursively(option.optionsNextQuestion, visitedQuestions);
 
-            if (optionsNextQuestionData && optionsNextQuestionArray.length > 0) {
-              mainQuestionNode.children = [...mainQuestionNode.children, ...optionsNextQuestionData];
+              if (optionsNextQuestionData && optionsNextQuestionArray.length > 0) {
+                mainQuestionNode.children = [...mainQuestionNode.children, ...optionsNextQuestionData];
 
-              for (const child of optionsNextQuestionData) {
-                if (child.optionsNextQuestion) {
-                  const nestedChildData = await fetchQuestionsRecursively(child.optionsNextQuestion, visitedQuestions);
-                  if (nestedChildData && nestedChildData.length > 0) {
-                    child.children = [...child.children, ...nestedChildData];
+                for (const child of optionsNextQuestionData) {
+                  if (child.optionsNextQuestion) {
+                    const nestedChildData = await fetchQuestionsRecursively(child.optionsNextQuestion, visitedQuestions);
+                    if (nestedChildData && nestedChildData.length > 0) {
+                      child.children = [...child.children, ...nestedChildData];
+                    }
                   }
                 }
               }
             }
           }
+        } catch (error) {
+          console.error("Error fetching optionsNextQuestion:", error);
         }
-      } catch (error) {
-        console.error("Error fetching optionsNextQuestion:", error);
       }
-    }
 
-    if (questionData.nextQuestion) {
-      const nextQuestionData = await fetchQuestionsRecursively(questionData.nextQuestion, visitedQuestions);
-      mainQuestionNode.children.push(...(nextQuestionData || [])); // Handle null or undefined nextQuestionData
-    }
-
-    childrenData.push(mainQuestionNode);
-  } else {
-    // Handle regular node
-    const node = {
-      name: questionData.question,
-      attributes: {
-        text: questionData.text || "",
-      },
-    };
-
-    // Save this as a child node for potential future reuse based on the answer text
-    if (questionData.text) {
-      if (nextQuestionNodesMap[questionData.text]) {
-        console.log(`Reusing child node for question with answer "${questionData.text}"`);
-        node.children = [nextQuestionNodesMap[questionData.text]];
-      } else {
-        nextQuestionNodesMap[questionData.text] = node;
+      if (questionData.nextQuestion) {
+        const nextQuestionData = await fetchQuestionsRecursively(questionData.nextQuestion, visitedQuestions);
+        mainQuestionNode.children.push(...(nextQuestionData || [])); // Handle null or undefined nextQuestionData
       }
-    }
 
-    // Check if there are any existing nodes with the same nextQuestion ID
-    const existingNodes = Object.values(nextQuestionNodesMap).filter(n => n.attributes && n.attributes.text === questionData.nextQuestion);
-
-    if (existingNodes.length > 0) {
-      // If there are existing nodes, create a new parent node for each and connect them to the current node
-      const parentNodes = existingNodes.map(existingNode => ({
-        name: 'Parent Node',  // Provide a suitable name for the parent node
+      childrenData.push(mainQuestionNode);
+    } else {
+      // Handle regular node
+      const node = {
+        name: questionData.question,
         attributes: {
-          text: questionData.nextQuestion,
+          text: questionData.text || "",
         },
-        children: [existingNode],
-      }));
-    
-      node.children.push(...parentNodes);
+      };
+
+      // Save this as a child node for potential future reuse based on the answer text
+      if (questionData.text) {
+        const answerText = questionData.text.toLowerCase(); // convert to lowercase for case-insensitive matching
+        if (nextQuestionNodesMap[answerText]) {
+          console.log(`Reusing child node for question with answer "${answerText}"`);
+          node.children = [nextQuestionNodesMap[answerText]];
+        } else {
+          nextQuestionNodesMap[answerText] = node;
+        }
+      }
+
+      // Check if there are any existing nodes with the same nextQuestion ID
+      const existingNodes = Object.values(nextQuestionNodesMap).filter(n => n.attributes && n.attributes.text === questionData.nextQuestion);
+
+      let childNode;
+
+      if (existingNodes.length > 0) {
+        // If the child node already exists, use it
+        childNode = existingNodes[0];
+      } else {
+        // Otherwise, create a new child node
+        childNode = {
+          name: 'Child Node',  // Provide a suitable name for the child node
+          attributes: {
+            text: questionData.nextQuestion,
+          },
+          children: [],
+        };
+
+        // Save the new child node in the map
+        nextQuestionNodesMap[questionData.nextQuestion] = childNode;
+      }
+
+      // Connect the child node to all parent nodes
+      parentNodes.forEach(parentNode => {
+        parentNode.children.push(childNode);
+      });
+
+      if (questionData.nextQuestion) {
+        const nextQuestionData = await fetchQuestionsRecursively(questionData.nextQuestion, visitedQuestions);
+        node.children = nextQuestionData || []; // Handle null or undefined nextQuestionData
+      }
+
+      childrenData.push(node);
     }
 
-    if (questionData.nextQuestion) {
-      const nextQuestionData = await fetchQuestionsRecursively(questionData.nextQuestion, visitedQuestions);
-      node.children = nextQuestionData || []; // Handle null or undefined nextQuestionData
-    }
-
-    childrenData.push(node);
-  }
-
-  return childrenData;
-};
-
+    return childrenData;
+  };
 
   // Function to fetch a question by ID
   const fetchQuestion = async (questionId) => {
