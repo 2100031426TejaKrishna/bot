@@ -8,7 +8,13 @@ const titlesSchema = new mongoose.Schema({
         subTitle: [
             {
                 subTitleLabel: String,
-                nestedTitle: [{ nestedTitleLabel: String }]
+                // questionsSubTitle: [String],
+                nestedTitle: [ 
+                    { 
+                        nestedTitleLabel: String,
+                        // questionsNestedTitle: [String] 
+                    }
+                ]
             }
         ]
     }
@@ -20,7 +26,8 @@ Titles.createIndexes();
 router.post('/insertTitle', async (req, res) => {
     try {
         let titleData = req.body;
-        console.log(JSON.parse(titleData));
+        // console.log(JSON.parse(titleData));
+        console.log(titleData);
 
         const title = new Titles(titleData);
         let result = await title.save();
@@ -28,7 +35,7 @@ router.post('/insertTitle', async (req, res) => {
         console.log(result);
         res.send(titleData);
     } catch (error) {
-        console.error("Error inserting question:", error);
+        console.error("Error inserting title:", error);
         res.status(500).send("Titles: Something Went Wrong");
     }
 });

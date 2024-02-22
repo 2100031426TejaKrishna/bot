@@ -16,7 +16,13 @@ class CreateTitle extends Component {
         subTitle: [
           {
             subTitleLabel: '',
-            nestedTitle: [{ nestedTitleLabel: '' }]
+            // questionsSubTitle: [],
+            nestedTitle: [
+              { 
+                nestedTitleLabel: '', 
+                // questionsNestedTitle: [] 
+              }
+            ]
           }
         ],
       },
@@ -66,6 +72,7 @@ class CreateTitle extends Component {
         // refresh here
         this.setState({ showToast: true });
         setTimeout(() => this.setState({ showToast: false }), 5000);
+        this.resetState()
       } else {
         console.error('Server responded with an error:', response.status, response.statusText);
         const responseData = await response.json();
@@ -282,6 +289,7 @@ class CreateTitle extends Component {
     //     console.log(`nestedLabel[${i}][${j}]: ${title.subTitle[i].nestedTitle[j].nestedTitleLabel}`)
     //   }
     // }
+    // console.log(JSON.stringify(dataToInsert))
     //
 
     // Insert database server API

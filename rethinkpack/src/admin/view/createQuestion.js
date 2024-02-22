@@ -77,7 +77,6 @@ class CreateQuestion extends Component {
       minScale: 1,
       maxScale: 5,
       validationErrors: {
-        questionType: '',
         question: '',
         optionType: '',
         options: '',
@@ -87,7 +86,8 @@ class CreateQuestion extends Component {
         explanation: '',
       },
       requireResponse: false,
-      allQuestions: []
+      allQuestions: [],
+      allTitles:[]
     };
 
     this.initialState = { ...this.state };
@@ -114,16 +114,19 @@ class CreateQuestion extends Component {
     createQuestionModal.addEventListener('shown.bs.modal', () => {
         this.resetState(); 
         this.fetchQuestions();
+        this.fetchTitles();
     });
     createQuestionModal.addEventListener('hidden.bs.modal', () => {
         this.resetState();
     });
     this.fetchQuestions();
+    this.fetchTitles();
   }
 
   componentDidUpdate(prevProps) {
     if (this.props.questionsChanged !== prevProps.questionsChanged) {
       this.fetchQuestions();
+      this.fetchTitles();
     }
   };
 
@@ -132,6 +135,20 @@ class CreateQuestion extends Component {
       const response = await fetch(`http://${destination}/api/displayAllQuestions`);
       const questions = await response.json();
       this.setState({ allQuestions: questions });
+    } catch (error) {
+      console.error('Error fetching questions:', error);
+    }
+  };
+
+  fetchTitles = async () => {
+    try {
+      const response = await fetch(`http://${destination}/api/displayTitles`);
+      const titles = await response.json();
+      this.setState({ allTitles: titles },
+        () => {
+            console.log(`titles: ${JSON.stringify(titles)}`)
+        }
+        );
     } catch (error) {
       console.error('Error fetching questions:', error);
     }
@@ -813,11 +830,6 @@ class CreateQuestion extends Component {
     });
   };
 
-  validateQuestionType = () => {
-    const { questionType } = this.state;
-    return questionType !== '';
-  };
-  
   validateQuestion = () => {
     const { question } = this.state;
     return question.trim() !== '';
@@ -936,7 +948,6 @@ class CreateQuestion extends Component {
   handleSubmit = async (e) => {
     e.preventDefault();
 
-    const isQuestionTypeValid = this.validateQuestionType();
     const isQuestionValid = this.validateQuestion();
     const isOptionTypeValid = this.validateOptionType();
     const isOptionsValid = this.validateOptions();
@@ -948,7 +959,6 @@ class CreateQuestion extends Component {
 
     this.setState({
       validationErrors: {
-        questionType: isQuestionTypeValid ? '' : 'Select one question type',
         question: isQuestionValid ? '' : 'Enter the question',
         optionType: isOptionTypeValid ? '' : 'Select an option type',
         grid: isGridValid ? '' : 'Complete all grid data entry and ensure there is one selection per row',
@@ -960,7 +970,7 @@ class CreateQuestion extends Component {
       },
     });
 
-    if (!isQuestionTypeValid || !isQuestionValid || !isOptionTypeValid || !isOptionsValid || !isGridValid || !isOpenEndedValid || !isMarksValid || !isCountriesValid || !isExplanationValid) {
+    if (!isQuestionValid || !isOptionTypeValid || !isOptionsValid || !isGridValid || !isOpenEndedValid || !isMarksValid || !isCountriesValid || !isExplanationValid) {
       return;
     }
 
@@ -1097,6 +1107,7 @@ class CreateQuestion extends Component {
                 <form>
                 <div className="mb-3">
                     <div className="d-flex">
+                      {/* Insert title dropdown selection here */}
                       <div className="form-check form-check-inline">
                         <input
                           className="form-check-input"
@@ -1126,11 +1137,11 @@ class CreateQuestion extends Component {
                         </label>
                       </div>
                     </div>
-                    {validationErrors.questionType && (
+                    {/* {validationErrors.questionType && (
                       <div style={{ color: 'red', fontSize: 12 }}>
                         {validationErrors.questionType}
                       </div>
-                    )}
+                    )} */}
                   </div>
                   <div className="mb-3">
                     <label htmlFor="question" className="col-form-label">
