@@ -5,7 +5,7 @@ import { faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 const Questions = () => {
     const [questions, setQuestions] = useState([]);
-    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+    const [currentQuestionId, setCurrentQuestionId] = useState(null);
     const [currentAnswer, setCurrentAnswer] = useState('');
     const [selectedOptions, setSelectedOptions] = useState([]);
     const [gridAnswers, setGridAnswers] = useState({});
@@ -81,6 +81,10 @@ const Questions = () => {
                 const data = await response.json();
                 setQuestions(data); 
                 setIsLoading(false);
+                if (data.length > 0) {
+                    setCurrentQuestionId(data[0]._id);
+                }
+                // console.log("Questions: ", data);
             } catch (error) {
                 console.error("Error fetching all questions:", error);
                 setIsLoading(false);
@@ -91,7 +95,10 @@ const Questions = () => {
     }, []);
 
     useEffect(() => {
-        const prevAnswer = answers[currentQuestionIndex];
+        const currentQuestion = questions.find(q => q._id === currentQuestionId);
+        if (!currentQuestion) return;
+
+        const prevAnswer = answers[currentQuestionId];
         if (prevAnswer) {
             if (Array.isArray(prevAnswer)) {
                 setSelectedOptions(prevAnswer);
@@ -106,7 +113,7 @@ const Questions = () => {
             setGridAnswers({});
         }
         setCanProceed(!!prevAnswer);
-    }, [currentQuestionIndex, answers]);
+    }, [currentQuestionId, answers, questions]);
     
     const handleAnswerChange = (event, optionType) => {
         if (optionType === 'checkbox') {
@@ -160,12 +167,26 @@ const Questions = () => {
     const updateAnswers = (newAnswer) => {
         setAnswers((prevAnswers) => ({
             ...prevAnswers,
-            [currentQuestionIndex]: newAnswer
+            [currentQuestionId]: newAnswer
         }));
     };
+
+    // useEffect(() => {
+    //     // Log current question
+    //     if (questions && questions.length > 0 && currentQuestionIndex < questions.length) {
+    //         console.log("Current question:", questions[currentQuestionIndex].question);
+    //     }
+    
+    //     // Log previous question if it exists
+    //     if (currentQuestionIndex > 0 && questions.length > currentQuestionIndex) {
+    //         console.log("Previous question:", questions[currentQuestionIndex - 1].question);
+    //     }
+    //     console.log("------------------------");
+
+    // }, [currentQuestionIndex, questions]);
     
     const handleNextQuestion = () => {
-        const currentQuestion = questions[currentQuestionIndex];
+        const currentQuestion = questions.find(q => q._id === currentQuestionId);
         let newAnswer;
     
         // Determine the new answer based on the question type
@@ -189,17 +210,22 @@ const Questions = () => {
             }
         }
     
-        setNavigationHistory((prevHistory) => [...prevHistory, currentQuestionIndex]);
-        
+        // setNavigationHistory((prevHistory) => [...prevHistory, currentQuestionIndex]);
+        // if (nextQuestionId) {
+        //     navigateToNextQuestionById(nextQuestionId);
+        // } else if (currentQuestion.nextQuestion) {
+        //     navigateToNextQuestionById(currentQuestion.nextQuestion);
+
         if (nextQuestionId) {
-            navigateToNextQuestionById(nextQuestionId);
-        } else if (currentQuestion.nextQuestion) {
-            navigateToNextQuestionById(currentQuestion.nextQuestion);
+            setCurrentQuestionId(nextQuestionId);
+            setNavigationHistory(prevHistory => [...prevHistory, currentQuestionId]);
+            setIsLastQuestion(false);
         } else {
-            if (countrySpecificQuestions.length > 0 && questions.length === currentQuestionIndex + 1) {
-                setQuestions(questions.concat(countrySpecificQuestions));
-                setCountrySpecificQuestions([]); // Clear country-specific questions to avoid re-appending
-                setCurrentQuestionIndex(currentQuestionIndex + 1); // Move to the first country-specific question
+            if (countrySpecificQuestions.length > 0 && currentQuestionId === questions[questions.length - 1]._id) {
+                const updatedQuestions = [...questions, ...countrySpecificQuestions];
+                setQuestions(updatedQuestions);
+                setCurrentQuestionId(countrySpecificQuestions[0]._id); 
+                setCountrySpecificQuestions([]);
             } else {
                 // Set isLastQuestion to true if there are no further questions defined
                 setIsLastQuestion(true);
@@ -207,34 +233,34 @@ const Questions = () => {
         }
     };
     
-    const navigateToNextQuestionById = (nextQuestionId) => {
-        const nextQuestionIndex = questions.findIndex(question => question._id === nextQuestionId);
-        if (nextQuestionIndex !== -1) {
-            if (!uniqueQuestions.includes(nextQuestionId)) {
-                // Update uniqueQuestions only if the nextQuestionId is not already included
-                const updatedUniqueQuestions = [...uniqueQuestions, nextQuestionId];
-                setUniqueQuestions(updatedUniqueQuestions);
-            }
-            setCurrentUniqueIndex(uniqueQuestions.indexOf(nextQuestionId));
-            setCurrentQuestionIndex(nextQuestionIndex);
-            setIsLastQuestion(false); // Reset this flag when navigating to another question
-        } else {
-            // If the next question ID is invalid or doesn't exist, consider it the end of the survey
-            setIsLastQuestion(true);
-        }
-    };
+    // const navigateToNextQuestionById = (nextQuestionId) => {
+    //     const nextQuestionIndex = questions.findIndex(question => question._id === nextQuestionId);
+    //     if (nextQuestionIndex !== -1) {
+    //         if (!uniqueQuestions.includes(nextQuestionId)) {
+    //             // Update uniqueQuestions only if the nextQuestionId is not already included
+    //             const updatedUniqueQuestions = [...uniqueQuestions, nextQuestionId];
+    //             setUniqueQuestions(updatedUniqueQuestions);
+    //         }
+    //         setCurrentUniqueIndex(uniqueQuestions.indexOf(nextQuestionId));
+    //         setCurrentQuestionIndex(nextQuestionIndex);
+    //         setIsLastQuestion(false); // Reset this flag when navigating to another question
+    //     } else {
+    //         // If the next question ID is invalid or doesn't exist, consider it the end of the survey
+    //         setIsLastQuestion(true);
+    //     }
+    // };
     
     const handlePreviousQuestion = () => {
         setNavigationHistory((prevHistory) => {
             if (prevHistory.length > 1) {
                 const newHistory = [...prevHistory];
-                newHistory.pop(); // Remove the current question index from history
-                const prevQuestionIndex = newHistory[newHistory.length - 1]; // Get the previous question index
+                newHistory.pop(); // Remove the current question ID from history
+                const prevQuestionId = newHistory[newHistory.length - 1];
     
-                setCurrentQuestionIndex(prevQuestionIndex);
+                setCurrentQuestionId(prevQuestionId);   
     
                 // Restore previous answers to the UI
-                const prevQuestionAnswers = answers[prevQuestionIndex];
+                const prevQuestionAnswers = answers[prevQuestionId];
                 if (Array.isArray(prevQuestionAnswers)) {
                     setSelectedOptions(prevQuestionAnswers);
                 } else if (typeof prevQuestionAnswers === 'object' && prevQuestionAnswers !== null) {
@@ -244,8 +270,7 @@ const Questions = () => {
                 }
     
                 // Determine if the previous question should show the "Next" or "Submit" button
-                const prevQuestion = questions[prevQuestionIndex];
-                const hasFollowingQuestion = prevQuestion.nextQuestion || (prevQuestionIndex < questions.length - 1 && newHistory.includes(prevQuestionIndex + 1));
+                const hasFollowingQuestion = questions.find(q => q._id === prevQuestionId)?.nextQuestion || newHistory.length < questions.length;
                 setIsLastQuestion(!hasFollowingQuestion);
                 setCanProceed(true);
     
@@ -259,11 +284,10 @@ const Questions = () => {
         if (currentQuestion.optionType === 'checkboxGrid' || currentQuestion.optionType === 'multipleChoiceGrid') {
             // Initialize an empty object to reset gridAnswers
             const resetGridAnswers = {};
-            // If it's a multipleChoiceGrid, we need to reset each row's answer
             if (currentQuestion.optionType === 'multipleChoiceGrid') {
                 currentQuestion.grid.rows.forEach((_, rowIndex) => {
                     // For multipleChoiceGrid, reset each row's selection to an empty array or null
-                    resetGridAnswers[rowIndex] = []; // or you might set it to null, depending on your validation logic
+                    resetGridAnswers[rowIndex] = []; 
                 });
             } else {
                 // For checkboxGrid, a simple reset is enough, but kept inside for future customization
@@ -289,7 +313,7 @@ const Questions = () => {
         return <div>No questions available</div>;
     }
 
-    const currentQuestion = questions[currentQuestionIndex];
+    const currentQuestion = questions.find(q => q._id === currentQuestionId);
 
     const handleSubmit = () => {
         setShowModal(true);
@@ -301,7 +325,7 @@ const Questions = () => {
         updateAnswers(lastAnswer); 
         console.log("Submitted Answers:", {
             ...answers, 
-            [currentQuestionIndex]: lastAnswer 
+            [currentQuestionId]: lastAnswer 
         });
     
         const userId = "1"; 
@@ -449,7 +473,6 @@ const Questions = () => {
     const handleCountrySelectionConfirm = async () => {
         if (selectedCountries.length > 0) {
             setShowCountrySelection(false);
-            console.log(selectedCountries);
     
             try {
                 // First, send selected countries to the backend
@@ -500,7 +523,7 @@ const Questions = () => {
             country.toLowerCase().startsWith(query)
         );
     
-        console.log("Matched Country:", matchedCountry);
+        // console.log("Matched Country:", matchedCountry);
     
         if (matchedCountry) {
             scrollToCountry(matchedCountry);
@@ -509,7 +532,7 @@ const Questions = () => {
     
     const scrollToCountry = (countryName) => {
         const countryRef = countryRefs.current[countryName];
-        console.log("Scrolling to:", countryName, countryRef); 
+        // console.log("Scrolling to:", countryName, countryRef); 
     
         if (countryRef && countryRef.current) {
             countryRef.current.scrollIntoView({
@@ -608,7 +631,7 @@ const Questions = () => {
             )}
             <footer className="survey-questions-footer">
                 <div className="survey-questions-navigation-buttons">
-                    {currentQuestionIndex > 0 && (
+                    {navigationHistory.length > 1 && (
                         <button className="survey-questions-button" onClick={handlePreviousQuestion}>Back</button>
                     )}
                     {isLastQuestion ? (
