@@ -144,11 +144,7 @@ class CreateQuestion extends Component {
     try {
       const response = await fetch(`http://${destination}/api/displayTitles`);
       const titles = await response.json();
-      this.setState({ allTitles: titles },
-        () => {
-            console.log(`titles: ${JSON.stringify(titles)}`)
-        }
-        );
+      this.setState({ allTitles: titles });
     } catch (error) {
       console.error('Error fetching questions:', error);
     }
@@ -1066,7 +1062,7 @@ class CreateQuestion extends Component {
   };
 
   render() {
-    const { questionType, selectedOption, showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, firstQuestion, validationErrors, allQuestions, nextQuestion } = this.state;
+    const { allTitles, selectedOption, showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, firstQuestion, validationErrors, allQuestions, nextQuestion } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
     const showNextQuestion = (isLeadingQuestion && (selectedOption === 'checkbox' || selectedOption === 'linear' || selectedOption === 'multipleChoiceGrid' || selectedOption === 'checkboxGrid')) || !isLeadingQuestion;
 
@@ -1106,37 +1102,40 @@ class CreateQuestion extends Component {
               <div className="modal-body">
                 <form>
                 <div className="mb-3">
-                    <div className="d-flex">
                       {/* Insert title dropdown selection here */}
-                      <div className="form-check form-check-inline">
-                        <input
-                          className="form-check-input"
-                          type="radio"
-                          name="questionType"
-                          id="productInfoRadio"
-                          value="productInfo"
-                          checked={questionType === 'productInfo'}
-                          onChange={() => this.setState({ questionType: 'productInfo' })}
-                        />
-                        <label className="form-check-label" htmlFor="productInfoRadio">
-                          Product Information
-                        </label>
-                      </div>
-                      <div className="form-check form-check-inline">
-                        <input
-                          className="form-check-input"
-                          type="radio"
-                          name="questionType"
-                          id="packagingInfoRadio"
-                          value="packagingInfo"
-                          checked={questionType === 'packagingInfo'}
-                          onChange={() => this.setState({ questionType: 'packagingInfo' })}
-                        />
-                        <label className="form-check-label" htmlFor="packagingInfoRadio">
-                          Packaging Information
-                        </label>
-                      </div>
-                    </div>
+                      <label className="col-form-label">
+                          Select a title to insert into:
+                      </label>
+                        <div className="d-flex align-items-left">
+                          <div className="d-flex flex-grow-1">
+                              <select
+                                className="form-select"
+                                style={{ flex: '1' }}
+                                // value={allTitles.titleLabel}
+                                // onChange={(e) => this.handleNextQuestionChange(index, e.target.value)}
+                              >
+                                <option value="">Select Title</option>
+                                {/* title loop */}
+                                {allTitles.map((titleObject) => (
+                                  <optgroup key={titleObject._id} label={titleObject.title.titleLabel}>
+                                    {titleObject.title.subTitle.map((subTitleObject) => (
+                                      // Outer option for subTitle
+                                      <option key={subTitleObject._id} value={subTitleObject.subTitleLabel}>
+                                        {subTitleObject.subTitleLabel}
+
+                                        {/* Nested loop for nestedTitle */}
+                                        {subTitleObject.nestedTitle.map((nestedTitleObject) => (
+                                          <option key={nestedTitleObject._id} value={nestedTitleObject.nestedTitleLabel}>
+                                            {nestedTitleObject.nestedTitleLabel}
+                                          </option>
+                                        ))}
+                                      </option>
+                                    ))}
+                                  </optgroup>
+                                ))}
+                              </select>
+                          </div>
+                        </div>
                     {/* {validationErrors.questionType && (
                       <div style={{ color: 'red', fontSize: 12 }}>
                         {validationErrors.questionType}
