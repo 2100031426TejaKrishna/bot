@@ -19,7 +19,6 @@ class CreateQuestion extends Component {
       marks: '',
       explanation: '',
       nextQuestion: '',
-      questionType: '',
       selectedOption: 'multipleChoice',
       options: [{ text: '', value: 'Option 1', isCorrect: false }],
       gridOptions: { row: [{ label: 'Row 1', value: 'Row 1' }], column: [{ label: 'Column 1', value: 'Column 1' }], answers: [] },
@@ -87,7 +86,9 @@ class CreateQuestion extends Component {
       },
       requireResponse: false,
       allQuestions: [],
-      allTitles:[]
+      allTitles:[],
+      selectedTitle: '',
+      selectedTitleLabel: '',
     };
 
     this.initialState = { ...this.state };
@@ -153,6 +154,16 @@ class CreateQuestion extends Component {
   componentWillUnmount() {
     const createQuestionModal = document.getElementById('createQuestion');
     createQuestionModal.removeEventListener('hidden.bs.modal', this.resetState);
+  };
+
+  handleTitleDropdown = (e) => {
+    const { selectedTitle } = this.state;
+    let valueArray = e.split(",");
+    this.setState({ 
+      selectedTitle: valueArray[0],
+      selectedTitleLabel: e
+    // });
+    }, console.log(`selectedTitle: ${valueArray[0]} and ${valueArray[1]}`));
   };
 
   addOption = (e) => {
@@ -971,7 +982,7 @@ class CreateQuestion extends Component {
     }
 
     const {
-      questionType,
+      selectedTitle,
       question,
       selectedOption,
       options,
@@ -990,7 +1001,7 @@ class CreateQuestion extends Component {
     } = this.state;
 
     const dataToInsert = {
-      questionType,
+      titleId: selectedTitle,
       question,
       options,
       optionType: selectedOption,
@@ -1108,32 +1119,34 @@ class CreateQuestion extends Component {
                       </label>
                         <div className="d-flex align-items-left">
                           <div className="d-flex flex-grow-1">
-                              <select
-                                className="form-select"
-                                style={{ flex: '1' }}
-                                // value={allTitles.titleLabel}
-                                // onChange={(e) => this.handleNextQuestionChange(index, e.target.value)}
-                              >
-                                <option value="">Select Title</option>
-                                {/* title loop */}
-                                {allTitles.map((titleObject) => (
-                                  <optgroup key={titleObject._id} label={titleObject.title.titleLabel}>
-                                    {titleObject.title.subTitle.map((subTitleObject) => (
-                                      // Outer option for subTitle
-                                      <option key={subTitleObject._id} value={subTitleObject.subTitleLabel}>
-                                        {subTitleObject.subTitleLabel}
+                          <select
+                            className="form-select"
+                            style={{ flex: '1' }}
+                            value={this.state.selectedTitleLabel}
+                            onChange={(e) => this.handleTitleDropdown(e.target.value)}
+                          >
+                            <option value="">Select Title</option>
+                            {/* title loop */}
+                            {allTitles.map((titleObject) => (
+                              <optgroup key={titleObject.title.titleLabel} label={titleObject.title.titleLabel}>
+                                {/* Render subTitleLabel as options */}
+                                {titleObject.title.subTitle.map((subTitleObject) => (
+                                  <React.Fragment key={subTitleObject._id}>
+                                    <option value={[subTitleObject._id, subTitleObject.subTitleLabel]}>
+                                      {subTitleObject.subTitleLabel}
+                                    </option>
 
-                                        {/* Nested loop for nestedTitle */}
-                                        {subTitleObject.nestedTitle.map((nestedTitleObject) => (
-                                          <option key={nestedTitleObject._id} value={nestedTitleObject.nestedTitleLabel}>
-                                            {nestedTitleObject.nestedTitleLabel}
-                                          </option>
-                                        ))}
+                                    {/* Render nestedTitleLabel as options */}
+                                    {subTitleObject.nestedTitle.map((nestedTitleObject) => (
+                                      <option key={nestedTitleObject._id} value={[nestedTitleObject._id, nestedTitleObject.nestedTitleLabel]}>
+                                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{nestedTitleObject.nestedTitleLabel} {/* Add one more level of indentation for nestedTitleLabel */}
                                       </option>
                                     ))}
-                                  </optgroup>
+                                  </React.Fragment>
                                 ))}
-                              </select>
+                              </optgroup>
+                            ))}
+                          </select>
                           </div>
                         </div>
                     {/* {validationErrors.questionType && (

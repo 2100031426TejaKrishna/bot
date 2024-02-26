@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const router = express.Router();
 
 const questionSchema = new mongoose.Schema({
-    questionType: String,
+    titleId: String,
     question: String,
     optionType: String,
     options: [{
