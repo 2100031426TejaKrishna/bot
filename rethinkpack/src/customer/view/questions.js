@@ -13,7 +13,7 @@ const Questions = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [answers, setAnswers] = useState({});
     const [uniqueQuestions, setUniqueQuestions] = useState([]);
-    const [currentUniqueIndex, setCurrentUniqueIndex] = useState(0);
+    const [currentUniqueId, setCurrentUniqueId] = useState(0);
     const [isLastQuestion, setIsLastQuestion] = useState(false);
     const [navigationHistory, setNavigationHistory] = useState([]);
     const [showModal, setShowModal] = useState(false);
@@ -216,10 +216,13 @@ const Questions = () => {
         // } else if (currentQuestion.nextQuestion) {
         //     navigateToNextQuestionById(currentQuestion.nextQuestion);
 
+        setNavigationHistory((prevHistory) => [...prevHistory, currentQuestionId]);
+        console.log("Navigation History before next question:", navigationHistory);
+        
         if (nextQuestionId) {
-            setCurrentQuestionId(nextQuestionId);
-            setNavigationHistory(prevHistory => [...prevHistory, currentQuestionId]);
-            setIsLastQuestion(false);
+            navigateToNextQuestionById(nextQuestionId);
+        } else if (currentQuestion.nextQuestion) {
+            navigateToNextQuestionById(currentQuestion.nextQuestion);
         } else {
             if (countrySpecificQuestions.length > 0 && currentQuestionId === questions[questions.length - 1]._id) {
                 const updatedQuestions = [...questions, ...countrySpecificQuestions];
@@ -232,6 +235,31 @@ const Questions = () => {
             }
         }
     };
+    
+    const navigateToNextQuestionById = (nextQuestionId) => {
+        if (questions.some(question => question._id === nextQuestionId)) {
+            // Directly set the currentQuestionId to navigate
+            setCurrentQuestionId(nextQuestionId);
+    
+            // Update uniqueQuestions with the ID if it's not already included
+            if (!uniqueQuestions.includes(nextQuestionId)) {
+                setUniqueQuestions(prevUniqueQuestions => [...prevUniqueQuestions, nextQuestionId]);
+            }
+    
+            // Update currentUniqueId for tracking current unique question's ID
+            setCurrentUniqueId(nextQuestionId);
+    
+            // Add the current question ID to navigation history for "Back" navigation
+            setNavigationHistory(prevHistory => [...prevHistory, currentQuestionId]);
+    
+            // Since we navigated to a next question, ensure isLastQuestion is reset
+            setIsLastQuestion(false);
+        } else {
+            // If the next question ID does not exist in the questions array, consider it the end
+            setIsLastQuestion(true);
+        }
+    };
+    
     
     // const navigateToNextQuestionById = (nextQuestionId) => {
     //     const nextQuestionIndex = questions.findIndex(question => question._id === nextQuestionId);
@@ -251,12 +279,13 @@ const Questions = () => {
     // };
     
     const handlePreviousQuestion = () => {
-        setNavigationHistory((prevHistory) => {
+        setNavigationHistory(prevHistory => {
             if (prevHistory.length > 1) {
                 const newHistory = [...prevHistory];
                 newHistory.pop(); // Remove the current question ID from history
                 const prevQuestionId = newHistory[newHistory.length - 1];
     
+                // Navigate back to the previous question by setting its ID
                 setCurrentQuestionId(prevQuestionId);   
     
                 // Restore previous answers to the UI
@@ -269,7 +298,7 @@ const Questions = () => {
                     setCurrentAnswer(prevQuestionAnswers || '');
                 }
     
-                // Determine if the previous question should show the "Next" or "Submit" button
+                // Determine if "Next" or "Submit" should be shown
                 const hasFollowingQuestion = questions.find(q => q._id === prevQuestionId)?.nextQuestion || newHistory.length < questions.length;
                 setIsLastQuestion(!hasFollowingQuestion);
                 setCanProceed(true);
