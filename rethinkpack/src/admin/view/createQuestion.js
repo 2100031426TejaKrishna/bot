@@ -746,10 +746,28 @@ class CreateQuestion extends Component {
     }));
   };
 
+
+  validateFirstQuestion = () => {
+    const { allQuestions } = this.state;
+    for (let i=0; i < allQuestions.length; i++){
+      // case when a first question exists
+      if (allQuestions[i].firstQuestion === true) {
+        return { exists: true, value: allQuestions[i].question };
+      }
+    };
+    return { exists: false, value: null };
+  };
+
   toggleFirstQuestion = () => {
-    this.setState(prevState => ({
-      firstQuestion: !prevState.firstQuestion,
-    }));
+    const { exists, value } = this.validateFirstQuestion();
+    // case when a first question does not exist
+    if (exists === false) {
+      this.setState(prevState => ({
+        firstQuestion: !prevState.firstQuestion,
+      }));
+    } else {
+      console.log(`A first question already exists: ${value}`)
+    }
   };
 
   toggleRequireResponse = () => {
