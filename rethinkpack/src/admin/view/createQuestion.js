@@ -76,6 +76,7 @@ class CreateQuestion extends Component {
       minScale: 1,
       maxScale: 5,
       validationErrors: {
+        title: '',
         question: '',
         optionType: '',
         options: '',
@@ -156,7 +157,7 @@ class CreateQuestion extends Component {
     createQuestionModal.removeEventListener('hidden.bs.modal', this.resetState);
   };
 
-  handleTitleDropdown = (e) => {
+  handleTitleSelect = (e) => {
     const { selectedTitle } = this.state;
     let valueArray = e.split(",");
     this.setState({ 
@@ -745,10 +746,28 @@ class CreateQuestion extends Component {
     }));
   };
 
+
+  validateFirstQuestion = () => {
+    const { allQuestions } = this.state;
+    for (let i=0; i < allQuestions.length; i++){
+      // case when a first question exists
+      if (allQuestions[i].firstQuestion === true) {
+        return { exists: true, value: allQuestions[i].question };
+      }
+    };
+    return { exists: false, value: null };
+  };
+
   toggleFirstQuestion = () => {
-    this.setState(prevState => ({
-      firstQuestion: !prevState.firstQuestion,
-    }));
+    const { exists, value } = this.validateFirstQuestion();
+    // case when a first question does not exist
+    if (exists === false) {
+      this.setState(prevState => ({
+        firstQuestion: !prevState.firstQuestion,
+      }));
+    } else {
+      console.log(`A first question already exists: ${value}`)
+    }
   };
 
   toggleRequireResponse = () => {
@@ -837,6 +856,18 @@ class CreateQuestion extends Component {
     });
   };
 
+  validateTitleSelect = () => {
+    const { selectedTitle } = this.state;
+    if (
+      selectedTitle.trim() === '' || 
+      selectedTitle.trim() === 'Select Title'
+      ) {
+        return false
+    } else {
+      return true
+    };
+  };
+  
   validateQuestion = () => {
     const { question } = this.state;
     return question.trim() !== '';
@@ -955,6 +986,7 @@ class CreateQuestion extends Component {
   handleSubmit = async (e) => {
     e.preventDefault();
 
+    const isTitleSelectValid = this.validateTitleSelect();
     const isQuestionValid = this.validateQuestion();
     const isOptionTypeValid = this.validateOptionType();
     const isOptionsValid = this.validateOptions();
@@ -966,6 +998,7 @@ class CreateQuestion extends Component {
 
     this.setState({
       validationErrors: {
+        title: isTitleSelectValid ? '' : 'Select a title',
         question: isQuestionValid ? '' : 'Enter the question',
         optionType: isOptionTypeValid ? '' : 'Select an option type',
         grid: isGridValid ? '' : 'Complete all grid data entry and ensure there is one selection per row',
@@ -977,7 +1010,7 @@ class CreateQuestion extends Component {
       },
     });
 
-    if (!isQuestionValid || !isOptionTypeValid || !isOptionsValid || !isGridValid || !isOpenEndedValid || !isMarksValid || !isCountriesValid || !isExplanationValid) {
+    if (!isTitleSelectValid || !isQuestionValid || !isOptionTypeValid || !isOptionsValid || !isGridValid || !isOpenEndedValid || !isMarksValid || !isCountriesValid || !isExplanationValid) {
       return;
     }
 
@@ -1123,7 +1156,7 @@ class CreateQuestion extends Component {
                             className="form-select"
                             style={{ flex: '1' }}
                             value={this.state.selectedTitleLabel}
-                            onChange={(e) => this.handleTitleDropdown(e.target.value)}
+                            onChange={(e) => this.handleTitleSelect(e.target.value)}
                           >
                             <option value="">Select Title</option>
                             {/* title loop */}
@@ -1149,11 +1182,11 @@ class CreateQuestion extends Component {
                           </select>
                           </div>
                         </div>
-                    {/* {validationErrors.questionType && (
+                    {validationErrors.title && (
                       <div style={{ color: 'red', fontSize: 12 }}>
-                        {validationErrors.questionType}
+                        {validationErrors.title}
                       </div>
-                    )} */}
+                    )}
                   </div>
                   <div className="mb-3">
                     <label htmlFor="question" className="col-form-label">
