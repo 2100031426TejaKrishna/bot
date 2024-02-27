@@ -145,6 +145,7 @@ const Questions = () => {
                 newGridAnswers[rowIndex] = [colIndex];
             }
     
+            updateAnswers(newGridAnswers);
             const isValid = validateGridAnswersWithTempAnswers(newGridAnswers);
             setCanProceed(isValid);
     
@@ -210,12 +211,6 @@ const Questions = () => {
             }
         }
     
-        // setNavigationHistory((prevHistory) => [...prevHistory, currentQuestionIndex]);
-        // if (nextQuestionId) {
-        //     navigateToNextQuestionById(nextQuestionId);
-        // } else if (currentQuestion.nextQuestion) {
-        //     navigateToNextQuestionById(currentQuestion.nextQuestion);
-
         setNavigationHistory((prevHistory) => [...prevHistory, currentQuestionId]);
         console.log("Navigation History before next question:", navigationHistory);
         
@@ -260,26 +255,8 @@ const Questions = () => {
         }
     };
     
-    
-    // const navigateToNextQuestionById = (nextQuestionId) => {
-    //     const nextQuestionIndex = questions.findIndex(question => question._id === nextQuestionId);
-    //     if (nextQuestionIndex !== -1) {
-    //         if (!uniqueQuestions.includes(nextQuestionId)) {
-    //             // Update uniqueQuestions only if the nextQuestionId is not already included
-    //             const updatedUniqueQuestions = [...uniqueQuestions, nextQuestionId];
-    //             setUniqueQuestions(updatedUniqueQuestions);
-    //         }
-    //         setCurrentUniqueIndex(uniqueQuestions.indexOf(nextQuestionId));
-    //         setCurrentQuestionIndex(nextQuestionIndex);
-    //         setIsLastQuestion(false); // Reset this flag when navigating to another question
-    //     } else {
-    //         // If the next question ID is invalid or doesn't exist, consider it the end of the survey
-    //         setIsLastQuestion(true);
-    //     }
-    // };
-    
     const handlePreviousQuestion = () => {
-        setNavigationHistory(prevHistory => {
+        setNavigationHistory((prevHistory) => {
             if (prevHistory.length > 1) {
                 const newHistory = [...prevHistory];
                 newHistory.pop(); // Remove the current question ID from history
@@ -298,8 +275,26 @@ const Questions = () => {
                     setCurrentAnswer(prevQuestionAnswers || '');
                 }
     
-                // Determine if "Next" or "Submit" should be shown
-                const hasFollowingQuestion = questions.find(q => q._id === prevQuestionId)?.nextQuestion || newHistory.length < questions.length;
+                // Re-evaluate if there's a next question based on selected options or other criteria
+                const prevQuestion = questions.find(q => q._id === prevQuestionId);
+                let hasFollowingQuestion = false;
+                if (prevQuestion) {
+                    if (prevQuestion.optionType === 'multipleChoice' || prevQuestion.optionType === 'dropdown') {
+                        const selectedOption = prevQuestion.options.find(option => option.text === prevQuestionAnswers);
+                        if (selectedOption && selectedOption.optionsNextQuestion) {
+                            hasFollowingQuestion = true;
+                        }
+                    }
+    
+                    if (prevQuestion.nextQuestion) {
+                        hasFollowingQuestion = true;
+                    }
+    
+                    if (countrySpecificQuestions.length > 0 && prevQuestionId === questions[questions.length - 1]._id) {
+                        hasFollowingQuestion = true;
+                    }
+                }
+    
                 setIsLastQuestion(!hasFollowingQuestion);
                 setCanProceed(true);
     
