@@ -3,6 +3,7 @@ import CreateQuestion from './admin/view/createQuestion';
 import Questions from './admin/view/questions';
 import QuestionsTreeMap from './admin/view/questionsTreeMap';
 import CustomerQuestions from './customer/view/questions';
+import UnlinkedQuestions from './admin/view/unlinkedQuestions';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
 function App() {
@@ -38,9 +39,19 @@ function App() {
                   Tree Map
                 </a>
               </li>
+              <li className="nav-item">
+                <a
+                  className={`nav-link ${activeTab === 'unlinked' ? 'active' : ''}`}
+                  href="#"
+                  onClick={() => setActiveTab('unlinked')}
+                >
+                  Unlinked
+                </a>
+              </li>
             </ul>
             {activeTab === 'list' && <Questions triggerRefresh={triggerRefresh} />}
             {activeTab === 'treeMap' && <QuestionsTreeMap />}
+            {activeTab === 'unlinked' && <UnlinkedQuestions />}
           </div>
         } />
 
