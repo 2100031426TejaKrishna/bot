@@ -6,6 +6,7 @@ import './createQuestion.css';
 import Form from 'react-bootstrap/Form';
 import InputGroup from 'react-bootstrap/InputGroup';
 import CreateTitle from './createTitle';
+import FirstQuestionModal from './firstQuestionModal';
 
 // Switch URLs between Server and Local hosting here
 // const destination = "localhost:5000";
@@ -84,12 +85,14 @@ class CreateQuestion extends Component {
         marks: '',
         country: '',
         explanation: '',
+        firstQuestion: ''
       },
       requireResponse: false,
       allQuestions: [],
       allTitles:[],
       selectedTitle: '',
       selectedTitleLabel: '',
+      showFirstQuestionModal: false
     };
 
     this.initialState = { ...this.state };
@@ -758,16 +761,43 @@ class CreateQuestion extends Component {
     return { exists: false, value: null };
   };
 
+  renderFirstQuestionModal = () => {
+    return (
+      <>
+        <FirstQuestionModal
+          openFirstQuestionModal={this.openFirstQuestionModal}
+        />
+      </>
+    );
+  };
+
+  openFirstQuestionModal = () => {
+    this.setState({
+      showFirstQuestionModal: true,
+    });
+  };
+
+
   toggleFirstQuestion = () => {
+    const { firstQuestion, validationErrors } = this.state;
     const { exists, value } = this.validateFirstQuestion();
     // case when a first question does not exist
     if (exists === false) {
       this.setState(prevState => ({
         firstQuestion: !prevState.firstQuestion,
       }));
-    } else {
-      console.log(`A first question already exists: ${value}`)
     }
+    // case when a first question exists AND toggle is currently set FALSE
+    // this way when editing THE first question, the toggle may be turned from TRUE to FALSE without executing this validation 
+    else if (exists === true && firstQuestion === false) {
+      console.log(`A first question already exists: ${value}`)
+      this.renderFirstQuestionModal();
+      // this.setState({
+      //   validationErrors: {
+      //     firstQuestion: !exists ? '' : `A first question already exists: "${value}"`
+      //   }
+      // });
+    };
   };
 
   toggleRequireResponse = () => {
@@ -995,6 +1025,10 @@ class CreateQuestion extends Component {
     const isCountriesValid = this.validateCountries();
     const isExplanationValid = this.validateExplanation();
     const isGridValid = this.validateGrid();
+    //
+    const { exists, value } = this.validateFirstQuestion();
+    const isFirstQuestionValid = !exists;
+    console.log(`isFirstQuestionValid: ${isFirstQuestionValid}`)
 
     this.setState({
       validationErrors: {
@@ -1007,10 +1041,11 @@ class CreateQuestion extends Component {
         marks: isMarksValid ? '' : 'Enter the marks for this question',
         country: isCountriesValid ? '' : 'Select at least one country',
         explanation: isExplanationValid ? '' : (this.state.isLeadingQuestion ? 'Enter the recommendation for this question' : 'Enter the explanation for the correct answer'),
+        // firstQuestion: isFirstQuestionValid ? '' : `A first question already exists: ${value}`,
       },
     });
 
-    if (!isTitleSelectValid || !isQuestionValid || !isOptionTypeValid || !isOptionsValid || !isGridValid || !isOpenEndedValid || !isMarksValid || !isCountriesValid || !isExplanationValid) {
+    if (!isTitleSelectValid || !isQuestionValid || !isOptionTypeValid || !isOptionsValid || !isGridValid || !isOpenEndedValid || !isMarksValid || !isCountriesValid || !isExplanationValid || !isFirstQuestionValid) {
       return;
     }
 
@@ -1118,12 +1153,7 @@ class CreateQuestion extends Component {
               <a href="/landing" className="btn btn-dark d-none d-md-inline-block" data-bs-toggle="modal" data-bs-target="#createQuestion">
                 Create Question
               </a>
-              {/* Insert Create Title here */}
-              <CreateTitle
-                  // index = {index}
-                  // questionId = {question._id} 
-                  // refreshQuestions={refreshQuestions}
-              />
+              <CreateTitle/>
               <a href="/landing" className="btn btn-dark d-md-none">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-house" viewBox="0 0 16 16">
                   <path d="M6 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H1s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C9.516 10.68 8.289 10 6 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z" />
@@ -1360,6 +1390,12 @@ class CreateQuestion extends Component {
                     <label className="form-check-label" htmlFor="firstQuestionCheck">
                       First Question
                     </label>
+                    {validationErrors.firstQuestion && (
+                      <div >
+                        {/* {validationErrors.firstQuestion} */}
+                        {this.renderFirstQuestionModal()}
+                      </div>
+                    )}
                   </div>
                   <button type="button" className="btn btn-dark" onClick={this.handleSubmit}>
                     Submit
