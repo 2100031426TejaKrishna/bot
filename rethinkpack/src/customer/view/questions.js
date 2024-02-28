@@ -102,17 +102,22 @@ const Questions = () => {
         if (prevAnswer) {
             if (Array.isArray(prevAnswer)) {
                 setSelectedOptions(prevAnswer);
+                setCanProceed(prevAnswer.length > 0);
             } else if (typeof prevAnswer === 'object' && prevAnswer !== null) {
                 setGridAnswers(prevAnswer);
+                const isValid = validateGridAnswersWithTempAnswers(prevAnswer, currentQuestion);
+                setCanProceed(isValid);
             } else {
                 setCurrentAnswer(prevAnswer);
+                setCanProceed(prevAnswer.trim() !== '');
             }
         } else {
             setCurrentAnswer('');
             setSelectedOptions([]);
             setGridAnswers({});
+            setCanProceed(false);
         }
-        setCanProceed(!!prevAnswer);
+        // setCanProceed(!!prevAnswer);
     }, [currentQuestionId, answers, questions]);
     
     const handleAnswerChange = (event, optionType) => {
@@ -153,7 +158,7 @@ const Questions = () => {
         });
     };
 
-    const validateGridAnswersWithTempAnswers = (tempAnswers) => {
+    const validateGridAnswersWithTempAnswers = (tempAnswers, question) => {
         if (currentQuestion.optionType === 'multipleChoiceGrid' || currentQuestion.optionType === 'checkboxGrid') {
             if (currentQuestion.requireResponse) {
                 return currentQuestion.grid.rows.every((_, rowIndex) => {
@@ -305,25 +310,20 @@ const Questions = () => {
     };
 
     const handleClearSelection = () => {
+        // Update the clearing logic to also update the `answers` state
         if (currentQuestion.optionType === 'checkboxGrid' || currentQuestion.optionType === 'multipleChoiceGrid') {
-            // Initialize an empty object to reset gridAnswers
             const resetGridAnswers = {};
-            if (currentQuestion.optionType === 'multipleChoiceGrid') {
-                currentQuestion.grid.rows.forEach((_, rowIndex) => {
-                    // For multipleChoiceGrid, reset each row's selection to an empty array or null
-                    resetGridAnswers[rowIndex] = []; 
-                });
-            } else {
-                // For checkboxGrid, a simple reset is enough, but kept inside for future customization
-                currentQuestion.grid.rows.forEach((_, rowIndex) => {
-                    resetGridAnswers[rowIndex] = [];
-                });
-            }
+            currentQuestion.grid.rows.forEach((_, rowIndex) => {
+                resetGridAnswers[rowIndex] = [];
+            });
             setGridAnswers(resetGridAnswers);
+            updateAnswers(resetGridAnswers); // Update answers state
         } else if (currentQuestion.optionType === 'checkbox') {
             setSelectedOptions([]);
+            updateAnswers([]); // Update answers state
         } else {
             setCurrentAnswer('');
+            updateAnswers(''); // Update answers state for single answer questions
         }
     
         setCanProceed(false);
