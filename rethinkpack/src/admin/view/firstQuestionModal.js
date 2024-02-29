@@ -16,11 +16,9 @@ class FirstQuestionModal extends Component {
         subTitle: [
           {
             subTitleLabel: '',
-            // questionsSubTitle: [],
             nestedTitle: [
               { 
                 nestedTitleLabel: '', 
-                // questionsNestedTitle: [] 
               }
             ]
           }
@@ -32,11 +30,13 @@ class FirstQuestionModal extends Component {
         nestedTitleLabel: ''
       },
       showModal: false,
+      openFirstQuestionModal: props.openFirstQuestionModal,
+      firstQuestionId: props.firstQuestionId,
+      firstQuestionValue: props.firstQuestionValue
     };
 
     this.initialState = { ...this.state };
     this.resetState = this.resetState.bind(this);
-    this.onEditClickHandler = this.onEditClickHandler.bind(this);
     this.insertTitle = this.insertTitle.bind(this);
   }
 
@@ -49,9 +49,7 @@ class FirstQuestionModal extends Component {
 
   /*--------------onClick-----------------*/
 
-  onEditClickHandler = () => {
-    this.setState( { showModal: true } )
-  };
+  
 
   /*--------------API-----------------*/
 
@@ -86,7 +84,13 @@ class FirstQuestionModal extends Component {
   /*-------------MODAL-----------------*/
 
   componentDidMount() {
-    this.props.openFirstQuestionModal(this.toggleModal);
+    const { showModal, openFirstQuestionModal, firstQuestionValue } = this.state;
+    // console.log(`showModal: ${showModal}`)
+    console.log(`openFirstQuestionModal: ${openFirstQuestionModal}`)
+    console.log(`firstQuestionValue: ${firstQuestionValue}`)
+
+    this.setState({ showModal: openFirstQuestionModal });
+    
   }
 
   componentWillUnmount() {
@@ -310,20 +314,11 @@ class FirstQuestionModal extends Component {
 
   render() {
 
-    const { validationErrors, questionIndex, title } = this.state;
+    const { validationErrors, firstQuestionId, firstQuestionValue } = this.state;
 
     return (
 
       <div>
-
-        {/* <button
-          // className="btn btn-primary"
-          className="btn btn-dark d-none d-md-inline-block"
-          id={`btEdit-${questionIndex}`}
-          onClick={() => this.onEditClickHandler()}>
-          Create Title
-        </button> */}
-
         <Modal
           show={this.state.showModal === true}
           onHide={() => {
@@ -332,7 +327,7 @@ class FirstQuestionModal extends Component {
             )
           }
           }
-          className="modal-lg"
+          className=""
         >
           {/* Modal content */}
           <Modal.Header
@@ -343,7 +338,7 @@ class FirstQuestionModal extends Component {
               className="modal-title fs-5"
               id="createTitleLabel"
             >
-              Create Title
+              A first question already exists:
             </Modal.Title>
           </Modal.Header>
           <Modal.Body>
@@ -351,14 +346,19 @@ class FirstQuestionModal extends Component {
               {/* Title 0 */}
               <div className="mb-3">
                 <label htmlFor="question" className="col-form-label">
-                  Title:
+                  Existing first question:
                 </label>
+                <div>
+                  <label htmlFor="question" className="col-form-label">
+                    {firstQuestionValue}
+                  </label>
+                </div>
                 <div>
                   <input
                     type="text"
                     className="form-control"
                     id="formQuestion"
-                    value={this.state.title.titleLabel}
+                    value={firstQuestionValue}
                     onChange={this.handleTitleLabel}
                   />
                 </div>
@@ -368,89 +368,7 @@ class FirstQuestionModal extends Component {
                   </div>
                 )}
               </div>
-              {/* SubTitle loop */}
-              {this.state.title.subTitle.map((subTitleElem, index) => (
-                <ul>
-                  {/* Title 1 */}
-                  <li key={`sub_${index}`}>
-                    <div className="mb-3 d-flex align-items-center mb-2">
-                      <label htmlFor="question" className="col-form-label">
-                        Subtitle:
-                      </label>
-                      <div className="d-flex flex-grow-1 mx-2">
-                        <input
-                          type="text"
-                          className="form-control mx-2"
-                          id="formSubTitle"
-                          value={title.subTitle[index].subTitleLabel}
-                          onChange={(e) => this.handleSubTitleLabel(index, e.target.value)}
-                        />
-                      </div>
-                      {title.subTitle.length > 1 && (
-                        <button
-                          className="btn btn-outline-secondary"
-                          type="button"
-                          onClick={() => this.deleteSubTitle(index)}
-                        >
-                          &times;
-                        </button>
-                      )}
-                    </div>
-                  </li>
-                  {/* Nested Title Loop */}
-                  {subTitleElem.nestedTitle && subTitleElem.nestedTitle.map((nestedTitleElem, index_nest) => (
-                    <ul>
-                      <li key={`nest_${index}_${index_nest}`}>
-                        {/* Title 2 */}
-                        <div className="mb-3 d-flex align-items-center mb-2">
-                          <label htmlFor="question" className="col-form-label">
-                            Nested Title:
-                          </label>
-                          <div className="d-flex flex-grow-1 mx-2">
-                            <input
-                              type="text"
-                              className="form-control mx-2"
-                              id="formNestedTitle"
-                              value={title.subTitle[index].nestedTitle[index_nest].nestedTitleLabel}
-                              onChange={(e) => this.handleNestedTitleLabel(index, index_nest, e.target.value)}
-                            />
-                          </div>
-                          {/* Delete nestedTitle */}
-                          {title.subTitle[index].nestedTitle.length > 1 && (
-                            <button
-                              className="btn btn-outline-secondary"
-                              type="button"
-                              onClick={() => this.deleteNestedTitle(index, index_nest)}
-                            >
-                              &times;
-                            </button>
-                          )}
-                        </div>
-                      </li>
-                    </ul>
-                  ))}
-                  {/* Add nestedTitle */}
-                  <div className="d-flex align-items-center">
-                    <button
-                      className="btn btn-outline-dark"
-                      onClick={(e) => this.addNestedTitle(index, e)}
-                    >
-                      Add nested title
-                    </button>
-                  </div>
-                </ul>
-              ))}
-              {/* Add subTitle button */}
-              <div className="d-flex align-items-center">
-                <button className="btn btn-outline-dark" onClick={this.addSubTitle}>
-                  Add subtitle
-                </button>
-              </div>
-              {/* {validationErrors.subTitleLabel && (
-                <div style={{ color: 'red', fontSize: 12 }}>
-                  {validationErrors.subTitleLabel}
-                </div>
-              )} */}
+              
             </form>
           </Modal.Body>
           <Modal.Footer>

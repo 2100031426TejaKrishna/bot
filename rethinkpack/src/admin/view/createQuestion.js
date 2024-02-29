@@ -92,7 +92,8 @@ class CreateQuestion extends Component {
       allTitles:[],
       selectedTitle: '',
       selectedTitleLabel: '',
-      showFirstQuestionModal: false
+      firstQuestionId: '',
+      firstQuestionValue: '',
     };
 
     this.initialState = { ...this.state };
@@ -755,32 +756,33 @@ class CreateQuestion extends Component {
     for (let i=0; i < allQuestions.length; i++){
       // case when a first question exists
       if (allQuestions[i].firstQuestion === true) {
-        return { exists: true, value: allQuestions[i].question };
+        this.setState({
+          firstQuestionId: allQuestions[i]._id,
+          firstQuestionValue: allQuestions[i].question
+        });
+        return { exists: true, id: allQuestions[i]._id, value: allQuestions[i].question };
       }
     };
-    return { exists: false, value: null };
+    return { exists: false, id: null, value: null };
   };
 
   renderFirstQuestionModal = () => {
+    const { firstQuestionId, firstQuestionValue } = this.state;
+    // console.log(`render values: ${id},${value}`);
     return (
       <>
         <FirstQuestionModal
-          openFirstQuestionModal={this.openFirstQuestionModal}
+          openFirstQuestionModal = {true}
+          firstQuestionId = {firstQuestionId}
+          firstQuestionValue = {firstQuestionValue}
         />
       </>
     );
   };
 
-  openFirstQuestionModal = () => {
-    this.setState({
-      showFirstQuestionModal: true,
-    });
-  };
-
-
   toggleFirstQuestion = () => {
-    const { firstQuestion, validationErrors } = this.state;
-    const { exists, value } = this.validateFirstQuestion();
+    const { firstQuestion } = this.state;
+    const { exists, id, value } = this.validateFirstQuestion();
     // case when a first question does not exist
     if (exists === false) {
       this.setState(prevState => ({
@@ -790,13 +792,13 @@ class CreateQuestion extends Component {
     // case when a first question exists AND toggle is currently set FALSE
     // this way when editing THE first question, the toggle may be turned from TRUE to FALSE without executing this validation 
     else if (exists === true && firstQuestion === false) {
-      console.log(`A first question already exists: ${value}`)
+      console.log(`A first question already exists: ${id}-${value}`)
       this.renderFirstQuestionModal();
-      // this.setState({
-      //   validationErrors: {
-      //     firstQuestion: !exists ? '' : `A first question already exists: "${value}"`
-      //   }
-      // });
+      this.setState({
+        validationErrors: {
+          firstQuestion: !exists ? '' : `A first question already exists: "${value}"`
+        }
+      });
     };
   };
 
@@ -1026,7 +1028,7 @@ class CreateQuestion extends Component {
     const isExplanationValid = this.validateExplanation();
     const isGridValid = this.validateGrid();
     //
-    const { exists, value } = this.validateFirstQuestion();
+    const { exists } = this.validateFirstQuestion();
     const isFirstQuestionValid = !exists;
     console.log(`isFirstQuestionValid: ${isFirstQuestionValid}`)
 
@@ -1391,8 +1393,8 @@ class CreateQuestion extends Component {
                       First Question
                     </label>
                     {validationErrors.firstQuestion && (
-                      <div >
-                        {/* {validationErrors.firstQuestion} */}
+                      <div style={{ color: 'red', fontSize: 12 }}>
+                        {validationErrors.firstQuestion}
                         {this.renderFirstQuestionModal()}
                       </div>
                     )}
