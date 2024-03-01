@@ -4,6 +4,8 @@ import Questions from './admin/view/questions';
 import QuestionsTreeMap from './admin/view/questionsTreeMap';
 import CustomerQuestions from './customer/view/questions';
 import UnlinkedQuestions from './admin/view/unlinkedQuestions';
+import SubtitleQuestions from './admin/view/subtitleQuestions';
+import NestedtitleQuestions from './admin/view/nestedtitleQuestions';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import axios from 'axios'; // Import Axios for making HTTP requests
 
@@ -15,6 +17,11 @@ function App() {
   const [triggerRefresh, setTriggerRefresh] = useState(false);
   const [activeTab, setActiveTab] = useState('list');
   const [titles, setTitles] = useState([]); // State to hold titles
+  const [activeSubTitle, setActiveSubTitle] = useState(null);
+  const [selectedSubtitle, setSelectedSubtitle] = useState(null); // State to hold selected subtitle
+  const [activeNestedTitle, setActiveNestedTitle] = useState(null);
+  const [selectedNestedtitle, setSelectedNestedtitle] = useState(null); // State to hold selected nested title
+
 
   const refreshQuestions = useCallback(() => {
     setTriggerRefresh(prev => !prev); 
@@ -93,7 +100,12 @@ function App() {
                         <a
                           className={`nav-link ${activeTab === subTitle.subTitleLabel ? 'active' : ''}`}
                           href="#"
-                          onClick={() => setActiveTab(subTitle.subTitleLabel)}
+                          onClick={() => {
+                            setActiveTab(subTitle.subTitleLabel)
+                            setActiveSubTitle(subTitle.subTitleLabel)
+                            setSelectedSubtitle(subTitle._id.toString()); // Update selected subtitle
+                            console.log('Selected Subtitle:', subTitle._id.toString()); // Log the selected subtitle ID
+                          }}
                         >
                           {subTitle.subTitleLabel.toString()}
                         </a>
@@ -117,7 +129,12 @@ function App() {
                             <a
                               className={`nav-link ${activeTab === nestedTitle.nestedTitleLabel ? 'active' : ''}`}
                               href="#"
-                              onClick={() => setActiveTab(nestedTitle.nestedTitleLabel)}
+                              onClick={() => {
+                                setActiveTab(nestedTitle.nestedTitleLabel)
+                                setActiveNestedTitle(nestedTitle.nestedTitleLabel)
+                                setSelectedNestedtitle(nestedTitle._id.toString()); // Update selected nestedtitle
+                                console.log('Selected Nestedtitle:', nestedTitle._id.toString()); // Log the selected nestedtitle ID
+                              }}
                             >
                               {nestedTitle.nestedTitleLabel.toString()}
                             </a>
@@ -132,6 +149,8 @@ function App() {
             {activeTab === 'list' && <Questions triggerRefresh={triggerRefresh} />}
             {activeTab === 'treeMap' && <QuestionsTreeMap />}
             {activeTab === 'unlinked' && <UnlinkedQuestions />}
+            {activeTab === activeSubTitle && <SubtitleQuestions selectedSubtitle={selectedSubtitle} />}
+            {activeTab === activeNestedTitle && <NestedtitleQuestions selectedNestedtitle={selectedNestedtitle} />}
 
           </div>
         } />
