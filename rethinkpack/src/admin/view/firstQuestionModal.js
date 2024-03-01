@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
 import Modal from 'react-bootstrap/Modal';
+import './firstQuestionModal.css';
 
 // const destination = "localhost:5000";
 const destination = "rtp.dusky.bond:5000";
@@ -37,7 +38,6 @@ class FirstQuestionModal extends Component {
 
     this.initialState = { ...this.state };
     this.resetState = this.resetState.bind(this);
-    this.insertTitle = this.insertTitle.bind(this);
   }
 
   resetState() {
@@ -53,34 +53,40 @@ class FirstQuestionModal extends Component {
 
   /*--------------API-----------------*/
 
-  insertTitle = async (dataToInsert) => {
+  removeExistingFirstQuestion = async (firstQuestionId) => {
+    
+    const dataToUpdate = {
+      firstQuestion: false
+    };
+    
     try {
-      const response = await fetch(`http://${destination}/api/insertTitle`, {
-        method: 'POST',
+      const response = await fetch(`http://${destination}/api/update/${firstQuestionId}`, {
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(dataToInsert),
-      });
-
+        body: JSON.stringify(dataToUpdate),
+      })
       if (response.ok) {
         console.log('Data submitted successfully');
-        console.log(dataToInsert);
-        
-        // refresh here
-        this.setState({ showToast: true });
-        setTimeout(() => this.setState({ showToast: false }), 5000);
-        this.resetState()
+        this.setState({ 
+          showModal: false,
+          showToast: true 
+        });
+        setTimeout(() => this.setState({ showToast: false }), 10000);
+
+        // Pass props to createQuestion.js to toggle firstQuestiont to true and dataToInsert
+        this.props.updateFirstQuestion();
       } else {
         console.error('Server responded with an error:', response.status, response.statusText);
         const responseData = await response.json();
         console.error('Server error data:', responseData);
       }
     } catch (error) {
-        console.error('Network error:', error);
+      console.error('Network error:', error);
     }
   };
-
+  
   /*-------------MODAL-----------------*/
 
   componentDidMount() {
@@ -99,106 +105,8 @@ class FirstQuestionModal extends Component {
 
   /*----------- function helpers ----------------------*/
 
-  toggleModal = () => {
-    this.setState(prevState => ({
-      showModal: !prevState.showModal,
-    }));
-  };
+  
 
-
-  //
-  handleTitleLabel = (e) => {
-    this.setState((prevState) => ({
-      title: { ...prevState.title, titleLabel: e.target.value }
-    }))
-  };
-
-  handleSubTitleLabel = (index, value) => {
-    const { title } = this.state;
-    this.setState((prevState) => ({
-      title: {
-        ...prevState.title,
-        subTitle: title.subTitle.map((subTitleElem, i) =>
-          i === index ? { ...subTitleElem, subTitleLabel: value } : subTitleElem
-        ),
-      },
-    }));
-  };
-
-  handleNestedTitleLabel = (index_sub, index_nest, value) => {
-    // const { title } = this.state;
-    this.setState((prevState) => ({
-      title: {
-        ...prevState.title,
-        subTitle: prevState.title.subTitle.map((subTitleElem, i) =>
-          i === index_sub
-            ? {
-              ...subTitleElem,
-              nestedTitle: subTitleElem.nestedTitle.map((nestedTitleElem, j) =>
-                j === index_nest ? { ...nestedTitleElem, nestedTitleLabel: value } : nestedTitleElem
-              ),
-            }
-            : subTitleElem
-        ),
-      },
-    }));
-  };
-
-  addSubTitle = (e) => {
-    e.preventDefault();
-    e.stopPropagation()
-    this.setState((prevState) => ({
-      title: {
-        ...prevState.title,
-        subTitle: [
-          ...prevState.title.subTitle,
-          { subTitleLabel: "", nestedTitle: [{ nestedTitleLabel: '' }] }
-        ]
-      }
-    }));
-  };
-
-  deleteSubTitle = (index) => {
-    this.setState(prevState => ({
-      title: { ...prevState.title, subTitle: prevState.title.subTitle.filter((_, i) => i !== index) }
-    }));
-  };
-
-  addNestedTitle = (subtitleIndex, e) => {
-    e.preventDefault(); // Prevent the default action of the button click (accidental form submission)
-    this.setState((prevState) => ({
-      title: {
-        ...prevState.title,
-        subTitle: prevState.title.subTitle.map((subTitleElem, i) =>
-          i === subtitleIndex
-            ? {
-              ...subTitleElem,
-              nestedTitle: [
-                ...subTitleElem.nestedTitle,
-                { nestedTitleLabel: '' },
-              ],
-            }
-            : subTitleElem
-        ),
-      },
-    }));
-  };
-
-  deleteNestedTitle = (subtitleIndex, nestedTitleIndex) => {
-    this.setState((prevState) => ({
-      title: {
-        ...prevState.title,
-        subTitle: prevState.title.subTitle.map((subTitleElem, i) =>
-          i === subtitleIndex
-            ? {
-              ...subTitleElem,
-              nestedTitle: subTitleElem.nestedTitle.filter((_, j) => j !== nestedTitleIndex)
-            }
-            : subTitleElem
-        )
-      }
-    }));
-  };
 
   // --------------- VALIDATIONS---------------------------------
 
@@ -242,7 +150,7 @@ class FirstQuestionModal extends Component {
           <div className="toast show bg-dark text-white">
             <div className="d-flex justify-content-between">
               <div className="toast-body">
-                Created title successfully!
+                First question updated!
               </div>
               <button type="button" className="btn-close btn-close-white me-2 m-auto" onClick={() => this.setState({ showToast: false })}></button>
             </div>
@@ -255,60 +163,7 @@ class FirstQuestionModal extends Component {
 
   // -------------------------- HANDLE SUBMIT ------------------------------
 
-  handleSubmit = async (e) => {
-    e.preventDefault();
-
-    const { title } = this.state
-
-    const isTitleLabelValid = this.validateTitleLabel();
-    const isSubTitleLabelValid = this.validateSubTitleLabel();
-    const isNestedTitleLabelValid = this.validateNestedTitleLabel();
-
-    this.setState({
-      validationErrors: {
-        titleLabel: isTitleLabelValid ? '' : 'Enter the title',
-        subTitleLabel: isSubTitleLabelValid ? '' : 'Enter all subtitles',
-        nestedTitleLabel: isNestedTitleLabelValid ? '' : 'Enter all nested titles'
-      },
-    });
-
-    if (
-      !isTitleLabelValid  || 
-      !isSubTitleLabelValid || 
-      !isNestedTitleLabelValid
-    ) {
-      // exit out of handleSubmit
-      return;
-    }
-
-    const dataToInsert = {
-      title: title
-    };
-
-    // debug
-    // print title label
-    // console.log(`titleLabel: ${this.state.title.titleLabel}`)
-
-    // // print labels
-    // for (let i = 0; i < title.subTitle.length; i++) {
-
-    //   // subtitle labels
-    //   console.log(`subtitleLabel[${i}]: ${title.subTitle[i].subTitleLabel}`)
-
-    //   // nested title labels
-    //   for (let j = 0; j < title.subTitle[i].nestedTitle.length; j++) {
-    //     console.log(`nestedLabel[${i}][${j}]: ${title.subTitle[i].nestedTitle[j].nestedTitleLabel}`)
-    //   }
-    // }
-    // console.log(JSON.stringify(dataToInsert))
-    //
-
-    // Insert database server API
-    this.insertTitle(dataToInsert);
-
-    // close modal
-    this.setState( { showModal: false } )
-  };
+  
 
   /*---------------------RENDER----------------------------------*/
 
@@ -327,7 +182,7 @@ class FirstQuestionModal extends Component {
             )
           }
           }
-          className=""
+          className="firstQuestionModal"
         >
           {/* Modal content */}
           <Modal.Header
@@ -336,67 +191,42 @@ class FirstQuestionModal extends Component {
           >
             <Modal.Title
               className="modal-title fs-5"
-              id="createTitleLabel"
+              id="firstQuestionModalLabel"
             >
-              A first question already exists:
+              A first question already exists
             </Modal.Title>
           </Modal.Header>
           <Modal.Body>
             <form>
-              {/* Title 0 */}
-              <div className="mb-3">
+              <div className="d-flex justify-content-center">
                 <label htmlFor="question" className="col-form-label">
                   Existing first question:
-                </label>
-                <div>
-                  <label htmlFor="question" className="col-form-label">
-                    {firstQuestionValue}
-                  </label>
-                </div>
-                <div>
-                  <input
-                    type="text"
-                    className="form-control"
-                    id="formQuestion"
-                    value={firstQuestionValue}
-                    onChange={this.handleTitleLabel}
-                  />
-                </div>
-                {validationErrors.titleLabel && (
-                  <div style={{ color: 'red', fontSize: 12 }}>
-                    {validationErrors.titleLabel}
-                  </div>
-                )}
+                </label>                
               </div>
-              
+              <div className="d-flex justify-content-center">
+                <strong>
+                  {firstQuestionValue}
+                </strong>
+              </div>
             </form>
           </Modal.Body>
           <Modal.Footer>
-            <div className="d-flex justify-content-between w-100">
-
-              <div className="form-check form-switch form-check-inline">
-              {/* {validationErrors.nestedTitleLabel && (
-                <div style={{ color: 'red', fontSize: 12 }}>
-                  {validationErrors.nestedTitleLabel}
-                </div>
-              )} */}
-              </div>
-              <button type="button" className="btn btn-dark" onClick={this.handleSubmit}>
-                Submit
+            <div className="d-flex justify-content-around w-100">
+              <button 
+                className="btn btn-primary" 
+                id="btKeep"
+                onClick={() => this.setState({ showModal: false })}
+              >
+                Keep
+              </button>
+              <button 
+                className="btn btn-danger" 
+                id="btRemove"
+                onClick={() => this.removeExistingFirstQuestion(firstQuestionId)}
+              >
+                Remove
               </button>
             </div>
-            {/* Subtitle validation */}
-            {validationErrors.subTitleLabel && (
-              <div style={{ color: 'red', fontSize: 12 }}>
-                {validationErrors.subTitleLabel}
-              </div>
-            )}
-            {/* Nested title validation */}
-            {validationErrors.nestedTitleLabel && (
-              <div style={{ color: 'red', fontSize: 12 }}>
-                {validationErrors.nestedTitleLabel}
-              </div>
-            )}
           </Modal.Footer>
         </Modal>
         {this.renderToast()}

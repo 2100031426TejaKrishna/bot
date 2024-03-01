@@ -161,6 +161,30 @@ class CreateQuestion extends Component {
     createQuestionModal.removeEventListener('hidden.bs.modal', this.resetState);
   };
 
+  updateFirstQuestion = () => {
+    console.log(`prop updateFirstQuestion executed.`)
+    
+    const { allQuestions } = this.state;
+    const updatedQuestions = allQuestions.map(question => {
+      if (question.firstQuestion === true) {
+        return { ...question, firstQuestion: false };
+      } else {
+        return question;
+      }
+    });
+    this.setState({ allQuestions: updatedQuestions });
+
+    // const { firstQuestion } = this.state;
+    this.setState({ 
+      // set validation
+      isFirstQuestionValid: true,
+      validationErrors: {
+        firstQuestion: true
+      },
+      firstQuestion: true
+     });
+  };
+
   handleTitleSelect = (e) => {
     const { selectedTitle } = this.state;
     let valueArray = e.split(",");
@@ -775,6 +799,7 @@ class CreateQuestion extends Component {
           openFirstQuestionModal = {true}
           firstQuestionId = {firstQuestionId}
           firstQuestionValue = {firstQuestionValue}
+          updateFirstQuestion = {this.updateFirstQuestion}
         />
       </>
     );
@@ -1393,8 +1418,7 @@ class CreateQuestion extends Component {
                       First Question
                     </label>
                     {validationErrors.firstQuestion && (
-                      <div style={{ color: 'red', fontSize: 12 }}>
-                        {validationErrors.firstQuestion}
+                      <div>
                         {this.renderFirstQuestionModal()}
                       </div>
                     )}
