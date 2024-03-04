@@ -20,6 +20,7 @@ const Questions = () => {
     const [selectedCountries, setSelectedCountries] = useState([]);
     const [showCountrySelection, setShowCountrySelection] = useState(true);
     const [countrySpecificQuestions, setCountrySpecificQuestions] = useState([]);
+    const [hasSelectedCountries, setHasSelectedCountries] = useState(false);
     const countries = [
         "Afghanistan", "Albania", "Algeria", "Andorra", "Angola",
         "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria",
@@ -119,6 +120,48 @@ const Questions = () => {
         }
         // setCanProceed(!!prevAnswer);
     }, [currentQuestionId, answers, questions]);
+
+    useEffect(() => {
+        // Check if currentQuestionId corresponds to a country-specific question
+        const isCountrySpecificQuestion = countrySpecificQuestions.some(question => question._id === currentQuestionId);
+
+        // If it is a country-specific question and has already been fetched, set it as the current question
+        if (isCountrySpecificQuestion) {
+            return;
+        }
+
+        // If it is not a country-specific question or hasn't been fetched yet, fetch it
+        const fetchCountrySpecificQuestions = async () => {
+            try {
+                // Fetch country-specific questions based on selected countries
+                const response = await fetch(`http://${destination}/api/fetchQuestionsByCountries`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ countries: selectedCountries }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                setCountrySpecificQuestions(data);
+                setIsLoading(false);
+
+                // If there are country-specific questions, set the first one as the current question
+                if (data.length > 0) {
+                    setCurrentQuestionId(data[0]._id);
+                }
+            } catch (error) {
+                console.error("Error fetching country-specific questions:", error);
+                setIsLoading(false);
+            }
+        };
+
+        fetchCountrySpecificQuestions();
+    }, [currentQuestionId, selectedCountries]);
     
     const handleAnswerChange = (event, optionType) => {
         if (optionType === 'checkbox') {
@@ -306,6 +349,7 @@ const Questions = () => {
                 return newHistory;
             }
             return prevHistory;
+            setHasSelectedCountries(false);
         });
     };
 
@@ -497,6 +541,7 @@ const Questions = () => {
     const handleCountrySelectionConfirm = async () => {
         if (selectedCountries.length > 0) {
             setShowCountrySelection(false);
+            setHasSelectedCountries(true);
     
             try {
                 // First, send selected countries to the backend
@@ -655,6 +700,9 @@ const Questions = () => {
             )}
             <footer className="survey-questions-footer">
                 <div className="survey-questions-navigation-buttons">
+                    {hasSelectedCountries && (
+                        <button className="survey-questions-button" onClick={() => setShowCountrySelection(true)}>Back to Country Selection</button>
+                    )}
                     {navigationHistory.length > 1 && (
                         <button className="survey-questions-button" onClick={handlePreviousQuestion}>Back</button>
                     )}
