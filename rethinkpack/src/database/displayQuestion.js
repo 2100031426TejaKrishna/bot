@@ -99,7 +99,13 @@ router.get('/displayQuestions', async (req, res) => {
 router.get('/displayAllQuestions', async (req, res) => {
     try {
         const questions = await fetchQuestions();
-        res.json(questions.map(q => ({ _id: q._id, question: q.question, firstQuestion: q.firstQuestion })));
+        res.json(questions.map(q => ({ 
+            _id: q._id, 
+            question: q.question, 
+            firstQuestion: q.firstQuestion, 
+            titleId: 
+            q.titleId 
+        })));
     } catch (error) {
         res.status(500).send("Unable to fetch questions");
     }

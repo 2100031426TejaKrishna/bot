@@ -19,6 +19,7 @@ class CreateQuestion extends Component {
       question: '',
       marks: '',
       explanation: '',
+      previousQuestion: '',
       nextQuestion: '',
       selectedOption: 'multipleChoice',
       options: [{ text: '', value: 'Option 1', isCorrect: false }],
@@ -92,6 +93,7 @@ class CreateQuestion extends Component {
       allTitles:[],
       selectedTitle: '',
       selectedTitleLabel: '',
+      selectedTitleQuestions: [],
       firstQuestionId: '',
       firstQuestionValue: '',
     };
@@ -186,11 +188,23 @@ class CreateQuestion extends Component {
   };
 
   handleTitleSelect = (e) => {
-    const { selectedTitle } = this.state;
+    const { allQuestions } = this.state;
     let valueArray = e.split(",");
+
+    //
+    let titleQuestionsArray = [];
+    for (let i=0; i<allQuestions.length; i++) {
+      if (valueArray[0] === allQuestions[i].titleId) {
+        titleQuestionsArray.push(allQuestions[i])
+        console.log(`matching Qs: ${allQuestions[i].question}`)
+      };
+    };
+    // console.log(`matching Qs Id: ${titleQuestionsArray}`)
+
     this.setState({ 
       selectedTitle: valueArray[0],
-      selectedTitleLabel: e
+      selectedTitleLabel: e,
+      selectedTitleQuestions: titleQuestionsArray
     // });
     }, console.log(`selectedTitle: ${valueArray[0]} and ${valueArray[1]}`));
   };
@@ -1068,11 +1082,10 @@ class CreateQuestion extends Component {
         marks: isMarksValid ? '' : 'Enter the marks for this question',
         country: isCountriesValid ? '' : 'Select at least one country',
         explanation: isExplanationValid ? '' : (this.state.isLeadingQuestion ? 'Enter the recommendation for this question' : 'Enter the explanation for the correct answer'),
-        // firstQuestion: isFirstQuestionValid ? '' : `A first question already exists: ${value}`,
       },
     });
 
-    if (!isTitleSelectValid || !isQuestionValid || !isOptionTypeValid || !isOptionsValid || !isGridValid || !isOpenEndedValid || !isMarksValid || !isCountriesValid || !isExplanationValid || !isFirstQuestionValid) {
+    if (!isTitleSelectValid || !isQuestionValid || !isOptionTypeValid || !isOptionsValid || !isGridValid || !isOpenEndedValid || !isMarksValid || !isCountriesValid || !isExplanationValid ) {
       return;
     }
 
@@ -1168,7 +1181,7 @@ class CreateQuestion extends Component {
   };
 
   render() {
-    const { allTitles, selectedOption, showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, firstQuestion, validationErrors, allQuestions, nextQuestion } = this.state;
+    const { allTitles, selectedTitle, selectedTitleQuestions, selectedOption, showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, firstQuestion, validationErrors, allQuestions, nextQuestion, previousQuestion } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
     const showNextQuestion = (isLeadingQuestion && (selectedOption === 'checkbox' || selectedOption === 'linear' || selectedOption === 'multipleChoiceGrid' || selectedOption === 'checkboxGrid')) || !isLeadingQuestion;
 
@@ -1342,8 +1355,27 @@ class CreateQuestion extends Component {
                       )} 
                     </div>
                   )}
-                  {showNextQuestion && (
+                  
+                  
+                  {/* Previous Question */}
+                  {showNextQuestion && selectedTitle && (
                     <div className="mb-3">
+                      <label htmlFor="previousQuestion" className="col-form-label">Previous Question:</label>
+                      <select
+                        className="form-select"
+                        id="previousQuestion"
+                        value={previousQuestion}
+                        onChange={(e) => this.setState({ previousQuestion: e.target.value })}
+                      >
+                        <option value="">Select Previous Question</option>
+                        {selectedTitleQuestions.map((question) => (
+                          <option key={question._id} value={question._id}>
+                            {question.question}
+                          </option>
+                        ))}
+                      </select>
+                    
+                    {/* Next Question */}
                       <label htmlFor="nextQuestion" className="col-form-label">Next Question:</label>
                       <select
                         className="form-select"
@@ -1352,7 +1384,7 @@ class CreateQuestion extends Component {
                         onChange={(e) => this.setState({ nextQuestion: e.target.value })}
                       >
                         <option value="">Select Next Question</option>
-                        {allQuestions.map((question) => (
+                        {selectedTitleQuestions.map((question) => (
                           <option key={question._id} value={question._id}>
                             {question.question}
                           </option>
