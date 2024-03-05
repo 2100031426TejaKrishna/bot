@@ -121,48 +121,6 @@ const Questions = () => {
         // setCanProceed(!!prevAnswer);
     }, [currentQuestionId, answers, questions]);
 
-    useEffect(() => {
-        // Check if currentQuestionId corresponds to a country-specific question
-        const isCountrySpecificQuestion = countrySpecificQuestions.some(question => question._id === currentQuestionId);
-
-        // If it is a country-specific question and has already been fetched, set it as the current question
-        if (isCountrySpecificQuestion) {
-            return;
-        }
-
-        // If it is not a country-specific question or hasn't been fetched yet, fetch it
-        const fetchCountrySpecificQuestions = async () => {
-            try {
-                // Fetch country-specific questions based on selected countries
-                const response = await fetch(`http://${destination}/api/fetchQuestionsByCountries`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ countries: selectedCountries }),
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const data = await response.json();
-                setCountrySpecificQuestions(data);
-                setIsLoading(false);
-
-                // If there are country-specific questions, set the first one as the current question
-                if (data.length > 0) {
-                    setCurrentQuestionId(data[0]._id);
-                }
-            } catch (error) {
-                console.error("Error fetching country-specific questions:", error);
-                setIsLoading(false);
-            }
-        };
-
-        fetchCountrySpecificQuestions();
-    }, [currentQuestionId, selectedCountries]);
-    
     const handleAnswerChange = (event, optionType) => {
         if (optionType === 'checkbox') {
             const updatedOptions = event.target.checked
@@ -260,7 +218,7 @@ const Questions = () => {
         }
     
         setNavigationHistory((prevHistory) => [...prevHistory, currentQuestionId]);
-        console.log("Navigation History before next question:", navigationHistory);
+        // console.log("Navigation History before next question:", navigationHistory);
         
         if (nextQuestionId) {
             navigateToNextQuestionById(nextQuestionId);
@@ -307,49 +265,58 @@ const Questions = () => {
         setNavigationHistory((prevHistory) => {
             if (prevHistory.length > 1) {
                 const newHistory = [...prevHistory];
-                newHistory.pop(); // Remove the current question ID from history
-                const prevQuestionId = newHistory[newHistory.length - 1];
+                const prevQuestionId = newHistory.pop(); // Remove the current question ID from history
     
-                // Navigate back to the previous question by setting its ID
-                setCurrentQuestionId(prevQuestionId);   
-    
-                // Restore previous answers to the UI
-                const prevQuestionAnswers = answers[prevQuestionId];
-                if (Array.isArray(prevQuestionAnswers)) {
-                    setSelectedOptions(prevQuestionAnswers);
-                } else if (typeof prevQuestionAnswers === 'object' && prevQuestionAnswers !== null) {
-                    setGridAnswers(prevQuestionAnswers);
+                // Check if the current question is a country-specific question
+                if (countrySpecificQuestions.length > 0 && prevQuestionId === questions[questions.length - 1]._id) {
+                    // Navigate back to the last question of all questions
+                    setCurrentQuestionId(prevQuestionId);
+                    setIsLastQuestion(false);
+                    setCanProceed(true);
+                    setCountrySpecificQuestions([]); // Reset country-specific questions
+                    setHasSelectedCountries(true); // Ensure the flag remains true
                 } else {
-                    setCurrentAnswer(prevQuestionAnswers || '');
-                }
+                    // Navigate back to the previous question by setting its ID
+                    setCurrentQuestionId(prevQuestionId);
     
-                // Re-evaluate if there's a next question based on selected options or other criteria
-                const prevQuestion = questions.find(q => q._id === prevQuestionId);
-                let hasFollowingQuestion = false;
-                if (prevQuestion) {
-                    if (prevQuestion.optionType === 'multipleChoice' || prevQuestion.optionType === 'dropdown') {
-                        const selectedOption = prevQuestion.options.find(option => option.text === prevQuestionAnswers);
-                        if (selectedOption && selectedOption.optionsNextQuestion) {
+                    // Restore previous answers to the UI
+                    const prevQuestionAnswers = answers[prevQuestionId];
+                    if (Array.isArray(prevQuestionAnswers)) {
+                        setSelectedOptions(prevQuestionAnswers);
+                    } else if (typeof prevQuestionAnswers === 'object' && prevQuestionAnswers !== null) {
+                        setGridAnswers(prevQuestionAnswers);
+                    } else {
+                        setCurrentAnswer(prevQuestionAnswers || '');
+                    }
+    
+                    // Re-evaluate if there's a next question based on selected options or other criteria
+                    const prevQuestion = questions.find(q => q._id === prevQuestionId);
+                    let hasFollowingQuestion = false;
+                    if (prevQuestion) {
+                        if (prevQuestion.optionType === 'multipleChoice' || prevQuestion.optionType === 'dropdown') {
+                            const selectedOption = prevQuestion.options.find(option => option.text === prevQuestionAnswers);
+                            if (selectedOption && selectedOption.optionsNextQuestion) {
+                                hasFollowingQuestion = true;
+                            }
+                        }
+    
+                        if (prevQuestion.nextQuestion) {
+                            hasFollowingQuestion = true;
+                        }
+    
+                        if (countrySpecificQuestions.length > 0 && prevQuestionId === questions[questions.length - 1]._id) {
                             hasFollowingQuestion = true;
                         }
                     }
     
-                    if (prevQuestion.nextQuestion) {
-                        hasFollowingQuestion = true;
-                    }
-    
-                    if (countrySpecificQuestions.length > 0 && prevQuestionId === questions[questions.length - 1]._id) {
-                        hasFollowingQuestion = true;
-                    }
+                    setIsLastQuestion(!hasFollowingQuestion);
+                    setCanProceed(true);
+                    setHasSelectedCountries(false); // Reset to false for non-country questions
                 }
-    
-                setIsLastQuestion(!hasFollowingQuestion);
-                setCanProceed(true);
     
                 return newHistory;
             }
             return prevHistory;
-            setHasSelectedCountries(false);
         });
     };
 
@@ -665,10 +632,10 @@ const Questions = () => {
     return (
         <div className="survey-questions-container">
             <div className="survey-questions-card">
-                <h6>
+                {/* <h6>
                     {currentQuestion.questionType === 'productInfo' ? 'Product Information' : 
                     currentQuestion.questionType === 'packagingInfo' ? 'Packaging Information' : ''}
-                </h6>
+                </h6> */}
                 <h4>{currentQuestion.question}</h4>
                 <div className="options-container">
                     {renderOptions(currentQuestion)}
@@ -700,7 +667,7 @@ const Questions = () => {
             )}
             <footer className="survey-questions-footer">
                 <div className="survey-questions-navigation-buttons">
-                    {hasSelectedCountries && (
+                    {(currentQuestionId !== questions[0]._id || hasSelectedCountries) && (
                         <button className="survey-questions-button" onClick={() => setShowCountrySelection(true)}>Back to Country Selection</button>
                     )}
                     {navigationHistory.length > 1 && (
