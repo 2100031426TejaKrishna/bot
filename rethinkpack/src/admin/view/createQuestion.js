@@ -1105,6 +1105,7 @@ class CreateQuestion extends Component {
       explanation,
       showExplanation,
       requireResponse,
+      previousQuestion,
       nextQuestion
     } = this.state;
 
@@ -1121,6 +1122,7 @@ class CreateQuestion extends Component {
       showCountry,
       firstQuestion,
       requireResponse,
+      previousQuestion: isLeadingQuestion ? undefined : previousQuestion,
       nextQuestion: isLeadingQuestion ? undefined : nextQuestion
     };
 

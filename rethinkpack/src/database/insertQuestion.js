@@ -34,6 +34,7 @@ const questionSchema = new mongoose.Schema({
     explanation: String,
     firstQuestion: Boolean,
     recommendation: String,
+    previousQuestion: String,
     nextQuestion: String,
     date: {
         type: Date,
