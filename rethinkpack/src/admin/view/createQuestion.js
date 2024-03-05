@@ -70,7 +70,10 @@ class CreateQuestion extends Component {
         "Vanuatu", "Vatican City", "Venezuela", "Vietnam", "Yemen",
         "Zambia", "Zimbabwe"
       ],
-      selectedCountries: [],
+      country: {
+        selectedCountry: '',
+        countryFirstQuestion: false
+      },
       isLeadingQuestion: false,
       showExplanation: false,
       firstQuestion: false,
@@ -310,14 +313,9 @@ class CreateQuestion extends Component {
 
   handleInputChange = (e) => {
     if (e.target.id === "country") {
-      const options = e.target.options;
-      const selectedCountries = [];
-      for (let i = 0; i < options.length; i++) {
-        if (options[i].selected) {
-          selectedCountries.push(options[i].value);
-        }
-      }
-      this.setState({ selectedCountries });
+      // const { selectedCountry } = this.state;
+      // const options = e.target.options;
+      this.setState({ selectedCountry: e.target.options });
     } else {
       this.setState({ [e.target.id]: e.target.value });
     }
@@ -910,21 +908,15 @@ class CreateQuestion extends Component {
     }
   };
   
-  handleCountryChange = (event) => {
-    const { value } = event.target;
-    this.setState((prevState) => {
-      if (prevState.selectedCountries.includes(value)) {
-        return {
-          selectedCountries: prevState.selectedCountries.filter(
-            (country) => country !== value
-          ),
-        };
-      } else {
-        return {
-          selectedCountries: [...prevState.selectedCountries, value],
-        };
-      }
-    });
+  // handleCountryChange = (event) => {
+  //   const { value } = event.target;
+  //   this.setState({ selectedCountry: value });
+  // };
+
+  handleCountryChange = (e) => {
+    this.setState( (prevState) => ({
+      country: { ...prevState.country, selectedCountry: e.target.value }
+    }))
   };
 
   validateTitleSelect = () => {
@@ -1026,10 +1018,10 @@ class CreateQuestion extends Component {
     return isLeadingQuestion || (marks.trim() !== '' && !isNaN(marks));
   };
   
-  validateCountries = () => {
-    const { selectedCountries, showCountry } = this.state;
-    return !showCountry || (selectedCountries.length > 0);
-  };
+  // validateCountries = () => {
+  //   const { selectedCountries, showCountry } = this.state;
+  //   return !showCountry || (selectedCountries.length > 0);
+  // };
   
   validateExplanation = () => {
     const { explanation, showExplanation } = this.state;
@@ -1063,7 +1055,7 @@ class CreateQuestion extends Component {
     const isOptionsValid = this.validateOptions();
     const isOpenEndedValid = this.validateOpenEnded();
     const isMarksValid = this.validateMarks();
-    const isCountriesValid = this.validateCountries();
+    // const isCountriesValid = this.validateCountries();
     const isExplanationValid = this.validateExplanation();
     const isGridValid = this.validateGrid();
     //
@@ -1080,12 +1072,22 @@ class CreateQuestion extends Component {
         options: isOptionsValid ? '' : 'Add at least two options and at least one selection',
         openEnded: isOpenEndedValid  ? '' : 'Ensure entry is less than the word limit',
         marks: isMarksValid ? '' : 'Enter the marks for this question',
-        country: isCountriesValid ? '' : 'Select at least one country',
+        // country: isCountriesValid ? '' : 'Select at least one country',
         explanation: isExplanationValid ? '' : (this.state.isLeadingQuestion ? 'Enter the recommendation for this question' : 'Enter the explanation for the correct answer'),
       },
     });
 
-    if (!isTitleSelectValid || !isQuestionValid || !isOptionTypeValid || !isOptionsValid || !isGridValid || !isOpenEndedValid || !isMarksValid || !isCountriesValid || !isExplanationValid ) {
+    if (
+      !isTitleSelectValid || 
+      !isQuestionValid || 
+      !isOptionTypeValid || 
+      !isOptionsValid || 
+      !isGridValid || 
+      !isOpenEndedValid || 
+      !isMarksValid || 
+      // !isCountriesValid || 
+      !isExplanationValid 
+      ) {
       return;
     }
 
@@ -1100,8 +1102,9 @@ class CreateQuestion extends Component {
       isLeadingQuestion,
       firstQuestion,
       marks,
+      country,
       showCountry,
-      selectedCountries,
+      selectedCountry,
       explanation,
       showExplanation,
       requireResponse,
@@ -1116,7 +1119,7 @@ class CreateQuestion extends Component {
       optionType: selectedOption,
       openEndedText: this.state.openEndedText,
       marks: isLeadingQuestion ? undefined : parseFloat(marks),
-      countries: showCountry ? selectedCountries : undefined,
+      country: country,
       explanation: showExplanation ? explanation : undefined,
       isLeadingQuestion,
       showCountry,
@@ -1183,7 +1186,7 @@ class CreateQuestion extends Component {
   };
 
   render() {
-    const { allTitles, selectedTitle, selectedTitleQuestions, selectedOption, showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, firstQuestion, validationErrors, allQuestions, nextQuestion, previousQuestion } = this.state;
+    const { allTitles, selectedTitle, selectedTitleQuestions, selectedOption, showCountry, countries, selectedCountry, isLeadingQuestion, showExplanation, firstQuestion, validationErrors, allQuestions, nextQuestion, previousQuestion } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
     const showNextQuestion = (isLeadingQuestion && (selectedOption === 'checkbox' || selectedOption === 'linear' || selectedOption === 'multipleChoiceGrid' || selectedOption === 'checkboxGrid')) || !isLeadingQuestion;
 
@@ -1329,6 +1332,8 @@ class CreateQuestion extends Component {
                       )}
                     </div>
                   )}
+                  
+                  {/* Specific Country */}
                   {showCountry && (
                     <div className="mb-3">
                       <label className="col-form-label">Country:</label>
@@ -1336,10 +1341,10 @@ class CreateQuestion extends Component {
                         {countries.map((country, index) => (
                           <div key={index} className="form-check">
                             <input
-                              type="checkbox"
+                              type="radio"
                               id={country}
                               value={country}
-                              checked={selectedCountries.includes(country)}
+                              // checked={selectedCountries.includes(country)}
                               onChange={this.handleCountryChange}
                               className="form-check-input"
                               size={5}
@@ -1355,9 +1360,25 @@ class CreateQuestion extends Component {
                           {validationErrors.country}
                         </div>
                       )} 
+
+                    {/* Country First Question */}
+                    <p></p>
+                    <div className="form-check form-switch form-check-inline">
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      role="switch"
+                      id="firstQuestionCheck"
+                      checked={firstQuestion}
+                      onChange={this.toggleFirstQuestion}
+                    />
+                    <label className="form-check-label" htmlFor="firstQuestionCheck">
+                      First Question
+                    </label>
+                    </div>
+
                     </div>
                   )}
-                  
                   
                   {/* Previous Question */}
                   {showNextQuestion && selectedTitle && (
@@ -1439,6 +1460,7 @@ class CreateQuestion extends Component {
                       </label>
                     </div>
                   </div>
+                  {!showCountry && (
                   <div className="form-check form-switch form-check-inline">
                     <input
                       className="form-check-input"
@@ -1457,6 +1479,7 @@ class CreateQuestion extends Component {
                       </div>
                     )}
                   </div>
+                  )}
                   <button type="button" className="btn btn-dark" onClick={this.handleSubmit}>
                     Submit
                   </button>
