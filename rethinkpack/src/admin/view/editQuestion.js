@@ -193,12 +193,25 @@ class EditQuestion extends Component {
     // console.log(`questionList: ${JSON.stringify(this.state.questionList)}`)
   };
 
+      // Add this method to fetch filtered questions
+      async fetchFilteredQuestions() {
+        try {
+          const response = await fetch('http://localhost:5000/api/filtered-questions');
+          const filteredQuestions = await response.json();
+      
+          this.setState({ filteredQuestions }); // Update state with fetched questions
+        } catch (error) {
+          console.error('Error fetching filtered questions:', error);
+        }
+      }
+
 /*-------------MODAL-----------------*/
 
   componentDidMount() {
     // reset
     const editQuestionModal = document.getElementById("editQuestion");
     editQuestionModal.addEventListener('hidden.bs.modal', this.resetState);
+    this.fetchFilteredQuestions();
   }
 
   componentWillUnmount() {
@@ -478,6 +491,12 @@ class EditQuestion extends Component {
     // Split the text by whitespace and filter out empty strings
     const words = text.trim().split(/\s+/).filter(Boolean);
     return words.length;
+  };
+
+  isOptionNextQuestionUsed = (question) => {
+    const { options } = this.state.questionList;
+  
+    return options.some(option => option.optionsNextQuestion === question._id);
   };
   
 
@@ -1300,6 +1319,7 @@ class EditQuestion extends Component {
 
     const { showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, validationErrors, questionId, questionIndex, allQuestions } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
+    const { filteredQuestions } = this.state;
 
     return (
       
@@ -1490,26 +1510,29 @@ class EditQuestion extends Component {
                   )} 
                 </div>
               )}
-              
-              {/* Next Question */}
-                  {!isLeadingQuestion && (
-                    <div className="mb-3">
-                      <label htmlFor="nextQuestion" className="col-form-label">Next Question:</label>
-                      <select
-                        className="form-select"
-                        id="nextQuestion"
-                        value={this.state.questionList.nextQuestion}
-                        onChange={this.handleQuestionNextQuestion}
-                      >
-                        <option value="">Select Next Question</option>
-                        {allQuestions.map((question) => (
+                {/* Next Question */}
+                {!isLeadingQuestion && filteredQuestions && (
+                  <div className="mb-3">
+                    <label htmlFor="nextQuestion" className="col-form-label">
+                      Next Question:
+                    </label>
+                    <select
+                      className="form-select"
+                      id="nextQuestion"
+                      value={this.state.questionList.nextQuestion}
+                      onChange={this.handleQuestionNextQuestion}
+                    >
+                      <option value="">Select Next Question</option>
+                      {filteredQuestions
+                        .filter(question => !question.firstQuestion && !this.isOptionNextQuestionUsed(question))
+                        .map((question) => (
                           <option key={question._id} value={question._id}>
                             {question.question}
                           </option>
                         ))}
-                      </select>
-                    </div>
-                  )}
+                    </select>
+                  </div>
+                )}
             </form>
         </Modal.Body>
         <Modal.Footer>
