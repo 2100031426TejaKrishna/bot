@@ -3,6 +3,7 @@ const router = express.Router();
 const mongoose = require('mongoose');
 
 const Questions = mongoose.model('questions');
+// const Titles = mongoose.model('titles');
 
 const fetchQuestions = async () => {
     try {
@@ -15,6 +16,11 @@ const fetchQuestions = async () => {
 
         while (queue.length > 0) {
             let currentQuestion = queue.shift();
+            // Fetch title information
+            // if (currentQuestion.titleId) {
+            //     let titleInfo = await Titles.findById(currentQuestion.titleId).lean();
+            //     currentQuestion.titleInfo = titleInfo; // Add title info to the question object
+            // }
             allQuestions.set(currentQuestion._id.toString(), currentQuestion);
 
             // Function to handle adding next questions to the queue
