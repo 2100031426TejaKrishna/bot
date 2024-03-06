@@ -103,8 +103,8 @@ router.get('/displayAllQuestions', async (req, res) => {
             _id: q._id, 
             question: q.question, 
             firstQuestion: q.firstQuestion, 
-            titleId: 
-            q.titleId 
+            titleId: q.titleId,
+            country: q.country
         })));
     } catch (error) {
         res.status(500).send("Unable to fetch questions");

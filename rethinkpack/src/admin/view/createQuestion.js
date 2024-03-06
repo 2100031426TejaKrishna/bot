@@ -89,7 +89,8 @@ class CreateQuestion extends Component {
         marks: '',
         country: '',
         explanation: '',
-        firstQuestion: ''
+        firstQuestion: '',
+        countryFirstQuestion: ''
       },
       requireResponse: false,
       allQuestions: [],
@@ -99,6 +100,8 @@ class CreateQuestion extends Component {
       selectedTitleQuestions: [],
       firstQuestionId: '',
       firstQuestionValue: '',
+      countryFirstQuestionId: '',
+      countryFirstQuestionValue: '',
     };
 
     this.initialState = { ...this.state };
@@ -179,7 +182,6 @@ class CreateQuestion extends Component {
     });
     this.setState({ allQuestions: updatedQuestions });
 
-    // const { firstQuestion } = this.state;
     this.setState({ 
       // set validation
       isFirstQuestionValid: true,
@@ -194,12 +196,11 @@ class CreateQuestion extends Component {
     const { allQuestions } = this.state;
     let valueArray = e.split(",");
 
-    //
     let titleQuestionsArray = [];
     for (let i=0; i<allQuestions.length; i++) {
       if (valueArray[0] === allQuestions[i].titleId) {
         titleQuestionsArray.push(allQuestions[i])
-        console.log(`matching Qs: ${allQuestions[i].question}`)
+        // console.log(`matching Qs: ${allQuestions[i].question}`)
       };
     };
     // console.log(`matching Qs Id: ${titleQuestionsArray}`)
@@ -312,13 +313,7 @@ class CreateQuestion extends Component {
   };
 
   handleInputChange = (e) => {
-    if (e.target.id === "country") {
-      // const { selectedCountry } = this.state;
-      // const options = e.target.options;
-      this.setState({ selectedCountry: e.target.options });
-    } else {
-      this.setState({ [e.target.id]: e.target.value });
-    }
+    this.setState({ [e.target.id]: e.target.value });
   };
 
   handleOptionChange = (index, value) => {
@@ -802,6 +797,28 @@ class CreateQuestion extends Component {
     return { exists: false, id: null, value: null };
   };
 
+  validateCountryFirstQuestion = () => {
+    const { allQuestions } = this.state;
+
+    for (let i=0; i < allQuestions.length; i++){
+      // case when a first question exists
+      if (allQuestions[i].country.countryFirstQuestion === true) {
+        this.setState({
+          countryFirstQuestionId: allQuestions[i]._id,
+          countryFirstQuestionValue: allQuestions[i].question
+        });
+        return { 
+          exists: true, 
+          id: allQuestions[i]._id, 
+          value: allQuestions[i].question, 
+          countryValue: allQuestions[i].country.selectedCountry, 
+          countryFirstQuestionBoolean: allQuestions[i].country.countryFirstQuestion
+        };
+      }
+    };
+    return { exists: false, id: null, value: null };
+  };
+
   renderFirstQuestionModal = () => {
     const { firstQuestionId, firstQuestionValue } = this.state;
     // console.log(`render values: ${id},${value}`);
@@ -836,6 +853,77 @@ class CreateQuestion extends Component {
           firstQuestion: !exists ? '' : `A first question already exists: "${value}"`
         }
       });
+    };
+  };
+
+  toggleCountryFirstQuestion = () => {
+    const { country } = this.state;
+
+    // Reset state on each function call
+    this.setState({
+      validationErrors: {
+        countryFirstQuestion: true
+      }
+    });
+
+    if (country.selectedCountry === '') {
+      console.log(`Select a country`)
+      this.setState({
+        validationErrors: {
+          countryFirstQuestion: false ? '' : `Select a country first`
+        }
+      });
+      return;
+    }
+
+    // Cases
+    // - same country and firstQ vacant
+    // - same country and firstQ taken
+    // - diff country
+
+    // Case when country.selectedCountry has been selected
+    const { 
+      exists, 
+      id, 
+      value,
+      countryValue,
+      countryFirstQuestionBoolean
+    } = this.validateCountryFirstQuestion();
+
+    // case same country and firstQ vacant
+    if (country.selectedCountry === countryValue && countryFirstQuestionBoolean === false) {
+      console.log(`A country first question is vacant`)
+      this.setState(prevState => ({
+        country: {
+          ...prevState.country,
+          countryFirstQuestion: !prevState.country.countryFirstQuestion
+        }
+      }));
+    }
+    // case when a first question exists AND toggle is currently set FALSE
+    // this way when editing THE first question, the toggle may be turned from TRUE to FALSE without executing this validation 
+    else if (country.selectedCountry === countryValue && countryFirstQuestionBoolean === true && country.countryFirstQuestion === false) {
+      console.log(`A country first question already exists: ${id}-${value}-${countryValue}`)
+      // this.renderFirstQuestionModal();
+      this.setState({
+        validationErrors: {
+          // firstQuestion: !exists ? '' : `A first question already exists: "${value}"`
+        }
+      });
+
+      // implement in handleCountryChange, to set the state to false
+      // happens when already selected tab true, then select a country to already has a first question
+    }
+
+    // case different country
+    else if (country.selectedCountry !== countryValue) {
+      console.log(`A country first question is vacant`)
+      this.setState(prevState => ({
+        country: {
+          ...prevState.country,
+          countryFirstQuestion: !prevState.country.countryFirstQuestion
+        }
+      }));
     };
   };
 
@@ -903,16 +991,10 @@ class CreateQuestion extends Component {
   
       // Add the new answer with isCorrect set to true
       gridOptions.answers.push({ rowIndex, columnIndex: colIndex, isCorrect: true });
-  
       this.setState( { gridOptions } );
     }
   };
   
-  // handleCountryChange = (event) => {
-  //   const { value } = event.target;
-  //   this.setState({ selectedCountry: value });
-  // };
-
   handleCountryChange = (e) => {
     this.setState( (prevState) => ({
       country: { ...prevState.country, selectedCountry: e.target.value }
@@ -1018,10 +1100,23 @@ class CreateQuestion extends Component {
     return isLeadingQuestion || (marks.trim() !== '' && !isNaN(marks));
   };
   
-  // validateCountries = () => {
-  //   const { selectedCountries, showCountry } = this.state;
-  //   return !showCountry || (selectedCountries.length > 0);
-  // };
+  validateCountry = () => {
+    const { country, showCountry } = this.state;
+    // case when "Specific Country" is switched on
+    if (showCountry) {
+      // case when a selectedCountry has been set
+      if (country.selectedCountry) {
+        // console.log(`country validated`)
+        return true;
+      }
+      else {
+        // console.log(`country IS NOT validated`)
+        return false;
+      }
+    } else {
+      return true;
+    }
+  };
   
   validateExplanation = () => {
     const { explanation, showExplanation } = this.state;
@@ -1055,13 +1150,13 @@ class CreateQuestion extends Component {
     const isOptionsValid = this.validateOptions();
     const isOpenEndedValid = this.validateOpenEnded();
     const isMarksValid = this.validateMarks();
-    // const isCountriesValid = this.validateCountries();
+    const isCountryValid = this.validateCountry();
     const isExplanationValid = this.validateExplanation();
     const isGridValid = this.validateGrid();
     //
     const { exists } = this.validateFirstQuestion();
     const isFirstQuestionValid = !exists;
-    console.log(`isFirstQuestionValid: ${isFirstQuestionValid}`)
+    // console.log(`isFirstQuestionValid: ${isFirstQuestionValid}`)
 
     this.setState({
       validationErrors: {
@@ -1072,7 +1167,7 @@ class CreateQuestion extends Component {
         options: isOptionsValid ? '' : 'Add at least two options and at least one selection',
         openEnded: isOpenEndedValid  ? '' : 'Ensure entry is less than the word limit',
         marks: isMarksValid ? '' : 'Enter the marks for this question',
-        // country: isCountriesValid ? '' : 'Select at least one country',
+        country: isCountryValid ? '' : 'Select at least one country',
         explanation: isExplanationValid ? '' : (this.state.isLeadingQuestion ? 'Enter the recommendation for this question' : 'Enter the explanation for the correct answer'),
       },
     });
@@ -1085,7 +1180,7 @@ class CreateQuestion extends Component {
       !isGridValid || 
       !isOpenEndedValid || 
       !isMarksValid || 
-      // !isCountriesValid || 
+      !isCountryValid || 
       !isExplanationValid 
       ) {
       return;
@@ -1186,7 +1281,7 @@ class CreateQuestion extends Component {
   };
 
   render() {
-    const { allTitles, selectedTitle, selectedTitleQuestions, selectedOption, showCountry, countries, selectedCountry, isLeadingQuestion, showExplanation, firstQuestion, validationErrors, allQuestions, nextQuestion, previousQuestion } = this.state;
+    const { allTitles, selectedTitle, selectedTitleQuestions, selectedOption, showCountry, countries, country, isLeadingQuestion, showExplanation, firstQuestion, validationErrors, allQuestions, nextQuestion, previousQuestion } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
     const showNextQuestion = (isLeadingQuestion && (selectedOption === 'checkbox' || selectedOption === 'linear' || selectedOption === 'multipleChoiceGrid' || selectedOption === 'checkboxGrid')) || !isLeadingQuestion;
 
@@ -1344,10 +1439,10 @@ class CreateQuestion extends Component {
                               type="radio"
                               id={country}
                               value={country}
-                              // checked={selectedCountries.includes(country)}
+                              checked={this.state.country.selectedCountry === country}
                               onChange={this.handleCountryChange}
                               className="form-check-input"
-                              size={5}
+                              size={8}
                             />
                             <label htmlFor={country} className="form-check-label">
                               {country}
@@ -1368,13 +1463,18 @@ class CreateQuestion extends Component {
                       className="form-check-input"
                       type="checkbox"
                       role="switch"
-                      id="firstQuestionCheck"
-                      checked={firstQuestion}
-                      onChange={this.toggleFirstQuestion}
+                      id="countryFirstQuestionCheck"
+                      checked={country.countryFirstQuestion}
+                      onChange={this.toggleCountryFirstQuestion}
                     />
                     <label className="form-check-label" htmlFor="firstQuestionCheck">
                       First Question
                     </label>
+                    {validationErrors.countryFirstQuestion && (
+                        <div style={{ color: 'red', fontSize: 12 }}>
+                          {validationErrors.countryFirstQuestion}
+                        </div>
+                      )} 
                     </div>
 
                     </div>
