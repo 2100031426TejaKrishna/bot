@@ -636,6 +636,19 @@ const Questions = () => {
                     {currentQuestion.questionType === 'productInfo' ? 'Product Information' : 
                     currentQuestion.questionType === 'packagingInfo' ? 'Packaging Information' : ''}
                 </h6> */}
+                {currentQuestion.titleInfo && (
+                    <div>
+                    <h3>{currentQuestion.titleInfo.titleLabel}</h3>
+                    {currentQuestion.titleInfo.subTitle.map((sub, subIndex) => (
+                        <div key={subIndex}>
+                        <h4>{sub.subTitleLabel}</h4>
+                        {sub.nestedTitle.map((nested, nestedIndex) => (
+                            <h5 key={nestedIndex}>{nested.nestedTitleLabel}</h5>
+                        ))}
+                        </div>
+                    ))}
+                    </div>
+                )}
                 <h4>{currentQuestion.question}</h4>
                 <div className="options-container">
                     {renderOptions(currentQuestion)}
@@ -673,7 +686,7 @@ const Questions = () => {
                     {navigationHistory.length > 1 && (
                         <button className="survey-questions-button" onClick={handlePreviousQuestion}>Back</button>
                     )}
-                    {isLastQuestion ? (
+                    {isLastQuestion && countrySpecificQuestions.length === 0 ? (
                         <button className="survey-questions-button" onClick={handleSubmit} disabled={!canProceed}>Submit</button>
                     ) : (
                         <button className="survey-questions-button" onClick={handleNextQuestion} disabled={!canProceed}>Next</button>
