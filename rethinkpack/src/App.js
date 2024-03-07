@@ -11,8 +11,8 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import axios from 'axios'; // Import Axios for making HTTP requests
 
 // Switch URLs between Server and Local hosting here
-const destination = "localhost:5000";
-// const destination = "rtp.dusky.bond:5000";
+// const destination = "localhost:5000";
+const destination = "rtp.dusky.bond:5000";
 
 function App() {
   const [triggerRefresh, setTriggerRefresh] = useState(false);

@@ -41,4 +41,30 @@ async function getQuestion(req, res, next) {
     next()
 }
 
+// Add this route to get the filtered questions
+router.get('/filtered-questions', async (req, res) => {
+    try {
+        // Fetch all questions
+        const allQuestions = await Questions.find();
+
+        // Fetch used question IDs from nextQuestion field
+        const usedQuestionIds = allQuestions.reduce((acc, question) => {
+            if (question.nextQuestion) {
+                acc.push(question.nextQuestion.toString()); // Convert ObjectId to string
+            }
+            return acc;
+        }, []);
+
+        // Filter questions based on criteria
+        const filteredQuestions = allQuestions.filter(question => (
+            !usedQuestionIds.includes(question._id.toString())
+        ));
+
+        res.json(filteredQuestions);
+    } catch (error) {
+        console.error('Error fetching filtered questions:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+
 module.exports = router;

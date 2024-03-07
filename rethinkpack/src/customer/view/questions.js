@@ -20,6 +20,7 @@ const Questions = () => {
     const [selectedCountries, setSelectedCountries] = useState([]);
     const [showCountrySelection, setShowCountrySelection] = useState(true);
     const [countrySpecificQuestions, setCountrySpecificQuestions] = useState([]);
+    const [hasSelectedCountries, setHasSelectedCountries] = useState(false);
     const countries = [
         "Afghanistan", "Albania", "Algeria", "Andorra", "Angola",
         "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria",
@@ -119,7 +120,7 @@ const Questions = () => {
         }
         // setCanProceed(!!prevAnswer);
     }, [currentQuestionId, answers, questions]);
-    
+
     const handleAnswerChange = (event, optionType) => {
         if (optionType === 'checkbox') {
             const updatedOptions = event.target.checked
@@ -217,7 +218,7 @@ const Questions = () => {
         }
     
         setNavigationHistory((prevHistory) => [...prevHistory, currentQuestionId]);
-        console.log("Navigation History before next question:", navigationHistory);
+        // console.log("Navigation History before next question:", navigationHistory);
         
         if (nextQuestionId) {
             navigateToNextQuestionById(nextQuestionId);
@@ -264,44 +265,54 @@ const Questions = () => {
         setNavigationHistory((prevHistory) => {
             if (prevHistory.length > 1) {
                 const newHistory = [...prevHistory];
-                newHistory.pop(); // Remove the current question ID from history
-                const prevQuestionId = newHistory[newHistory.length - 1];
+                const prevQuestionId = newHistory.pop(); // Remove the current question ID from history
     
-                // Navigate back to the previous question by setting its ID
-                setCurrentQuestionId(prevQuestionId);   
-    
-                // Restore previous answers to the UI
-                const prevQuestionAnswers = answers[prevQuestionId];
-                if (Array.isArray(prevQuestionAnswers)) {
-                    setSelectedOptions(prevQuestionAnswers);
-                } else if (typeof prevQuestionAnswers === 'object' && prevQuestionAnswers !== null) {
-                    setGridAnswers(prevQuestionAnswers);
+                // Check if the current question is a country-specific question
+                if (countrySpecificQuestions.length > 0 && prevQuestionId === questions[questions.length - 1]._id) {
+                    // Navigate back to the last question of all questions
+                    setCurrentQuestionId(prevQuestionId);
+                    setIsLastQuestion(false);
+                    setCanProceed(true);
+                    setCountrySpecificQuestions([]); // Reset country-specific questions
+                    setHasSelectedCountries(true); // Ensure the flag remains true
                 } else {
-                    setCurrentAnswer(prevQuestionAnswers || '');
-                }
+                    // Navigate back to the previous question by setting its ID
+                    setCurrentQuestionId(prevQuestionId);
     
-                // Re-evaluate if there's a next question based on selected options or other criteria
-                const prevQuestion = questions.find(q => q._id === prevQuestionId);
-                let hasFollowingQuestion = false;
-                if (prevQuestion) {
-                    if (prevQuestion.optionType === 'multipleChoice' || prevQuestion.optionType === 'dropdown') {
-                        const selectedOption = prevQuestion.options.find(option => option.text === prevQuestionAnswers);
-                        if (selectedOption && selectedOption.optionsNextQuestion) {
+                    // Restore previous answers to the UI
+                    const prevQuestionAnswers = answers[prevQuestionId];
+                    if (Array.isArray(prevQuestionAnswers)) {
+                        setSelectedOptions(prevQuestionAnswers);
+                    } else if (typeof prevQuestionAnswers === 'object' && prevQuestionAnswers !== null) {
+                        setGridAnswers(prevQuestionAnswers);
+                    } else {
+                        setCurrentAnswer(prevQuestionAnswers || '');
+                    }
+    
+                    // Re-evaluate if there's a next question based on selected options or other criteria
+                    const prevQuestion = questions.find(q => q._id === prevQuestionId);
+                    let hasFollowingQuestion = false;
+                    if (prevQuestion) {
+                        if (prevQuestion.optionType === 'multipleChoice' || prevQuestion.optionType === 'dropdown') {
+                            const selectedOption = prevQuestion.options.find(option => option.text === prevQuestionAnswers);
+                            if (selectedOption && selectedOption.optionsNextQuestion) {
+                                hasFollowingQuestion = true;
+                            }
+                        }
+    
+                        if (prevQuestion.nextQuestion) {
+                            hasFollowingQuestion = true;
+                        }
+    
+                        if (countrySpecificQuestions.length > 0 && prevQuestionId === questions[questions.length - 1]._id) {
                             hasFollowingQuestion = true;
                         }
                     }
     
-                    if (prevQuestion.nextQuestion) {
-                        hasFollowingQuestion = true;
-                    }
-    
-                    if (countrySpecificQuestions.length > 0 && prevQuestionId === questions[questions.length - 1]._id) {
-                        hasFollowingQuestion = true;
-                    }
+                    setIsLastQuestion(!hasFollowingQuestion);
+                    setCanProceed(true);
+                    setHasSelectedCountries(false); // Reset to false for non-country questions
                 }
-    
-                setIsLastQuestion(!hasFollowingQuestion);
-                setCanProceed(true);
     
                 return newHistory;
             }
@@ -497,6 +508,7 @@ const Questions = () => {
     const handleCountrySelectionConfirm = async () => {
         if (selectedCountries.length > 0) {
             setShowCountrySelection(false);
+            setHasSelectedCountries(true);
     
             try {
                 // First, send selected countries to the backend
@@ -620,10 +632,23 @@ const Questions = () => {
     return (
         <div className="survey-questions-container">
             <div className="survey-questions-card">
-                <h6>
+                {/* <h6>
                     {currentQuestion.questionType === 'productInfo' ? 'Product Information' : 
                     currentQuestion.questionType === 'packagingInfo' ? 'Packaging Information' : ''}
-                </h6>
+                </h6> */}
+                {currentQuestion.titleInfo && (
+                    <div>
+                    <h3>{currentQuestion.titleInfo.titleLabel}</h3>
+                    {currentQuestion.titleInfo.subTitle.map((sub, subIndex) => (
+                        <div key={subIndex}>
+                        <h4>{sub.subTitleLabel}</h4>
+                        {sub.nestedTitle.map((nested, nestedIndex) => (
+                            <h5 key={nestedIndex}>{nested.nestedTitleLabel}</h5>
+                        ))}
+                        </div>
+                    ))}
+                    </div>
+                )}
                 <h4>{currentQuestion.question}</h4>
                 <div className="options-container">
                     {renderOptions(currentQuestion)}
@@ -655,10 +680,13 @@ const Questions = () => {
             )}
             <footer className="survey-questions-footer">
                 <div className="survey-questions-navigation-buttons">
+                    {(currentQuestionId !== questions[0]._id || hasSelectedCountries) && (
+                        <button className="survey-questions-button" onClick={() => setShowCountrySelection(true)}>Back to Country Selection</button>
+                    )}
                     {navigationHistory.length > 1 && (
                         <button className="survey-questions-button" onClick={handlePreviousQuestion}>Back</button>
                     )}
-                    {isLastQuestion ? (
+                    {isLastQuestion && countrySpecificQuestions.length === 0 ? (
                         <button className="survey-questions-button" onClick={handleSubmit} disabled={!canProceed}>Submit</button>
                     ) : (
                         <button className="survey-questions-button" onClick={handleNextQuestion} disabled={!canProceed}>Next</button>
