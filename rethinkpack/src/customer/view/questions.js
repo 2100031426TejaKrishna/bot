@@ -7,6 +7,7 @@ const Questions = () => {
     const [questions, setQuestions] = useState([]);
     const [currentQuestionId, setCurrentQuestionId] = useState(null);
     const [currentAnswer, setCurrentAnswer] = useState('');
+    const [currentTitleDetails, setCurrentTitleDetails] = useState(null);
     const [selectedOptions, setSelectedOptions] = useState([]);
     const [gridAnswers, setGridAnswers] = useState({});
     const [canProceed, setCanProceed] = useState(false);
@@ -121,6 +122,31 @@ const Questions = () => {
         // setCanProceed(!!prevAnswer);
     }, [currentQuestionId, answers, questions]);
 
+    useEffect(() => {
+        const fetchTitleDetails = async (nestedTitleId) => {
+            try {
+                const response = await fetch(`http://${destination}/api/questionTitleDetails/${nestedTitleId}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                return data; 
+            } catch (error) {
+                console.error("Error fetching title details for question:", error);
+            }
+        };
+    
+        if (currentQuestionId) {
+            const currentQuestion = questions.find(q => q._id === currentQuestionId);
+            if (currentQuestion && currentQuestion.titleId) {
+                fetchTitleDetails(currentQuestion.titleId).then(titleDetails => {
+                    // Assuming you have a state `currentTitleDetails` to store the fetched title details
+                    setCurrentTitleDetails(titleDetails); 
+                });
+            }
+        }
+    }, [currentQuestionId, questions, destination]);
+
     const handleAnswerChange = (event, optionType) => {
         if (optionType === 'checkbox') {
             const updatedOptions = event.target.checked
@@ -177,20 +203,6 @@ const Questions = () => {
             [currentQuestionId]: newAnswer
         }));
     };
-
-    // useEffect(() => {
-    //     // Log current question
-    //     if (questions && questions.length > 0 && currentQuestionIndex < questions.length) {
-    //         console.log("Current question:", questions[currentQuestionIndex].question);
-    //     }
-    
-    //     // Log previous question if it exists
-    //     if (currentQuestionIndex > 0 && questions.length > currentQuestionIndex) {
-    //         console.log("Previous question:", questions[currentQuestionIndex - 1].question);
-    //     }
-    //     console.log("------------------------");
-
-    // }, [currentQuestionIndex, questions]);
     
     const handleNextQuestion = () => {
         const currentQuestion = questions.find(q => q._id === currentQuestionId);
@@ -631,24 +643,18 @@ const Questions = () => {
 
     return (
         <div className="survey-questions-container">
+            {currentTitleDetails && (
+                <div className="title-details">
+                    <h3>{currentTitleDetails.titleLabel}</h3>
+                    <h4>{currentTitleDetails.subTitleLabel}</h4>
+                    <h5>{currentTitleDetails.nestedTitleLabel}</h5>
+                </div>
+            )}
             <div className="survey-questions-card">
                 {/* <h6>
                     {currentQuestion.questionType === 'productInfo' ? 'Product Information' : 
                     currentQuestion.questionType === 'packagingInfo' ? 'Packaging Information' : ''}
                 </h6> */}
-                {currentQuestion.titleInfo && (
-                    <div>
-                    <h3>{currentQuestion.titleInfo.titleLabel}</h3>
-                    {currentQuestion.titleInfo.subTitle.map((sub, subIndex) => (
-                        <div key={subIndex}>
-                        <h4>{sub.subTitleLabel}</h4>
-                        {sub.nestedTitle.map((nested, nestedIndex) => (
-                            <h5 key={nestedIndex}>{nested.nestedTitleLabel}</h5>
-                        ))}
-                        </div>
-                    ))}
-                    </div>
-                )}
                 <h4>{currentQuestion.question}</h4>
                 <div className="options-container">
                     {renderOptions(currentQuestion)}

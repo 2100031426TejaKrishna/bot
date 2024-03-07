@@ -4,7 +4,6 @@ const cors = require('cors');
 const connectToDatabase = require('./database');
 const insertQuestionRoute = require('./insertQuestion');
 const displayQuestionRoute = require('./displayQuestion');
-const displayCustomerQuestionRoute = require('./displayCustomerQuestion');
 const submitResponseRoute = require('./insertCustomerResponse');
 const { router: treeMapRouter} = require('./mongodb-utils');
 const editReadUpdateRoute = require('./editReadUpdate');
@@ -12,7 +11,7 @@ const deleteQuestionRouter = require('./deleteQuestion');
 const deleteTitleRouter = require('./deleteTitle');
 const insertTitlesRoute = require('./insertTitles');
 const displayTitlesRoute = require('./displayTitles');
-
+const displayCustomerQuestionRoute = require('./displayCustomerQuestion');
 
 const corsOptions = {
   origin: ['http://rtp.dusky.bond'],
@@ -30,7 +29,6 @@ connectToDatabase().then(async () => {
   console.log("Database connected!");
   app.use('/api', insertQuestionRoute);
   app.use('/api', displayQuestionRoute);
-  app.use('/api', displayCustomerQuestionRoute);
   app.use('/api', submitResponseRoute);
   app.use('/api', editReadUpdateRoute);
   app.use('/api', deleteQuestionRouter);
@@ -38,6 +36,7 @@ connectToDatabase().then(async () => {
   app.use('/api', treeMapRouter);
   app.use('/api', insertTitlesRoute);
   app.use('/api', displayTitlesRoute);
+  app.use('/api', displayCustomerQuestionRoute);
 
   const PORT = 5000;
 
