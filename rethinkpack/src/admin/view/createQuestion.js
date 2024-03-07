@@ -90,7 +90,7 @@ class CreateQuestion extends Component {
         country: '',
         explanation: '',
         firstQuestion: '',
-        countryFirstQuestion: ''
+        countryFirstQuestion: '',
       },
       requireResponse: false,
       allQuestions: [],
@@ -100,8 +100,10 @@ class CreateQuestion extends Component {
       selectedTitleQuestions: [],
       firstQuestionId: '',
       firstQuestionValue: '',
+      firstQuestionRender: false,
       countryFirstQuestionId: '',
       countryFirstQuestionValue: '',
+      countryFirstQuestionRender: false
     };
 
     this.initialState = { ...this.state };
@@ -191,6 +193,39 @@ class CreateQuestion extends Component {
       firstQuestion: true
      });
   };
+
+  updateCountryFirstQuestion = () => {
+    console.log(`prop updateCountryFirstQuestion executed.`)
+    
+    const { allQuestions, countryFirstQuestionId } = this.state;
+    const updatedQuestions = allQuestions.map(question => {
+      if (question._id === countryFirstQuestionId) {
+        console.log(`question._id === countryFirstQuestionId`)
+        return { 
+          ...question,
+          country: {
+            ...question.country,
+            countryFirstQuestion: false,
+          },
+        };
+      } else {
+        return question;
+      }
+    });
+    this.setState({ allQuestions: updatedQuestions });
+
+    this.setState({ 
+      countryFirstQuestionRender: false
+     });
+  };
+  
+  firstQuestionModalOnHide = () => {
+    this.setState( {
+      firstQuestionRender: false,
+      countryFirstQuestionRender: false
+    })
+
+  }
 
   handleTitleSelect = (e) => {
     const { allQuestions } = this.state;
@@ -798,15 +833,19 @@ class CreateQuestion extends Component {
   };
 
   validateCountryFirstQuestion = () => {
-    const { allQuestions } = this.state;
+    const { allQuestions, country } = this.state;
 
     for (let i=0; i < allQuestions.length; i++){
-      // case when a first question exists
-      if (allQuestions[i].country.countryFirstQuestion === true) {
-        this.setState({
-          countryFirstQuestionId: allQuestions[i]._id,
-          countryFirstQuestionValue: allQuestions[i].question
-        });
+      // Case: same country AND first question exists
+      if (
+        country.selectedCountry === allQuestions[i].country.selectedCountry && 
+        allQuestions[i].country.countryFirstQuestion === true
+      ) {
+          console.log(`A first question already exists: ${allQuestions[i].country.selectedCountry}`)
+          this.setState({
+            countryFirstQuestionId: allQuestions[i]._id,
+            countryFirstQuestionValue: allQuestions[i].question
+          });
         return { 
           exists: true, 
           id: allQuestions[i]._id, 
@@ -814,6 +853,8 @@ class CreateQuestion extends Component {
           countryValue: allQuestions[i].country.selectedCountry, 
           countryFirstQuestionBoolean: allQuestions[i].country.countryFirstQuestion
         };
+      } else {
+        console.log(`A country first question is vacant`)
       }
     };
     return { exists: false, id: null, value: null };
@@ -826,9 +867,11 @@ class CreateQuestion extends Component {
       <>
         <FirstQuestionModal
           openFirstQuestionModal = {true}
+          type = {"general"}
           firstQuestionId = {firstQuestionId}
           firstQuestionValue = {firstQuestionValue}
           updateFirstQuestion = {this.updateFirstQuestion}
+          firstQuestionModalOnHide = {this.firstQuestionModalOnHide}
         />
       </>
     );
@@ -847,18 +890,18 @@ class CreateQuestion extends Component {
     // this way when editing THE first question, the toggle may be turned from TRUE to FALSE without executing this validation 
     else if (exists === true && firstQuestion === false) {
       console.log(`A first question already exists: ${id}-${value}`)
-      this.renderFirstQuestionModal();
+      // this.renderFirstQuestionModal();
       this.setState({
-        validationErrors: {
-          firstQuestion: !exists ? '' : `A first question already exists: "${value}"`
-        }
+        firstQuestionRender: exists
+        // validationErrors: {
+        //   firstQuestion: !exists ? '' : `A first question already exists: "${value}"`
+        // }
       });
     };
   };
 
   toggleCountryFirstQuestion = () => {
     const { country } = this.state;
-
     // Reset state on each function call
     this.setState({
       validationErrors: {
@@ -873,26 +916,21 @@ class CreateQuestion extends Component {
           countryFirstQuestion: false ? '' : `Select a country first`
         }
       });
+      // exit function
       return;
-    }
+    };
 
-    // Cases
-    // - same country and firstQ vacant
-    // - same country and firstQ taken
-    // - diff country
-
-    // Case when country.selectedCountry has been selected
+    // When country.selectedCountry has been selected
     const { 
-      exists, 
+      exists,
       id, 
       value,
       countryValue,
       countryFirstQuestionBoolean
     } = this.validateCountryFirstQuestion();
 
-    // case same country and firstQ vacant
+    // Case: same country AND first question vacant
     if (country.selectedCountry === countryValue && countryFirstQuestionBoolean === false) {
-      console.log(`A country first question is vacant`)
       this.setState(prevState => ({
         country: {
           ...prevState.country,
@@ -900,22 +938,21 @@ class CreateQuestion extends Component {
         }
       }));
     }
-    // case when a first question exists AND toggle is currently set FALSE
+    // Case: same country AND first question exists AND toggle is currently set FALSE
     // this way when editing THE first question, the toggle may be turned from TRUE to FALSE without executing this validation 
-    else if (country.selectedCountry === countryValue && countryFirstQuestionBoolean === true && country.countryFirstQuestion === false) {
+    else if (
+      country.selectedCountry === countryValue && 
+      countryFirstQuestionBoolean === true && 
+      country.countryFirstQuestion === false
+    ) {
       console.log(`A country first question already exists: ${id}-${value}-${countryValue}`)
-      // this.renderFirstQuestionModal();
       this.setState({
-        validationErrors: {
-          // firstQuestion: !exists ? '' : `A first question already exists: "${value}"`
-        }
+        countryFirstQuestionId: id,
+        countryFirstQuestionValue: value,
+        countryFirstQuestionRender: exists
       });
-
-      // implement in handleCountryChange, to set the state to false
-      // happens when already selected tab true, then select a country to already has a first question
     }
-
-    // case different country
+    // Case: different country
     else if (country.selectedCountry !== countryValue) {
       console.log(`A country first question is vacant`)
       this.setState(prevState => ({
@@ -925,6 +962,28 @@ class CreateQuestion extends Component {
         }
       }));
     };
+  };
+
+  renderCountryFirstQuestionModal = () => {
+    const { 
+      countryFirstQuestionId, 
+      countryFirstQuestionValue,
+      country
+     } = this.state;
+    // console.log(`render values: ${id},${value}`);
+    return (
+      <>
+        <FirstQuestionModal
+          openFirstQuestionModal = {true}
+          type = {"country"}
+          country = { country.selectedCountry }
+          firstQuestionId = {countryFirstQuestionId}
+          firstQuestionValue = {countryFirstQuestionValue}
+          updateFirstQuestion = {this.updateCountryFirstQuestion}
+          firstQuestionModalOnHide = {this.firstQuestionModalOnHide}
+        />
+      </>
+    );
   };
 
   toggleRequireResponse = () => {
@@ -997,8 +1056,12 @@ class CreateQuestion extends Component {
   
   handleCountryChange = (e) => {
     this.setState( (prevState) => ({
-      country: { ...prevState.country, selectedCountry: e.target.value }
-    }))
+      country: { 
+        ...prevState.country, 
+        selectedCountry: e.target.value, 
+        countryFirstQuestion: false 
+      }
+    }));
   };
 
   validateTitleSelect = () => {
@@ -1281,7 +1344,7 @@ class CreateQuestion extends Component {
   };
 
   render() {
-    const { allTitles, selectedTitle, selectedTitleQuestions, selectedOption, showCountry, countries, country, isLeadingQuestion, showExplanation, firstQuestion, validationErrors, allQuestions, nextQuestion, previousQuestion } = this.state;
+    const { allTitles, selectedTitle, selectedTitleQuestions, selectedOption, showCountry, countries, country, isLeadingQuestion, showExplanation, firstQuestion, firstQuestionRender, countryFirstQuestionRender, validationErrors, allQuestions, nextQuestion, previousQuestion } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
     const showNextQuestion = (isLeadingQuestion && (selectedOption === 'checkbox' || selectedOption === 'linear' || selectedOption === 'multipleChoiceGrid' || selectedOption === 'checkboxGrid')) || !isLeadingQuestion;
 
@@ -1474,6 +1537,11 @@ class CreateQuestion extends Component {
                         <div style={{ color: 'red', fontSize: 12 }}>
                           {validationErrors.countryFirstQuestion}
                         </div>
+                      )}
+                      {countryFirstQuestionRender && (
+                        <div>
+                          {this.renderCountryFirstQuestionModal()}
+                        </div>
                       )} 
                     </div>
 
@@ -1573,11 +1641,16 @@ class CreateQuestion extends Component {
                     <label className="form-check-label" htmlFor="firstQuestionCheck">
                       First Question
                     </label>
-                    {validationErrors.firstQuestion && (
+                    {/* {validationErrors.firstQuestion && (
                       <div>
                         {this.renderFirstQuestionModal()}
                       </div>
-                    )}
+                    )} */}
+                    {firstQuestionRender && (
+                        <div>
+                          {this.renderFirstQuestionModal()}
+                        </div>
+                    )} 
                   </div>
                   )}
                   <button type="button" className="btn btn-dark" onClick={this.handleSubmit}>

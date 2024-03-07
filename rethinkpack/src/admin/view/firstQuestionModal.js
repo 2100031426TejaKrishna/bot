@@ -32,6 +32,8 @@ class FirstQuestionModal extends Component {
       },
       showModal: false,
       openFirstQuestionModal: props.openFirstQuestionModal,
+      type: props.type,
+      country: props.country,
       firstQuestionId: props.firstQuestionId,
       firstQuestionValue: props.firstQuestionValue
     };
@@ -49,16 +51,51 @@ class FirstQuestionModal extends Component {
 
   /*--------------onClick-----------------*/
 
-  
-
   /*--------------API-----------------*/
 
   removeExistingFirstQuestion = async (firstQuestionId) => {
-    
     const dataToUpdate = {
       firstQuestion: false
     };
-    
+   
+    try {
+      const response = await fetch(`http://${destination}/api/update/${firstQuestionId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dataToUpdate),
+      })
+      if (response.ok) {
+        console.log('Data submitted successfully');
+        this.setState({ 
+          showModal: false,
+          showToast: true 
+        });
+        setTimeout(() => this.setState({ showToast: false }), 10000);
+
+        // Pass props to createQuestion.js to toggle firstQuestiont to true and dataToInsert
+        this.props.updateFirstQuestion();
+      } else {
+        console.error('Server responded with an error:', response.status, response.statusText);
+        const responseData = await response.json();
+        console.error('Server error data:', responseData);
+      }
+    } catch (error) {
+      console.error('Network error:', error);
+    }
+  };
+
+  removeCountryExistingFirstQuestion = async (firstQuestionId) => {
+    const { country } = this.state;
+
+    const dataToUpdate = {
+      country: {
+        selectedCountry: country,
+        countryFirstQuestion: false
+      }
+    };
+   
     try {
       const response = await fetch(`http://${destination}/api/update/${firstQuestionId}`, {
         method: 'PATCH',
@@ -169,7 +206,7 @@ class FirstQuestionModal extends Component {
 
   render() {
 
-    const { validationErrors, firstQuestionId, firstQuestionValue } = this.state;
+    const { validationErrors, firstQuestionId, firstQuestionValue, type, country } = this.state;
 
     return (
 
@@ -177,6 +214,7 @@ class FirstQuestionModal extends Component {
         <Modal
           show={this.state.showModal === true}
           onHide={() => {
+            this.props.firstQuestionModalOnHide();
             this.setState({ showModal: false },
               this.resetState
             )
@@ -189,12 +227,22 @@ class FirstQuestionModal extends Component {
             className="modal-header"
             closeButton
           >
-            <Modal.Title
-              className="modal-title fs-5"
-              id="firstQuestionModalLabel"
-            >
-              A first question already exists
-            </Modal.Title>
+            {(type === "general") && (
+              <Modal.Title
+                className="modal-title fs-5"
+                id="firstQuestionModalLabel"
+              >
+                A first question already exists
+              </Modal.Title>
+            )}
+            {(type === "country") && (
+              <Modal.Title
+                className="modal-title fs-5"
+                id="firstQuestionModalLabel"
+              >
+                A first question already exists for {country} 
+              </Modal.Title>
+            )} 
           </Modal.Header>
           <Modal.Body>
             <form>
@@ -219,13 +267,24 @@ class FirstQuestionModal extends Component {
               >
                 Keep
               </button>
-              <button 
-                className="btn btn-danger" 
-                id="btRemove"
-                onClick={() => this.removeExistingFirstQuestion(firstQuestionId)}
-              >
-                Remove
-              </button>
+              {(type === "general") && (
+                <button 
+                  className="btn btn-danger" 
+                  id="btRemove"
+                  onClick={() => this.removeExistingFirstQuestion(firstQuestionId)}
+                >
+                  Remove
+                </button>
+              )}
+              {(type === "country") && (
+                <button 
+                  className="btn btn-danger" 
+                  id="btRemove"
+                  onClick={() => this.removeCountryExistingFirstQuestion(firstQuestionId)}
+                >
+                  Remove
+                </button>
+              )}
             </div>
           </Modal.Footer>
         </Modal>
