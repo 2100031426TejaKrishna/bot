@@ -6,6 +6,7 @@ import CustomerQuestions from './customer/view/questions';
 import UnlinkedQuestions from './admin/view/unlinkedQuestions';
 import SubtitleQuestions from './admin/view/subtitleQuestions';
 import NestedtitleQuestions from './admin/view/nestedtitleQuestions';
+import TitleTab from './admin/view/titleTab';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import axios from 'axios'; // Import Axios for making HTTP requests
 
@@ -74,6 +75,15 @@ function App() {
                   onClick={() => setActiveTab('unlinked')}
                 >
                   Unlinked
+                </a>
+              </li>
+              <li className="nav-item">
+                <a
+                  className={`nav-link ${activeTab === 'title' ? 'active' : ''}`}
+                  href="#"
+                  onClick={() => setActiveTab('title')}
+                >
+                  Title
                 </a>
               </li>
               {/* Render <li> elements based on titles */}
@@ -149,6 +159,7 @@ function App() {
             {activeTab === 'list' && <Questions triggerRefresh={triggerRefresh} />}
             {activeTab === 'treeMap' && <QuestionsTreeMap />}
             {activeTab === 'unlinked' && <UnlinkedQuestions />}
+            {activeTab === 'title' && <TitleTab />}
             {activeTab === activeSubTitle && <SubtitleQuestions selectedSubtitle={selectedSubtitle} />}
             {activeTab === activeNestedTitle && <NestedtitleQuestions selectedNestedtitle={selectedNestedtitle} />}
 

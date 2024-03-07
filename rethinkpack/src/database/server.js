@@ -9,6 +9,7 @@ const submitResponseRoute = require('./insertCustomerResponse');
 const { router: treeMapRouter} = require('./mongodb-utils');
 const editReadUpdateRoute = require('./editReadUpdate');
 const deleteQuestionRouter = require('./deleteQuestion');
+const deleteTitleRouter = require('./deleteTitle');
 const insertTitlesRoute = require('./insertTitles');
 const displayTitlesRoute = require('./displayTitles');
 
@@ -33,6 +34,7 @@ connectToDatabase().then(async () => {
   app.use('/api', submitResponseRoute);
   app.use('/api', editReadUpdateRoute);
   app.use('/api', deleteQuestionRouter);
+  app.use('/api', deleteTitleRouter);
   app.use('/api', treeMapRouter);
   app.use('/api', insertTitlesRoute);
   app.use('/api', displayTitlesRoute);
