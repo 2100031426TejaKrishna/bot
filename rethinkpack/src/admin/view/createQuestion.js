@@ -22,7 +22,7 @@ class CreateQuestion extends Component {
       previousQuestion: '',
       nextQuestion: '',
       selectedOption: 'multipleChoice',
-      options: [{ text: '', value: 'Option 1', isCorrect: false }],
+      options: [{ text: '', isCorrect: false, marks: '' }],
       gridOptions: { row: [{ label: 'Row 1', value: 'Row 1' }], column: [{ label: 'Column 1', value: 'Column 1' }], answers: [] },
       openEndedText: '',
       openEndedWordLimit: 500,
@@ -356,7 +356,16 @@ class CreateQuestion extends Component {
     this.setState({
       options: options.map((option, i) =>
       i === index ? { ...option, text: value } : option
-      ),
+      )    
+    }) 
+  };
+
+  handleMarksChange = (index, value) => {
+    const { options } = this.state;
+    this.setState({
+      options: options.map((option, i) =>
+      i === index ? { ...option, marks: value } : option
+      )    
     }) 
   };
 
@@ -1158,10 +1167,10 @@ class CreateQuestion extends Component {
     }
   };
   
-  validateMarks = () => {
-    const { marks, isLeadingQuestion } = this.state;
-    return isLeadingQuestion || (marks.trim() !== '' && !isNaN(marks));
-  };
+  // validateMarks = () => {
+  //   const { marks, isLeadingQuestion } = this.state;
+  //   return isLeadingQuestion || (marks.trim() !== '' && !isNaN(marks));
+  // };
   
   validateCountry = () => {
     const { country, showCountry } = this.state;
@@ -1212,7 +1221,7 @@ class CreateQuestion extends Component {
     const isOptionTypeValid = this.validateOptionType();
     const isOptionsValid = this.validateOptions();
     const isOpenEndedValid = this.validateOpenEnded();
-    const isMarksValid = this.validateMarks();
+    // const isMarksValid = this.validateMarks();
     const isCountryValid = this.validateCountry();
     const isExplanationValid = this.validateExplanation();
     const isGridValid = this.validateGrid();
@@ -1229,7 +1238,7 @@ class CreateQuestion extends Component {
         grid: isGridValid ? '' : 'Complete all grid data entry and ensure there is one selection per row',
         options: isOptionsValid ? '' : 'Add at least two options and at least one selection',
         openEnded: isOpenEndedValid  ? '' : 'Ensure entry is less than the word limit',
-        marks: isMarksValid ? '' : 'Enter the marks for this question',
+        // marks: isMarksValid ? '' : 'Enter the marks for this question',
         country: isCountryValid ? '' : 'Select at least one country',
         explanation: isExplanationValid ? '' : (this.state.isLeadingQuestion ? 'Enter the recommendation for this question' : 'Enter the explanation for the correct answer'),
       },
@@ -1242,7 +1251,7 @@ class CreateQuestion extends Component {
       !isOptionsValid || 
       !isGridValid || 
       !isOpenEndedValid || 
-      !isMarksValid || 
+      // !isMarksValid || 
       !isCountryValid || 
       !isExplanationValid 
       ) {
@@ -1273,7 +1282,7 @@ class CreateQuestion extends Component {
     const dataToInsert = {
       titleId: selectedTitle,
       question,
-      options,
+      options: options,
       optionType: selectedOption,
       openEndedText: this.state.openEndedText,
       marks: isLeadingQuestion ? undefined : parseFloat(marks),
@@ -1287,7 +1296,7 @@ class CreateQuestion extends Component {
       nextQuestion: isLeadingQuestion ? undefined : nextQuestion
     };
 
-    if (selectedOption === 'multipleChoice' || selectedOption === 'dropdown') {
+    if (selectedOption === 'dropdown') {
       dataToInsert.options = options.map((option) => ({
         text: option.text,
         isCorrect: option.isCorrect || false,
@@ -1344,7 +1353,7 @@ class CreateQuestion extends Component {
   };
 
   render() {
-    const { allTitles, selectedTitle, selectedTitleQuestions, selectedOption, showCountry, countries, country, isLeadingQuestion, showExplanation, firstQuestion, firstQuestionRender, countryFirstQuestionRender, validationErrors, allQuestions, nextQuestion, previousQuestion } = this.state;
+    const { allTitles, selectedTitle, selectedTitleQuestions, selectedOption, options, showCountry, countries, country, isLeadingQuestion, showExplanation, firstQuestion, firstQuestionRender, countryFirstQuestionRender, validationErrors, allQuestions, nextQuestion, previousQuestion } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
     const showNextQuestion = (isLeadingQuestion && (selectedOption === 'checkbox' || selectedOption === 'linear' || selectedOption === 'multipleChoiceGrid' || selectedOption === 'checkboxGrid')) || !isLeadingQuestion;
 
@@ -1477,7 +1486,7 @@ class CreateQuestion extends Component {
                       )}
                     </div>
                   )}
-                  {!isLeadingQuestion && (
+                  {/* {!isLeadingQuestion && (
                     <div className="mb-3">
                       <label htmlFor="mark" className="col-form-label">
                         Marks:
@@ -1489,8 +1498,35 @@ class CreateQuestion extends Component {
                         </div>
                       )}
                     </div>
-                  )}
-                  
+                  )} */}
+
+                  {/* MARKS */}
+                  <div className="mb-3">
+                    <label htmlFor="mark" className="col-form-label">
+                      Marks:
+                    </label>
+                  </div>
+                  {!isLeadingQuestion && options.map((option, index) => (
+                    // Check if the option is correct, and only render if it is
+                    option.isCorrect && (
+                      <div className="mb-3" key={index}>
+                        <input
+                          type="text"
+                          className="form-control"
+                          id="marks"
+                          placeholder={option.text}
+                          value={option.marks}
+                          onChange={(e) => this.handleMarksChange(index, e.target.value)}
+                        />
+                        {/* {validationErrors.marks && (
+                          <div style={{ color: 'red', fontSize: 12 }}>
+                            {validationErrors.marks}
+                          </div>
+                        )} */}
+                      </div>
+                    )
+                  ))}
+
                   {/* Specific Country */}
                   {showCountry && (
                     <div className="mb-3">
