@@ -5,33 +5,30 @@ const mongoose = require('mongoose');
 const Titles = mongoose.model('titles');
 const Questions = mongoose.model('questions');
 
+const fetchTitleDetails = async (titleId) => {
+    try {
+        const title = await Titles.findById(titleId);
+        return title;
+    } catch (error) {
+        console.error("Error fetching title details:", error);
+        throw error;
+    }
+};
+
 const fetchQuestions = async () => {
     try {
         let allQuestions = new Map();
         let queue = [];
         let firstQuestion = await Questions.findOne({ firstQuestion: true });
         if (firstQuestion) {
+            const titleDetails = await fetchTitleDetails(firstQuestion.titleId);
+            firstQuestion = { ...firstQuestion._doc, titleDetails };
             queue.push(firstQuestion);
         }
 
         while (queue.length > 0) {
             let currentQuestion = queue.shift();
             allQuestions.set(currentQuestion._id.toString(), currentQuestion);
-
-            // // Fetch the title, sub-title, and nested title label
-            // const title = await Titles.findOne({ "title.subTitle.nestedTitle._id": currentQuestion.titleId });
-            // if (title) {
-            //     currentQuestion.titleInfo = {
-            //         title: title.title.titleLabel,
-            //         subTitle: title.title.subTitle.map(sub => sub.subTitleLabel),
-            //         nestedTitle: title.title.subTitle.map(sub => sub.nestedTitle.map(nested => nested.nestedTitleLabel))
-            //     };
-            //     console.log("Title:", currentQuestion.titleInfo.title);
-            //     console.log("Sub Title:", currentQuestion.titleInfo.subTitle);
-            //     console.log("Nested Title:", currentQuestion.titleInfo.nestedTitle);
-            // } else {
-            //     console.log('Title not found for question:', currentQuestion._id);
-            // }
 
             // Function to handle adding next questions to the queue
             const addNextQuestionToQueue = async (nextQuestionId) => {
@@ -69,47 +66,21 @@ const fetchQuestions = async () => {
 
 const fetchQuestionsByCountries = async (selectedCountries) => {
     try {
-        const questions = await Questions.find({
-            countries: { $in: selectedCountries }
+        // Find questions related to the selected countries
+        const countrySpecificQuestions = await Questions.find({
+            "country.selectedCountry": { $in: selectedCountries }
         });
 
-        return questions;
+        // Prioritize questions where countryFirstQuestion is true
+        const firstQuestions = countrySpecificQuestions.filter(question => question.country.countryFirstQuestion);
+        const otherQuestions = countrySpecificQuestions.filter(question => !question.country.countryFirstQuestion);
+
+        // Concatenate the two arrays, ensuring firstQuestions come first
+        const orderedQuestions = [...firstQuestions, ...otherQuestions];
+
+        return orderedQuestions;
     } catch (error) {
         console.error("Error fetching questions by countries:", error);
-        throw error;
-    }
-};
-
-const fetchTitleDetailsForQuestion = async (nestedTitleId) => {
-    try {
-        const result = await Titles.aggregate([
-            {
-                $unwind: '$subTitle'
-            },
-            {
-                $unwind: '$subTitle.nestedTitle'
-            },
-            {
-                $match: { 'subTitle.nestedTitle._id': mongoose.Types.ObjectId(nestedTitleId) }
-            },
-            {
-                $project: {
-                    _id: 0,
-                    titleLabel: '$title.titleLabel',
-                    subTitleLabel: '$subTitle.subTitleLabel',
-                    nestedTitleLabel: '$subTitle.nestedTitle.nestedTitleLabel'
-                }
-            }
-        ]);
-
-        if (result.length > 0) {
-            return result[0]; // Assuming the nestedTitleId is unique, there should only be one match.
-        } else {
-            console.error("No matching title details found for the given nestedTitleId");
-            return null;
-        }
-    } catch (error) {
-        console.error("Error fetching title details for question:", error);
         throw error;
     }
 };
@@ -151,18 +122,51 @@ router.post('/fetchQuestionsByCountries', async (req, res) => {
     }
 });
 
-router.get('/questionTitleDetails/:nestedTitleId', async (req, res) => {
-    const { nestedTitleId } = req.params;
+router.get('/fetchTitleForQuestion/:questionId', async (req, res) => {
+    const { questionId } = req.params;
+
     try {
-        const titleDetails = await fetchTitleDetailsForQuestion(nestedTitleId);
-        if (titleDetails) {
-            res.json(titleDetails);
-        } else {
-            res.status(404).send("Title details not found for the specified question");
+        // Fetch the question using the provided ID
+        const question = await Questions.findById(questionId);
+        if (!question) {
+            return res.status(404).json({ message: "Question not found" });
         }
+
+        // Extract the titleId from the question
+        const { titleId } = question;
+
+        // Initialize variables to hold the title information
+        let titleInfo = null;
+        let subtitleInfo = null;
+        let nestedTitleInfo = null;
+
+        // Fetch all titles and iterate to find the matching nested title ID
+        const titles = await Titles.find();
+        for (let title of titles) {
+            for (let subtitle of title.title.subTitle) {
+                for (let nestedTitle of subtitle.nestedTitle) {
+                    if (nestedTitle._id.toString() === titleId) {
+                        // Once found, set the title, subtitle, and nested title information
+                        titleInfo = title.title.titleLabel;
+                        subtitleInfo = subtitle.subTitleLabel;
+                        nestedTitleInfo = nestedTitle.nestedTitleLabel;
+                        break;
+                    }
+                }
+                if (nestedTitleInfo) break;
+            }
+            if (nestedTitleInfo) break;
+        }
+
+        if (!nestedTitleInfo) {
+            return res.status(404).json({ message: "Title information not found" });
+        }
+
+        // Respond with the found title information
+        res.json({ title: titleInfo, subtitle: subtitleInfo, nestedTitle: nestedTitleInfo });
     } catch (error) {
-        console.error("Error in /questionTitleDetails route:", error);
-        res.status(500).send("Server error while fetching title details");
+        console.error("Error fetching title for question:", error);
+        res.status(500).json({ message: "Error fetching title information" });
     }
 });
 

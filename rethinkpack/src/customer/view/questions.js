@@ -6,10 +6,16 @@ import { faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 const Questions = () => {
     const [questions, setQuestions] = useState([]);
     const [currentQuestionId, setCurrentQuestionId] = useState(null);
+    const [titleDetails, setTitleDetails] = useState({
+        title: '',
+        subtitle: '',
+        nestedTitle: '',
+    });
     const [currentAnswer, setCurrentAnswer] = useState('');
-    const [currentTitleDetails, setCurrentTitleDetails] = useState(null);
     const [selectedOptions, setSelectedOptions] = useState([]);
     const [gridAnswers, setGridAnswers] = useState({});
+    const [openEndedText, setOpenEndedText] = useState('');
+    const [openEndedWordLimit, setOpenEndedWordLimit] = useState(500);
     const [canProceed, setCanProceed] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [answers, setAnswers] = useState({});
@@ -100,6 +106,7 @@ const Questions = () => {
         const currentQuestion = questions.find(q => q._id === currentQuestionId);
         if (!currentQuestion) return;
 
+        let answer = answers[currentQuestionId];
         const prevAnswer = answers[currentQuestionId];
         if (prevAnswer) {
             if (Array.isArray(prevAnswer)) {
@@ -113,6 +120,9 @@ const Questions = () => {
                 setCurrentAnswer(prevAnswer);
                 setCanProceed(prevAnswer.trim() !== '');
             }
+        } else if (currentQuestion.optionType === 'openEnded') {
+            setOpenEndedText(answer || '');
+            setCanProceed(!!answer && answer.trim().length > 0);
         } else {
             setCurrentAnswer('');
             setSelectedOptions([]);
@@ -123,29 +133,27 @@ const Questions = () => {
     }, [currentQuestionId, answers, questions]);
 
     useEffect(() => {
-        const fetchTitleDetails = async (nestedTitleId) => {
+        const fetchTitleDetailsForCurrentQuestion = async () => {
+            if (!currentQuestionId) return;
+    
             try {
-                const response = await fetch(`http://${destination}/api/questionTitleDetails/${nestedTitleId}`);
+                const response = await fetch(`http://${destination}/api/fetchTitleForQuestion/${currentQuestionId}`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const data = await response.json();
-                return data; 
+                setTitleDetails({
+                    title: data.title || '',
+                    subtitle: data.subtitle || '',
+                    nestedTitle: data.nestedTitle || '',
+                });
             } catch (error) {
                 console.error("Error fetching title details for question:", error);
             }
         };
     
-        if (currentQuestionId) {
-            const currentQuestion = questions.find(q => q._id === currentQuestionId);
-            if (currentQuestion && currentQuestion.titleId) {
-                fetchTitleDetails(currentQuestion.titleId).then(titleDetails => {
-                    // Assuming you have a state `currentTitleDetails` to store the fetched title details
-                    setCurrentTitleDetails(titleDetails); 
-                });
-            }
-        }
-    }, [currentQuestionId, questions, destination]);
+        fetchTitleDetailsForCurrentQuestion();
+    }, [currentQuestionId, destination]);
 
     const handleAnswerChange = (event, optionType) => {
         if (optionType === 'checkbox') {
@@ -154,6 +162,10 @@ const Questions = () => {
                 : selectedOptions.filter(option => option !== event.target.value);
             setSelectedOptions(updatedOptions);
             setCanProceed(updatedOptions.length > 0);
+        } else if (optionType === 'openEnded') {
+            setOpenEndedText(event.target.value);
+            setCanProceed(event.target.value.trim().length > 0);
+            updateAnswers(event.target.value);
         } else {
             setCurrentAnswer(event.target.value);
             setCanProceed(event.target.value.trim() !== '');
@@ -203,16 +215,36 @@ const Questions = () => {
             [currentQuestionId]: newAnswer
         }));
     };
+
+    const handleOpenEndedChange = (event) => {
+        setOpenEndedText(event.target.value);
+    };
+
+    const getWordCount = (text) => {
+        return text.split(/\s+/).filter(Boolean).length;
+    };
+
+    const validateOpenEndedInput = () => {
+        const wordCount = getWordCount(openEndedText);
+        return wordCount <= openEndedWordLimit;
+    };
     
     const handleNextQuestion = () => {
         const currentQuestion = questions.find(q => q._id === currentQuestionId);
         let newAnswer;
+
+        if (currentQuestion.optionType === 'openEnded' && !canProceed) {
+            alert("Please enter some text for the open-ended question before proceeding.");
+            return; // Prevent moving to the next question if no input is provided
+        }
     
         // Determine the new answer based on the question type
         if (currentQuestion.optionType === 'checkbox') {
             newAnswer = selectedOptions;
         } else if (currentQuestion.optionType.includes('Grid')) {
             newAnswer = gridAnswers;
+        } else if (currentQuestion.optionType === 'openEnded') {
+            newAnswer = openEndedText;
         } else {
             newAnswer = currentAnswer;
         }
@@ -503,6 +535,20 @@ const Questions = () => {
                         </tbody>
                     </table>
                 );
+            case 'openEnded':
+                return (
+                    <>
+                        <textarea
+                            className="form-control"
+                            value={openEndedText}
+                            onChange={(e) => handleAnswerChange(e, 'openEnded')}
+                            placeholder="Your answer..."
+                        />
+                        <div>
+                            Words: {getWordCount(openEndedText)}/{openEndedWordLimit}
+                        </div>
+                    </>
+                );
             default:
                 return null;
         }
@@ -643,18 +689,10 @@ const Questions = () => {
 
     return (
         <div className="survey-questions-container">
-            {currentTitleDetails && (
-                <div className="title-details">
-                    <h3>{currentTitleDetails.titleLabel}</h3>
-                    <h4>{currentTitleDetails.subTitleLabel}</h4>
-                    <h5>{currentTitleDetails.nestedTitleLabel}</h5>
-                </div>
-            )}
+            {titleDetails.title && <h4>{titleDetails.title}</h4>}
+            {titleDetails.subtitle && <h5>{titleDetails.subtitle}</h5>}
+            {titleDetails.nestedTitle && <h6>{titleDetails.nestedTitle}</h6>}
             <div className="survey-questions-card">
-                {/* <h6>
-                    {currentQuestion.questionType === 'productInfo' ? 'Product Information' : 
-                    currentQuestion.questionType === 'packagingInfo' ? 'Packaging Information' : ''}
-                </h6> */}
                 <h4>{currentQuestion.question}</h4>
                 <div className="options-container">
                     {renderOptions(currentQuestion)}
