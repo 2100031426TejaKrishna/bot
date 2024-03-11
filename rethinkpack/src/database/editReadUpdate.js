@@ -47,18 +47,31 @@ router.get('/filtered-questions', async (req, res) => {
         // Fetch all questions
         const allQuestions = await Questions.find();
 
-        // Fetch used question IDs from nextQuestion field
+        // Fetch used question IDs from nextQuestion and optionsNextQuestion fields
         const usedQuestionIds = allQuestions.reduce((acc, question) => {
             if (question.nextQuestion) {
                 acc.push(question.nextQuestion.toString()); // Convert ObjectId to string
             }
+            if (question.options) {
+                question.options.forEach(option => {
+                    if (option.optionsNextQuestion) {
+                        acc.push(option.optionsNextQuestion.toString()); // Convert ObjectId to string
+                    }
+                });
+            }
             return acc;
         }, []);
 
+        console.log('All Question IDs:', allQuestions.map(q => q._id.toString()));
+        console.log('Used Question IDs:', usedQuestionIds);
+
         // Filter questions based on criteria
         const filteredQuestions = allQuestions.filter(question => (
-            !usedQuestionIds.includes(question._id.toString())
+            !usedQuestionIds.includes(question._id.toString()) &&
+            !question.marks // Exclude leading questions by checking if marks property is falsy
         ));
+
+        console.log('Filtered Questions IDs:', filteredQuestions.map(q => q._id.toString()));
 
         res.json(filteredQuestions);
     } catch (error) {
