@@ -103,7 +103,8 @@ class CreateQuestion extends Component {
       firstQuestionRender: false,
       countryFirstQuestionId: '',
       countryFirstQuestionValue: '',
-      countryFirstQuestionRender: false
+      countryFirstQuestionRender: false,
+      showMarks: true
     };
 
     this.initialState = { ...this.state };
@@ -1167,11 +1168,29 @@ class CreateQuestion extends Component {
     }
   };
   
-  // validateMarks = () => {
-  //   const { marks, isLeadingQuestion } = this.state;
-  //   return isLeadingQuestion || (marks.trim() !== '' && !isNaN(marks));
-  // };
+  validateMarks = () => {
+    const { options, isLeadingQuestion, showMarks } = this.state;
   
+    // Case: when marks is not required, then validation for marks not required
+    if (!showMarks) {
+      return true;
+    }
+
+    // Use every to check validation for each option
+    const isValid = options.every(option => {
+      // Ensure option is defined and marks property exists
+      if (option && option.marks !== undefined) {
+        const marks = option.marks;
+        return marks.trim() !== '' && !isNaN(parseInt(marks));
+      }
+      return false; // Return false if option is undefined or marks is undefined
+    });
+  
+    // If all options pass validation or it's a leading question, return true
+    // return isLeadingQuestion || isValid;
+    return isLeadingQuestion || isValid;
+  };
+
   validateCountry = () => {
     const { country, showCountry } = this.state;
     // case when "Specific Country" is switched on
@@ -1221,14 +1240,12 @@ class CreateQuestion extends Component {
     const isOptionTypeValid = this.validateOptionType();
     const isOptionsValid = this.validateOptions();
     const isOpenEndedValid = this.validateOpenEnded();
-    // const isMarksValid = this.validateMarks();
+    const isMarksValid = this.validateMarks();
     const isCountryValid = this.validateCountry();
     const isExplanationValid = this.validateExplanation();
     const isGridValid = this.validateGrid();
-    //
     const { exists } = this.validateFirstQuestion();
     const isFirstQuestionValid = !exists;
-    // console.log(`isFirstQuestionValid: ${isFirstQuestionValid}`)
 
     this.setState({
       validationErrors: {
@@ -1238,7 +1255,7 @@ class CreateQuestion extends Component {
         grid: isGridValid ? '' : 'Complete all grid data entry and ensure there is one selection per row',
         options: isOptionsValid ? '' : 'Add at least two options and at least one selection',
         openEnded: isOpenEndedValid  ? '' : 'Ensure entry is less than the word limit',
-        // marks: isMarksValid ? '' : 'Enter the marks for this question',
+        marks: isMarksValid ? '' : 'Enter the marks for all options',
         country: isCountryValid ? '' : 'Select at least one country',
         explanation: isExplanationValid ? '' : (this.state.isLeadingQuestion ? 'Enter the recommendation for this question' : 'Enter the explanation for the correct answer'),
       },
@@ -1251,7 +1268,7 @@ class CreateQuestion extends Component {
       !isOptionsValid || 
       !isGridValid || 
       !isOpenEndedValid || 
-      // !isMarksValid || 
+      !isMarksValid || 
       !isCountryValid || 
       !isExplanationValid 
       ) {
@@ -1353,7 +1370,7 @@ class CreateQuestion extends Component {
   };
 
   render() {
-    const { allTitles, selectedTitle, selectedTitleQuestions, selectedOption, options, showCountry, countries, country, isLeadingQuestion, showExplanation, firstQuestion, firstQuestionRender, countryFirstQuestionRender, validationErrors, allQuestions, nextQuestion, previousQuestion } = this.state;
+    const { allTitles, selectedTitle, selectedTitleQuestions, selectedOption, options, showCountry, countries, country, isLeadingQuestion, showExplanation, firstQuestion, firstQuestionRender, countryFirstQuestionRender, validationErrors, allQuestions, nextQuestion, previousQuestion, showMarks } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
     const showNextQuestion = (isLeadingQuestion && (selectedOption === 'checkbox' || selectedOption === 'linear' || selectedOption === 'multipleChoiceGrid' || selectedOption === 'checkboxGrid')) || !isLeadingQuestion;
 
@@ -1441,6 +1458,8 @@ class CreateQuestion extends Component {
                       </div>
                     )}
                   </div>
+                  
+                  {/* Option Types */}
                   <div className="mb-3">
                     <label htmlFor="optionsType" className="col-form-label">
                       Options Types:
@@ -1449,7 +1468,15 @@ class CreateQuestion extends Component {
                       className="form-select"
                       id="optionsType"
                       value={selectedOption}
-                      onChange={(e) => this.setState({ selectedOption: e.target.value })}
+                      onChange={
+                        (e) => this.setState({ selectedOption: e.target.value }, () => {
+                          if (e.target.value === 'linear' || e.target.value === 'openEnded'){
+                            this.setState({ showMarks: false });
+                          } else {
+                            this.setState({ showMarks: true });
+                          };
+                        })
+                      }
                     >
                       <option value="multipleChoice">Multiple Choice</option>
                       <option value="checkbox">Checkbox</option>
@@ -1486,46 +1513,37 @@ class CreateQuestion extends Component {
                       )}
                     </div>
                   )}
-                  {/* {!isLeadingQuestion && (
-                    <div className="mb-3">
-                      <label htmlFor="mark" className="col-form-label">
-                        Marks:
-                      </label>
-                      <input type="text" className="form-control" id="marks" value={this.state.marks} onChange={this.handleInputChange} />
-                      {validationErrors.marks && (
-                        <div style={{ color: 'red', fontSize: 12 }}>
-                          {validationErrors.marks}
-                        </div>
-                      )}
-                    </div>
-                  )} */}
-
+                  
                   {/* MARKS */}
+                  {!isLeadingQuestion && showMarks && (
                   <div className="mb-3">
                     <label htmlFor="mark" className="col-form-label">
                       Marks:
                     </label>
                   </div>
-                  {!isLeadingQuestion && options.map((option, index) => (
+                  )}
+                  {!isLeadingQuestion && showMarks && options.map((option, index) => (
                     // Check if the option is correct, and only render if it is
                     option.isCorrect && (
                       <div className="mb-3" key={index}>
+                        <a>{option.text}</a>
                         <input
                           type="text"
                           className="form-control"
                           id="marks"
-                          placeholder={option.text}
+                          placeholder="Enter marks for this option"
                           value={option.marks}
                           onChange={(e) => this.handleMarksChange(index, e.target.value)}
                         />
-                        {/* {validationErrors.marks && (
-                          <div style={{ color: 'red', fontSize: 12 }}>
-                            {validationErrors.marks}
-                          </div>
-                        )} */}
+                        
                       </div>
                     )
                   ))}
+                  {validationErrors.marks && (
+                    <div style={{ color: 'red', fontSize: 12 }}>
+                      {validationErrors.marks}
+                    </div>
+                  )}
 
                   {/* Specific Country */}
                   {showCountry && (
