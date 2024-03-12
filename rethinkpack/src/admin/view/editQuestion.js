@@ -196,7 +196,7 @@ class EditQuestion extends Component {
       // Add this method to fetch filtered questions
       async fetchFilteredQuestions() {
         try {
-          const response = await fetch('http://localhost:5000/api/filtered-questions');
+          const response = await fetch(`http://${destination}/api/filtered-questions`);
           const filteredQuestions = await response.json();
       
           this.setState({ filteredQuestions }); // Update state with fetched questions

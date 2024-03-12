@@ -16,6 +16,7 @@ const Questions = () => {
     const [gridAnswers, setGridAnswers] = useState({});
     const [openEndedText, setOpenEndedText] = useState('');
     const [openEndedWordLimit, setOpenEndedWordLimit] = useState(500);
+    const [isWordCountExceeded, setIsWordCountExceeded] = useState(false);
     const [canProceed, setCanProceed] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [answers, setAnswers] = useState({});
@@ -163,9 +164,11 @@ const Questions = () => {
             setSelectedOptions(updatedOptions);
             setCanProceed(updatedOptions.length > 0);
         } else if (optionType === 'openEnded') {
-            setOpenEndedText(event.target.value);
-            setCanProceed(event.target.value.trim().length > 0);
-            updateAnswers(event.target.value);
+            const newText = event.target.value;
+            setOpenEndedText(newText);
+            const wordCount = getWordCount(newText);
+            setIsWordCountExceeded(wordCount > openEndedWordLimit);
+            setCanProceed(wordCount <= openEndedWordLimit && newText.trim().length > 0);
         } else {
             setCurrentAnswer(event.target.value);
             setCanProceed(event.target.value.trim() !== '');
@@ -216,19 +219,10 @@ const Questions = () => {
         }));
     };
 
-    const handleOpenEndedChange = (event) => {
-        setOpenEndedText(event.target.value);
-    };
-
     const getWordCount = (text) => {
-        return text.split(/\s+/).filter(Boolean).length;
+        return text.trim().split(/\s+/).filter(Boolean).length;
     };
 
-    const validateOpenEndedInput = () => {
-        const wordCount = getWordCount(openEndedText);
-        return wordCount <= openEndedWordLimit;
-    };
-    
     const handleNextQuestion = () => {
         const currentQuestion = questions.find(q => q._id === currentQuestionId);
         let newAnswer;
@@ -269,15 +263,7 @@ const Questions = () => {
         } else if (currentQuestion.nextQuestion) {
             navigateToNextQuestionById(currentQuestion.nextQuestion);
         } else {
-            if (countrySpecificQuestions.length > 0 && currentQuestionId === questions[questions.length - 1]._id) {
-                const updatedQuestions = [...questions, ...countrySpecificQuestions];
-                setQuestions(updatedQuestions);
-                setCurrentQuestionId(countrySpecificQuestions[0]._id); 
-                setCountrySpecificQuestions([]);
-            } else {
-                // Set isLastQuestion to true if there are no further questions defined
-                setIsLastQuestion(true);
-            }
+            navigateToEndOrCountrySpecificQuestions();
         }
     };
     
@@ -301,6 +287,18 @@ const Questions = () => {
             setIsLastQuestion(false);
         } else {
             // If the next question ID does not exist in the questions array, consider it the end
+            setIsLastQuestion(true);
+        }
+    };
+
+    const navigateToEndOrCountrySpecificQuestions = () => {
+        if (countrySpecificQuestions.length > 0) {
+            const firstCountrySpecificQuestion = countrySpecificQuestions[0];
+            setCurrentQuestionId(firstCountrySpecificQuestion._id); 
+            setQuestions((prevQuestions) => [...prevQuestions, ...countrySpecificQuestions]);
+            setCountrySpecificQuestions([]);
+        } else {
+            // Set isLastQuestion to true if there are no further questions or country-specific questions
             setIsLastQuestion(true);
         }
     };
@@ -545,7 +543,10 @@ const Questions = () => {
                             placeholder="Your answer..."
                         />
                         <div>
-                            Words: {getWordCount(openEndedText)}/{openEndedWordLimit}
+                            Words:{" "}
+                            <span className={isWordCountExceeded ? "word-count-exceeded" : ""}>
+                                {getWordCount(openEndedText)}/{openEndedWordLimit}
+                            </span>
                         </div>
                     </>
                 );
@@ -731,9 +732,9 @@ const Questions = () => {
                         <button className="survey-questions-button" onClick={handlePreviousQuestion}>Back</button>
                     )}
                     {isLastQuestion && countrySpecificQuestions.length === 0 ? (
-                        <button className="survey-questions-button" onClick={handleSubmit} disabled={!canProceed}>Submit</button>
+                        <button className="survey-questions-button" onClick={handleSubmit} disabled={!canProceed || isWordCountExceeded}>Submit</button>
                     ) : (
-                        <button className="survey-questions-button" onClick={handleNextQuestion} disabled={!canProceed}>Next</button>
+                        <button className="survey-questions-button" onClick={handleNextQuestion} disabled={!canProceed || isWordCountExceeded}>Next</button>
                     )}
                     </div>
                 <button className="survey-questions-button text-button" onClick={handleClearSelection}>Clear</button>

@@ -123,3 +123,7 @@
 .search-input {
     margin-bottom: 20px;
 }
+
+.word-count-exceeded {
+    color: red;
+}
