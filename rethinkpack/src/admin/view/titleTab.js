@@ -11,6 +11,71 @@ const TitleTab = ({ triggerRefresh }) => {
     const [titleToDelete, setTitleToDelete] = useState('');
     const [showToast, setShowToast] = useState(false);
     const [error, setError] = useState(null);
+    // Define state variables to hold the updated data
+    const [newTitle, setNewTitle] = useState('');
+    const [newSubTitle, setNewSubTitle] = useState('');
+    const [newNestedTitle, setNewNestedTitle] = useState('');
+    const [titleId, setTitleId] = useState('');
+    // State variables for toast message
+    const [showSuccessToast, setShowSuccessToast] = useState(false);
+    // State variable for controlling modal visibility
+    const [showEditModal, setShowEditModal] = useState(false);
+    
+    const handleEditClick = (titleId) => {
+        setTitleId(titleId);
+        setShowEditModal(true); // Open the modal when edit button is clicked
+    };
+
+    // Event handler to update the newTitle state when the user types in the input field
+    const handleTitleChange = (event) => {
+        setNewTitle(event.target.value);
+    };
+
+    const handleSubTitleChange = (event) => {
+        setNewSubTitle(event.target.value);
+    };
+
+    const handleNestedTitleChange = (event) => {
+        setNewNestedTitle(event.target.value);
+    };
+
+
+
+    // Event handler to handle form submission
+    const handleFormSubmit = () => {
+        // Create the updatedData object
+        const updatedData = {
+            title: {
+                titleLabel: newTitle,
+                subTitle: [
+                    {
+                        subTitleLabel: newSubTitle,
+                        nestedTitle: [
+                            {
+                                nestedTitleLabel: newNestedTitle
+                            }
+                        ]
+                    }
+                ]
+            }
+        };
+
+
+        // Send the updatedData object to the backend API using Axios or your preferred method
+        axios.put(`http://${destination}/api/updateTitle/${titleId}`, updatedData)
+            .then(response => {
+                // Handle success
+                console.log('Title updated:', response.data);
+                setShowSuccessToast(true); // Show the success toast
+                setTimeout(() => setShowSuccessToast(false), 5000); // Hide the toast after 5 seconds
+                setShowEditModal(false); // Close the modal after successful update
+            })
+            .catch(error => {
+                // Handle error
+                console.error('Error updating title:', error);
+            });
+    };
+
 
     const deleteTitle = async () => {
         if (titleToDelete) {
@@ -61,6 +126,19 @@ const TitleTab = ({ triggerRefresh }) => {
 
     return (
         <div className="questions-container">
+            {/* Success toast notification */}
+            {showSuccessToast && (
+                <div className="toast-container position-fixed bottom-0 end-0 p-3">
+                    <div className="toast show bg-success text-white">
+                        <div className="d-flex justify-content-between">
+                            <div className="toast-body">
+                                Title updated successfully!
+                            </div>
+                            <button type="button" className="btn-close btn-close-white me-2 m-auto" onClick={() => setShowSuccessToast(false)}></button>
+                        </div>
+                    </div>
+                </div>
+            )}
             {/* Toast notification */}
             {showToast && (
                 <div className="toast-container position-fixed bottom-0 end-0 p-3">
@@ -100,6 +178,7 @@ const TitleTab = ({ triggerRefresh }) => {
                             className="btn btn-primary"
                             data-bs-toggle={`modal`}
                             data-bs-target={`#editModal${index}`}
+                            onClick={() => handleEditClick(title._id)} // Pass titleId to the event handler
                         >
                             Edit
                         </button>
@@ -123,7 +202,7 @@ const TitleTab = ({ triggerRefresh }) => {
                                         <form>
                                             <div className="mb-3">
                                                 <label htmlFor={`titleInput${index}`} className="form-label"><strong>New Title:</strong></label>
-                                                <input type="text" className="form-control" id={`titleInput${index}`} />
+                                                <input type="text" className="form-control" id={`titleInput${index}`} value={newTitle} onChange={handleTitleChange} />
                                             </div>
                                         </form>
 
@@ -138,7 +217,7 @@ const TitleTab = ({ triggerRefresh }) => {
                                                 <form>
                                                     <div className="mb-3">
                                                         <label htmlFor={`subtitleInput${index}_${subIndex}`} className="form-label"><strong>New SubTitle:</strong></label>
-                                                        <input type="text" className="form-control" id={`subtitleInput${index}_${subIndex}`} />
+                                                        <input type="text" className="form-control" id={`subtitleInput${index}_${subIndex}`} value={newSubTitle} onChange={handleSubTitleChange} />
                                                     </div>
                                                 </form>
 
@@ -153,20 +232,19 @@ const TitleTab = ({ triggerRefresh }) => {
                                                         <form>
                                                             <div className="mb-3">
                                                                 <label htmlFor={`nestedTitleInput${index}_${subIndex}_${nestedIndex}`} className="form-label"><strong>New NestedTitle:</strong></label>
-                                                                <input type="text" className="form-control" id={`nestedTitleInput${index}_${subIndex}_${nestedIndex}`} />
+                                                                <input type="text" className="form-control" id={`nestedTitleInput${index}_${subIndex}_${nestedIndex}`} value={newNestedTitle} onChange={handleNestedTitleChange} />
                                                             </div>
                                                         </form>
                                                     </div>
                                                 ))}
                                             </div>
-                                            
                                         ))}
                                     </div>
 
 
                                     <div className="modal-footer">
                                         <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                        <button type="button" className="btn btn-primary">Save changes</button>
+                                        <button type="button" className="btn btn-primary" onClick={handleFormSubmit}>Save changes</button>
                                     </div>
                                 </div>
                             </div>
