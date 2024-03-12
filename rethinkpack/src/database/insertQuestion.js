@@ -9,7 +9,7 @@ const questionSchema = new mongoose.Schema({
     options: [{
         text: String,
         isCorrect: Boolean,
-        marks: String,
+        marks: Number,
         optionsNextQuestion: String
     }],
     linearScale: [{
@@ -26,7 +26,8 @@ const questionSchema = new mongoose.Schema({
         answers: [{
             rowIndex: Number,
             columnIndex: Number,
-            isCorrect: Boolean
+            isCorrect: Boolean,
+            marks: Number
         }]
     },
     requireResponse: Boolean,  

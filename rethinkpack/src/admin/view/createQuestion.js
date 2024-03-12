@@ -329,23 +329,33 @@ class CreateQuestion extends Component {
       };
     });
   };
-  
+
   deleteGridRow = (index) => {
-    this.setState(prevState => ({
-      gridOptions: {
-        ...prevState.gridOptions,
-        row: prevState.gridOptions.row.filter((_, idx) => idx !== index)
-      }
-    }));
+    this.setState(prevState => {
+      const updatedRow = prevState.gridOptions.row.filter((_, idx) => idx !== index);
+      const updatedAnswers = prevState.gridOptions.answers.filter(answer => answer.rowIndex !== index);
+      return {
+        gridOptions: {
+          ...prevState.gridOptions,
+          row: updatedRow,
+          answers: updatedAnswers
+        }
+      };
+    });
   };
-  
+
   deleteGridColumn = (index) => {
-    this.setState(prevState => ({
-      gridOptions: {
-        ...prevState.gridOptions,
-        column: prevState.gridOptions.column.filter((_, idx) => idx !== index)
-      }
-    }));
+    this.setState(prevState => {
+      const updatedColumn = prevState.gridOptions.column.filter((_, idx) => idx !== index);
+      const updatedAnswers = prevState.gridOptions.answers.filter(answer => answer.columnIndex !== index);
+      return {
+        gridOptions: {
+          ...prevState.gridOptions,
+          column: updatedColumn,
+          answers: updatedAnswers
+        }
+      };
+    });
   };
 
   handleInputChange = (e) => {
@@ -1370,7 +1380,7 @@ class CreateQuestion extends Component {
   };
 
   render() {
-    const { allTitles, selectedTitle, selectedTitleQuestions, selectedOption, options, showCountry, countries, country, isLeadingQuestion, showExplanation, firstQuestion, firstQuestionRender, countryFirstQuestionRender, validationErrors, allQuestions, nextQuestion, previousQuestion, showMarks } = this.state;
+    const { allTitles, selectedTitle, selectedTitleQuestions, selectedOption, options, showCountry, countries, country, isLeadingQuestion, showExplanation, firstQuestion, firstQuestionRender, countryFirstQuestionRender, validationErrors, allQuestions, nextQuestion, previousQuestion, showMarks, gridOptions } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
     const showNextQuestion = (isLeadingQuestion && (selectedOption === 'checkbox' || selectedOption === 'linear' || selectedOption === 'multipleChoiceGrid' || selectedOption === 'checkboxGrid')) || !isLeadingQuestion;
 
@@ -1522,6 +1532,7 @@ class CreateQuestion extends Component {
                     </label>
                   </div>
                   )}
+                  {/* Case: multiple choice and checkbox */}
                   {!isLeadingQuestion && showMarks && options.map((option, index) => (
                     // Check if the option is correct, and only render if it is
                     option.isCorrect && (
@@ -1536,6 +1547,23 @@ class CreateQuestion extends Component {
                           onChange={(e) => this.handleMarksChange(index, e.target.value)}
                         />
                         
+                      </div>
+                    )
+                  ))}
+                  {/* Case: multiple choice grid and checkbox grid */}
+                  {!isLeadingQuestion && showMarks && gridOptions.answers.map((answers, index) => (
+                    // Check if the option is correct, and only render if it is
+                    answers.isCorrect && (
+                      <div className="mb-3" key={index}>
+                        <a>{gridOptions.row[answers.rowIndex] ? gridOptions.row[answers.rowIndex].text : ''} / {gridOptions.column[answers.columnIndex] ? gridOptions.column[answers.columnIndex].text : ''}</a>
+                        <input
+                          type="text"
+                          className="form-control"
+                          id="marks"
+                          placeholder="Enter marks for this option"
+                          value={answers.marks}
+                          onChange={(e) => this.handleMarksChange(index, e.target.value)}
+                        />
                       </div>
                     )
                   ))}
