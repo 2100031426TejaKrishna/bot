@@ -33,4 +33,18 @@ router.get('/displayAllTitles', async (req, res) => {
     }
 });
 
+router.get('/fetchTitleById/:titleId', async (req, res) => {
+    try {
+        const titleId = req.params.titleId;
+        const title = await Titles.findById(titleId);
+        if (!title) {
+            return res.status(404).json({ error: 'Title not found' });
+        }
+        res.json(title);
+    } catch (error) {
+        console.error('Error fetching title by ID:', error);
+        res.status(500).send('Unable to fetch title');
+    }
+});
+
 module.exports = router;

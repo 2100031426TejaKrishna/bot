@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import './questions.css';
-import EditQuestion from './editQuestion';
 import axios from 'axios'; // Import Axios for making HTTP requests
 
 // Switch URLs between Server and Local hosting here
@@ -12,7 +11,6 @@ const TitleTab = ({ triggerRefresh }) => {
     const [titleToDelete, setTitleToDelete] = useState('');
     const [showToast, setShowToast] = useState(false);
     const [error, setError] = useState(null);
-
 
     const deleteTitle = async () => {
         if (titleToDelete) {
@@ -45,6 +43,7 @@ const TitleTab = ({ triggerRefresh }) => {
                 setTitles(response.data); // Set titles from the response
                 console.log(response.data); // Log the titles data to the console
             } catch (error) {
+                setError(error); // Set the error state
                 console.error('Error fetching titles:', error);
             }
         };
@@ -79,12 +78,12 @@ const TitleTab = ({ triggerRefresh }) => {
             {titles.map((title, index) => (
                 <div key={index} className="question-card">
                     <h4>Title: {title.title.titleLabel.toString()}</h4>
-    
+
                     {/* Render subtitles */}
                     {title.title.subTitle.map((subTitle, subIndex) => (
                         <div key={subIndex}>
                             <h6>Subtitle: {subTitle.subTitleLabel.toString()}</h6>
-    
+
                             {/* Check if nestedTitle exists */}
                             {subTitle.nestedTitle && subTitle.nestedTitle.map((nestedTitle, nestedIndex) => (
                                 <div key={nestedIndex}>
@@ -93,9 +92,86 @@ const TitleTab = ({ triggerRefresh }) => {
                             ))}
                         </div>
                     ))}
-    
+
                     {/* Delete button and modal for confirming deletion */}
                     <div className="question-actions">
+                        {/* Edit button */}
+                        <button
+                            className="btn btn-primary"
+                            data-bs-toggle={`modal`}
+                            data-bs-target={`#editModal${index}`}
+                        >
+                            Edit
+                        </button>
+
+                        {/* Edit Modal */}
+                        <div className="modal fade" id={`editModal${index}`} tabIndex="-1" aria-labelledby={`editModalLabel${index}`} aria-hidden="true">
+                            <div className="modal-dialog modal-lg">
+                                <div className="modal-content">
+                                    <div className="modal-header">
+                                        <h5 className="modal-title" id={`editModalLabel${index}`}>Edit Title</h5>
+                                        <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div className="modal-body">
+                                        {/* Display default title */}
+                                        <div className="mb-3">
+                                            <label htmlFor={`defaultTitle${index}`} className="form-label">Default Title:</label>
+                                            <div id={`defaultTitle${index}`}><em>{title.title.titleLabel}</em></div>
+                                        </div>
+
+                                        {/* Form fields for editing */}
+                                        <form>
+                                            <div className="mb-3">
+                                                <label htmlFor={`titleInput${index}`} className="form-label"><strong>New Title:</strong></label>
+                                                <input type="text" className="form-control" id={`titleInput${index}`} />
+                                            </div>
+                                        </form>
+
+                                        {/* Display default subtitles and form fields for editing */}
+                                        {title.title.subTitle.map((subTitle, subIndex) => (
+                                            <div key={subIndex}>
+                                                <div className="mb-3">
+                                                    <label htmlFor={`defaultSubTitle${index}_${subIndex}`} className="form-label">Default SubTitle:</label>
+                                                    <div id={`defaultSubTitle${index}_${subIndex}`}><em>{subTitle.subTitleLabel}</em></div>
+                                                </div>
+
+                                                <form>
+                                                    <div className="mb-3">
+                                                        <label htmlFor={`subtitleInput${index}_${subIndex}`} className="form-label"><strong>New SubTitle:</strong></label>
+                                                        <input type="text" className="form-control" id={`subtitleInput${index}_${subIndex}`} />
+                                                    </div>
+                                                </form>
+
+                                                {/* Display default nested titles and form fields for editing */}
+                                                {subTitle.nestedTitle && subTitle.nestedTitle.map((nestedTitle, nestedIndex) => (
+                                                    <div key={nestedIndex}>
+                                                        <div className="mb-3">
+                                                            <label htmlFor={`defaultNestedTitle${index}_${subIndex}_${nestedIndex}`} className="form-label">Default NestedTitle:</label>
+                                                            <div id={`defaultNestedTitle${index}_${subIndex}_${nestedIndex}`}><em>{nestedTitle.nestedTitleLabel}</em></div>
+                                                        </div>
+
+                                                        <form>
+                                                            <div className="mb-3">
+                                                                <label htmlFor={`nestedTitleInput${index}_${subIndex}_${nestedIndex}`} className="form-label"><strong>New NestedTitle:</strong></label>
+                                                                <input type="text" className="form-control" id={`nestedTitleInput${index}_${subIndex}_${nestedIndex}`} />
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            
+                                        ))}
+                                    </div>
+
+
+                                    <div className="modal-footer">
+                                        <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                        <button type="button" className="btn btn-primary">Save changes</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <button
                             className="btn btn-danger"
                             data-bs-toggle={`modal`}
@@ -134,10 +210,10 @@ const TitleTab = ({ triggerRefresh }) => {
                     </div>
                 </div>
             ))}
-    
-            
+
+
         </div>
     );
-};    
+};
 
 export default TitleTab;
