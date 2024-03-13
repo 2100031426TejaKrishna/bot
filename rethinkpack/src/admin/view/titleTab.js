@@ -12,31 +12,29 @@ const TitleTab = ({ triggerRefresh }) => {
     const [showToast, setShowToast] = useState(false);
     const [error, setError] = useState(null);
     // Define state variables to hold the updated data
-    const [newTitle, setNewTitle] = useState('');
-    const [newSubTitle, setNewSubTitle] = useState('');
-    const [newNestedTitle, setNewNestedTitle] = useState('');
+    const [editedTitle, setEditedTitle] = useState('');
+    const [editedSubTitle, setEditedSubTitle] = useState('');
+    const [editedNestedTitle, setEditedNestedTitle] = useState('');
     const [titleId, setTitleId] = useState('');
     // State variables for toast message
     const [showSuccessToast, setShowSuccessToast] = useState(false);
     // State variable for controlling modal visibility
-    const [showEditModal, setShowEditModal] = useState(false);
-    
+
     const handleEditClick = (titleId) => {
         setTitleId(titleId);
-        setShowEditModal(true); // Open the modal when edit button is clicked
     };
 
-    // Event handler to update the newTitle state when the user types in the input field
+    // Event handler to update the editedTitle state when the user types in the input field
     const handleTitleChange = (event) => {
-        setNewTitle(event.target.value);
+        setEditedTitle(event.target.value);
     };
 
     const handleSubTitleChange = (event) => {
-        setNewSubTitle(event.target.value);
+        setEditedSubTitle(event.target.value);
     };
 
     const handleNestedTitleChange = (event) => {
-        setNewNestedTitle(event.target.value);
+        setEditedNestedTitle(event.target.value);
     };
 
 
@@ -46,13 +44,13 @@ const TitleTab = ({ triggerRefresh }) => {
         // Create the updatedData object
         const updatedData = {
             title: {
-                titleLabel: newTitle,
+                titleLabel: editedTitle,
                 subTitle: [
                     {
-                        subTitleLabel: newSubTitle,
+                        subTitleLabel: editedSubTitle,
                         nestedTitle: [
                             {
-                                nestedTitleLabel: newNestedTitle
+                                nestedTitleLabel: editedNestedTitle
                             }
                         ]
                     }
@@ -68,7 +66,6 @@ const TitleTab = ({ triggerRefresh }) => {
                 console.log('Title updated:', response.data);
                 setShowSuccessToast(true); // Show the success toast
                 setTimeout(() => setShowSuccessToast(false), 5000); // Hide the toast after 5 seconds
-                setShowEditModal(false); // Close the modal after successful update
             })
             .catch(error => {
                 // Handle error
@@ -194,15 +191,15 @@ const TitleTab = ({ triggerRefresh }) => {
                                     <div className="modal-body">
                                         {/* Display default title */}
                                         <div className="mb-3">
-                                            <label htmlFor={`defaultTitle${index}`} className="form-label">Default Title:</label>
+                                            <label htmlFor={`defaultTitle${index}`} className="form-label"><strong>Default Title:</strong></label>
                                             <div id={`defaultTitle${index}`}><em>{title.title.titleLabel}</em></div>
                                         </div>
 
                                         {/* Form fields for editing */}
                                         <form>
                                             <div className="mb-3">
-                                                <label htmlFor={`titleInput${index}`} className="form-label"><strong>New Title:</strong></label>
-                                                <input type="text" className="form-control" id={`titleInput${index}`} value={newTitle} onChange={handleTitleChange} />
+                                                <label htmlFor={`titleInput${index}`} className="form-label"><strong>Edit Title:</strong></label>
+                                                <input type="text" className="form-control" id={`titleInput${index}`} value={editedTitle} onChange={handleTitleChange} />
                                             </div>
                                         </form>
 
@@ -210,14 +207,22 @@ const TitleTab = ({ triggerRefresh }) => {
                                         {title.title.subTitle.map((subTitle, subIndex) => (
                                             <div key={subIndex}>
                                                 <div className="mb-3">
-                                                    <label htmlFor={`defaultSubTitle${index}_${subIndex}`} className="form-label">Default SubTitle:</label>
+                                                    <label htmlFor={`defaultSubTitle${index}_${subIndex}`} className="form-label"><strong>Default SubTitle:</strong></label>
                                                     <div id={`defaultSubTitle${index}_${subIndex}`}><em>{subTitle.subTitleLabel}</em></div>
                                                 </div>
+                                                {Array.isArray(title.title.subTitle) && title.title.subTitle.length > 1 && (
+                                                    <button
+                                                        className="btn btn-outline-secondary delete-button"
+                                                        type="button"
+                                                    >
+                                                        Delete Subtitle
+                                                    </button>
+                                                )}
 
                                                 <form>
                                                     <div className="mb-3">
-                                                        <label htmlFor={`subtitleInput${index}_${subIndex}`} className="form-label"><strong>New SubTitle:</strong></label>
-                                                        <input type="text" className="form-control" id={`subtitleInput${index}_${subIndex}`} value={newSubTitle} onChange={handleSubTitleChange} />
+                                                        <label htmlFor={`subtitleInput${index}_${subIndex}`} className="form-label"><strong>Edit SubTitle:</strong></label>
+                                                        <input type="text" className="form-control" id={`subtitleInput${index}_${subIndex}`} value={editedSubTitle} onChange={handleSubTitleChange} />
                                                     </div>
                                                 </form>
 
@@ -225,20 +230,32 @@ const TitleTab = ({ triggerRefresh }) => {
                                                 {subTitle.nestedTitle && subTitle.nestedTitle.map((nestedTitle, nestedIndex) => (
                                                     <div key={nestedIndex}>
                                                         <div className="mb-3">
-                                                            <label htmlFor={`defaultNestedTitle${index}_${subIndex}_${nestedIndex}`} className="form-label">Default NestedTitle:</label>
+                                                            <label htmlFor={`defaultNestedTitle${index}_${subIndex}_${nestedIndex}`} className="form-label"><strong>Default NestedTitle:</strong></label>
                                                             <div id={`defaultNestedTitle${index}_${subIndex}_${nestedIndex}`}><em>{nestedTitle.nestedTitleLabel}</em></div>
                                                         </div>
+                                                        {Array.isArray(subTitle.nestedTitle) && subTitle.nestedTitle.length > 1 && (
+                                                            <button
+                                                                className="btn btn-outline-secondary delete-button"                                          
+                                                                type="button"
+                                                            >
+                                                                Delete Nestedtitle
+                                                            </button>
+                                                        )}
 
                                                         <form>
                                                             <div className="mb-3">
-                                                                <label htmlFor={`nestedTitleInput${index}_${subIndex}_${nestedIndex}`} className="form-label"><strong>New NestedTitle:</strong></label>
-                                                                <input type="text" className="form-control" id={`nestedTitleInput${index}_${subIndex}_${nestedIndex}`} value={newNestedTitle} onChange={handleNestedTitleChange} />
+                                                                <label htmlFor={`nestedTitleInput${index}_${subIndex}_${nestedIndex}`} className="form-label"><strong>Edit NestedTitle:</strong></label>
+                                                                <input type="text" className="form-control" id={`nestedTitleInput${index}_${subIndex}_${nestedIndex}`} value={editedNestedTitle} onChange={handleNestedTitleChange} />
                                                             </div>
                                                         </form>
                                                     </div>
                                                 ))}
                                             </div>
                                         ))}
+                                        {/* Add button to add new subtitle */}
+                                        <button className="btn btn-secondary" >Add Subtitle</button>
+                                        {/* Add button to add new nested title */}
+                                        <button className="btn btn-secondary" >Add Nested Title</button>
                                     </div>
 
 
