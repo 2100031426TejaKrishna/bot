@@ -405,11 +405,17 @@ const Questions = () => {
             [currentQuestionId]: lastAnswer 
         });
     
-        const userId = "1"; 
-        const formattedResponses = questions.map((question, index) => ({
-            questionId: question._id,
-            answer: answers[index] || lastAnswer,
-        }));
+        const formattedResponses = questions.map(question => {
+            const answerForQuestion = answers[question._id] || ''; // Fetch the answer using question ID, defaulting to an empty string if not found
+            return {
+                questionId: question._id,
+                answer: answerForQuestion,
+            };
+        });
+    
+        console.log("Submitted Answers:", formattedResponses);
+    
+        const userId = "1";
     
         try {
             const response = await fetch(`http://${destination}/api/submitResponse`, {
