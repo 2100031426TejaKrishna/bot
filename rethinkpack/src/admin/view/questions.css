@@ -141,3 +141,13 @@
 .question-actions button {
     margin-left: 10px; 
 }
+
+.delete-button {
+    color: red;
+    border-color: red; /* Red border */
+}
+
+.delete-button:hover {
+    background-color: red; /* Red background when hovered */
+    color: white; /* White text color when hovered */
+}
