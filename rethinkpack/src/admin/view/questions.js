@@ -432,19 +432,19 @@ const Questions = ({ triggerRefresh }) => {
                             </label>
                         </div>
                     )}
-                    {question.marks && <p className="question-marks">Marks: {question.marks}</p>}
-                    {question.countries && question.countries.length > 0 && (
-                    <p className="question-countries">Countries: {question.countries.join(', ')}</p>
-                    )}
-                    {question.explanation && <p className="question-explanation">Explanation: {question.explanation}</p>}
-                    {question.nextQuestionTitle && ( <p className="next-question">Next Question: {question.nextQuestionTitle}</p> )}
-                    <p className="question-date">Date created: {formatDate(question.date)}</p>
-                    <div className="question-actions">
-                        <EditQuestion 
-                            index = {index}
-                            questionId = {question._id} 
-                            refreshQuestions={refreshQuestions}
-                        />
+                        {question.marks && <p className="question-marks">Marks: {question.marks}</p>}
+                        {question.country && question.country.selectedCountry && (
+                        <p className="question-country">Country: {question.country.selectedCountry}</p>
+                        )}
+                        {question.explanation && <p className="question-explanation">Explanation: {question.explanation}</p>}
+                        {question.nextQuestionTitle && <p className="next-question">Next Question: {question.nextQuestionTitle}</p>}
+                        <p className="question-date">Date created: {formatDate(question.date)}</p>
+                        <div className="question-actions">
+                            <EditQuestion 
+                                index={index}
+                                questionId={question._id} 
+                                refreshQuestions={refreshQuestions}
+                            />
                         <button 
                             className="btn btn-danger" 
                             data-bs-toggle="modal" 
