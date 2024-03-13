@@ -9,8 +9,8 @@ import CreateTitle from './createTitle';
 import FirstQuestionModal from './firstQuestionModal';
 
 // Switch URLs between Server and Local hosting here
-// const destination = "localhost:5000";
-const destination = "rtp.dusky.bond:5000";
+const destination = "localhost:5000";
+// const destination = "rtp.dusky.bond:5000";
 
 class CreateQuestion extends Component {
   constructor(props) {
@@ -379,6 +379,15 @@ class CreateQuestion extends Component {
       )    
     }) 
   };
+
+  // handleGridMarksChange = (index, value) => {
+  //   const { gridOptions } = this.state;
+  //   this.setState({
+  //     gridOptions: ...gridOptions,options.map((option, i) =>
+  //     i === index ? { ...option, marks: value } : option
+  //     )    
+  //   }) 
+  // };
 
   handleRowChange = (index, e) => {
     const newValue = e.target.value;
@@ -1054,7 +1063,7 @@ class CreateQuestion extends Component {
         gridOptions.answers.splice(answerIndex, 1);
       } else {
         // If answer doesn't exist, add it
-        gridOptions.answers.push({ rowIndex, columnIndex: colIndex, isCorrect: true });
+        gridOptions.answers.push({ rowIndex, columnIndex: colIndex, isCorrect: true, marks: '' });
       }
     
       this.setState( { gridOptions } );
@@ -1069,7 +1078,7 @@ class CreateQuestion extends Component {
       }
   
       // Add the new answer with isCorrect set to true
-      gridOptions.answers.push({ rowIndex, columnIndex: colIndex, isCorrect: true });
+      gridOptions.answers.push({ rowIndex, columnIndex: colIndex, isCorrect: true, marks: ''  });
       this.setState( { gridOptions } );
     }
   };
@@ -1179,26 +1188,45 @@ class CreateQuestion extends Component {
   };
   
   validateMarks = () => {
-    const { options, isLeadingQuestion, showMarks } = this.state;
+    const { selectedOption, options, isLeadingQuestion, showMarks, gridOptions } = this.state;
   
     // Case: when marks is not required, then validation for marks not required
     if (!showMarks) {
       return true;
     }
+    
+    // Case: when optionType is multipleChoice OR dropdown
 
-    // Use every to check validation for each option
-    const isValid = options.every(option => {
-      // Ensure option is defined and marks property exists
-      if (option && option.marks !== undefined) {
-        const marks = option.marks;
-        return marks.trim() !== '' && !isNaN(parseInt(marks));
-      }
-      return false; // Return false if option is undefined or marks is undefined
-    });
-  
-    // If all options pass validation or it's a leading question, return true
-    // return isLeadingQuestion || isValid;
-    return isLeadingQuestion || isValid;
+
+    // Case: when optionType is checkbox
+    if (selectedOption === "multipleChoice" || selectedOption === "checkbox" || selectedOption === "dropdown") {
+      console.log("validateMarks: standard");
+      // Use every to check validation for each option
+      const isValid = options.every(option => {
+        // Ensure option is defined and marks property exists
+        if (option && option.marks !== undefined) {
+          const marks = option.marks;
+          return marks.trim() !== '' && !isNaN(parseInt(marks));
+        }
+        return false; // Return false if option is undefined or marks is undefined
+      });
+    
+      // If all options pass validation or it's a leading question, return true
+      return isLeadingQuestion || isValid;
+    } else if (selectedOption === "multipleChoiceGrid" || selectedOption === "checkboxGrid") {
+        console.log("validateMarks: grid");
+        // Use every to check validation for each option
+      const isValid = gridOptions.answers.every(answer => {
+        // Ensure option is defined and marks property exists
+        if (answer && answer.marks !== undefined) {
+          const marks = answer.marks;
+          return marks.trim() !== '' && !isNaN(parseInt(marks));
+        }
+        return false; // Return false if option is undefined or marks is undefined
+      });
+      // If all options pass validation or it's a leading question, return true
+      return isLeadingQuestion || isValid;
+    }
   };
 
   validateCountry = () => {
@@ -1551,18 +1579,34 @@ class CreateQuestion extends Component {
                     )
                   ))}
                   {/* Case: multiple choice grid and checkbox grid */}
-                  {!isLeadingQuestion && showMarks && gridOptions.answers.map((answers, index) => (
+                  {!isLeadingQuestion && showMarks && gridOptions.answers.map((selection, index) => (
                     // Check if the option is correct, and only render if it is
-                    answers.isCorrect && (
+                    selection.isCorrect && (
                       <div className="mb-3" key={index}>
-                        <a>{gridOptions.row[answers.rowIndex] ? gridOptions.row[answers.rowIndex].text : ''} / {gridOptions.column[answers.columnIndex] ? gridOptions.column[answers.columnIndex].text : ''}</a>
+                        <a>{gridOptions.row[selection.rowIndex] ? gridOptions.row[selection.rowIndex].text : ''} / {gridOptions.column[selection.columnIndex] ? gridOptions.column[selection.columnIndex].text : ''}</a>
+                        
                         <input
                           type="text"
                           className="form-control"
                           id="marks"
                           placeholder="Enter marks for this option"
-                          value={answers.marks}
-                          onChange={(e) => this.handleMarksChange(index, e.target.value)}
+                          value={selection.marks}
+                          onChange={(e) => {
+                            const { value } = e.target;
+                            const updatedAnswers = gridOptions.answers.map((answer, i) => {
+                              if (i === index) {
+                                return { ...answer, marks: value };
+                              }
+                              return answer;
+                            });
+                          
+                            this.setState(prevState => ({
+                              gridOptions: {
+                                ...prevState.gridOptions,
+                                answers: updatedAnswers
+                              }
+                            }));
+                          }}
                         />
                       </div>
                     )
