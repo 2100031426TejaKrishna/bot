@@ -375,19 +375,10 @@ class CreateQuestion extends Component {
     const { options } = this.state;
     this.setState({
       options: options.map((option, i) =>
-      i === index ? { ...option, marks: value } : option
+        i === index ? { ...option, marks: value } : option
       )    
-    }) 
+    }); 
   };
-
-  // handleGridMarksChange = (index, value) => {
-  //   const { gridOptions } = this.state;
-  //   this.setState({
-  //     gridOptions: ...gridOptions,options.map((option, i) =>
-  //     i === index ? { ...option, marks: value } : option
-  //     )    
-  //   }) 
-  // };
 
   handleRowChange = (index, e) => {
     const newValue = e.target.value;
@@ -1196,26 +1187,74 @@ class CreateQuestion extends Component {
     }
     
     // Case: when optionType is multipleChoice OR dropdown
-
+    if (selectedOption === "multipleChoice" || selectedOption === "dropdown") {
+      
+      const isValid = () => {
+        return options.some(option => {
+          // Ensure option is defined and marks property exists
+          if (option && option.marks !== undefined) {
+            const marks = option.marks;
+            return marks.trim() !== '' && !isNaN(parseInt(marks));
+          }
+          return false; // If option or marks property is undefined
+        });
+      };
+      
+      // Case: when isValid is false OR undefined: all options did not have marks assigned
+      if (isValid() === false || isValid() === undefined) {
+        return false;
+      }
+    
+      console.log(`validateMarks: ${isValid()}`);
+      // If all options pass validation or it's a leading question, return true
+      return isLeadingQuestion || isValid();
+    }
 
     // Case: when optionType is checkbox
-    if (selectedOption === "multipleChoice" || selectedOption === "checkbox" || selectedOption === "dropdown") {
-      console.log("validateMarks: standard");
+    // else if ( selectedOption === "checkbox" ) {
+    //   console.log("validateMarks: checkbox");
+    //   // Use every to check validation for each option
+    //   const isValid = options.every(option => {
+    //     // Ensure option is defined and marks property exists
+    //     if (option && option.marks !== undefined) {
+    //       const marks = option.marks;
+    //       return marks.trim() !== '' && !isNaN(parseInt(marks));
+    //     }
+    //     // return false; // Return false if option is undefined or marks is undefined
+    //   });
+    
+    //   // If all options pass validation or it's a leading question, return true
+    //   return isLeadingQuestion || isValid;
+    // }
+
+    else if ( selectedOption === "checkbox" ) {
+      console.log("validateMarks: checkbox");
       // Use every to check validation for each option
-      const isValid = options.every(option => {
+      const isValid = () => {
+
+        let count = 0;
+        options.some(option => {
         // Ensure option is defined and marks property exists
-        if (option && option.marks !== undefined) {
+        if (option && option.marks !== undefined && option.isCorrect === true) {
+          count++;
           const marks = option.marks;
           return marks.trim() !== '' && !isNaN(parseInt(marks));
         }
-        return false; // Return false if option is undefined or marks is undefined
+        console.log(`count: ${count}`);
       });
+        return false; // Return false if option is undefined or marks is undefined
+      }
+
+      console.log(`validateMarks: ${isValid()}`);
     
       // If all options pass validation or it's a leading question, return true
-      return isLeadingQuestion || isValid;
-    } else if (selectedOption === "multipleChoiceGrid" || selectedOption === "checkboxGrid") {
-        console.log("validateMarks: grid");
-        // Use every to check validation for each option
+      return isLeadingQuestion || isValid();
+    }
+    
+    // Case: when optionType is multipleChoiceGrid OR checkboxGrid
+    else if (selectedOption === "multipleChoiceGrid" || selectedOption === "checkboxGrid") {
+      console.log("validateMarks: grid");
+      // Use every to check validation for each option
       const isValid = gridOptions.answers.every(answer => {
         // Ensure option is defined and marks property exists
         if (answer && answer.marks !== undefined) {
