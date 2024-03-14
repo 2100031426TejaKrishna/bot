@@ -400,13 +400,16 @@ const Questions = () => {
         setShowModal(false);
         const lastAnswer = currentQuestion.optionType.includes('Grid') ? gridAnswers : currentQuestion.optionType === 'checkbox' ? selectedOptions : currentAnswer;
         updateAnswers(lastAnswer); 
-        console.log("Submitted Answers:", {
-            ...answers, 
-            [currentQuestionId]: lastAnswer 
+
+        const answeredQuestions = questions.filter(question => {
+            // Check if the question ID exists in the answers object and the answer is not empty
+            const answer = answers[question._id];
+            return answer !== undefined && ((Array.isArray(answer) && answer.length > 0) || (typeof answer === 'string' && answer.trim() !== '') || (typeof answer === 'object' && Object.keys(answer).length > 0));
         });
     
-        const formattedResponses = questions.map(question => {
-            const answerForQuestion = answers[question._id] || ''; // Fetch the answer using question ID, defaulting to an empty string if not found
+        // Prepare the formattedResponses with only the questions that have answers
+        const formattedResponses = answeredQuestions.map(question => {
+            const answerForQuestion = answers[question._id]; // Fetch the answer using question ID
             return {
                 questionId: question._id,
                 answer: answerForQuestion,
@@ -423,7 +426,7 @@ const Questions = () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ userId, responses: formattedResponses }),
+                body: JSON.stringify({ userId, responses: formattedResponses, selectedCountries }),
             });
     
             if (!response.ok) {

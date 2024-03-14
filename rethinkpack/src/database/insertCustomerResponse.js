@@ -8,6 +8,7 @@ const responseSchema = new mongoose.Schema({
         questionId: String,
         answer: mongoose.Schema.Types.Mixed 
     }],
+    selectedCountries: [String],
     date: {
         type: Date,
         default: Date.now
@@ -19,14 +20,15 @@ CustomerResponse.createIndexes();
 
 router.post('/submitResponse', async (req, res) => {
     try {
-        const { userId, responses } = req.body;
+        const { userId, responses, selectedCountries } = req.body;
 
         const customerResponse = new CustomerResponse({
             userId: userId,
             responses: responses.map(response => ({
                 questionId: response.questionId,
                 answer: response.answer 
-            }))
+            })),
+            selectedCountries
         });
 
         await customerResponse.save();
