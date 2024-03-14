@@ -133,23 +133,27 @@ class EditQuestion extends Component {
 
 /*--------------API-----------------*/
   
-  fetchQuestion = async (questionId) => {
-    try {
-      const response = await fetch(`http://${destination}/api/read/${questionId}`);
-      const data = await response.json();
-      if (data) {
-        this.setState({
-          showModal: true, 
-          questionList: data,
-          selectedOption: data.optionType,
-          gridOptions: data.grid,
-          isLeadingQuestion: (data.marks) ? false : true
-        })
-      }
-    } catch (error) {
-      console.error('Error fetching questions:', error);
+fetchQuestion = async (questionId) => {
+  try {
+    const response = await fetch(`http://${destination}/api/read/${questionId}`);
+    const data = await response.json();
+    if (data) {
+      // Check if selectedCountry field is present and has a value
+      const showCountry = data.country && data.country.selectedCountry;
+
+      this.setState({
+        showModal: true, 
+        questionList: data,
+        selectedOption: data.optionType,
+        gridOptions: data.grid,
+        isLeadingQuestion: (data.marks) ? false : true,
+        showCountry: showCountry // Set showCountry based on selectedCountry field
+      });
     }
-  };
+  } catch (error) {
+    console.error('Error fetching questions:', error);
+  }
+};
 
   fetchQuestions = async () => {
     try {
