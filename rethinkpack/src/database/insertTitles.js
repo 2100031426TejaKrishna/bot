@@ -17,6 +17,10 @@ const titlesSchema = new mongoose.Schema({
                 ]
             }
         ]
+    },
+    date: {
+        type: Date,
+        default: Date.now,
     }
 });
 

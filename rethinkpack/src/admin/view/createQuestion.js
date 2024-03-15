@@ -9,8 +9,8 @@ import CreateTitle from './createTitle';
 import FirstQuestionModal from './firstQuestionModal';
 
 // Switch URLs between Server and Local hosting here
-// const destination = "localhost:5000";
-const destination = "rtp.dusky.bond:5000";
+const destination = "localhost:5000";
+// const destination = "rtp.dusky.bond:5000";
 
 class CreateQuestion extends Component {
   constructor(props) {
@@ -1022,7 +1022,7 @@ class CreateQuestion extends Component {
 
   toggleCorrectAnswer = (index) => {
     const { selectedOption  } = this.state;
-    if (selectedOption === 'multipleChoice' || selectedOption === 'checkbox') {
+    if (selectedOption === 'checkbox') {
       this.setState(prevState => ({
         options: prevState.options.map((option, i) => {
           if (i === index) {
@@ -1210,47 +1210,34 @@ class CreateQuestion extends Component {
       return isLeadingQuestion || isValid();
     }
 
-    // Case: when optionType is checkbox
-    // else if ( selectedOption === "checkbox" ) {
-    //   console.log("validateMarks: checkbox");
-    //   // Use every to check validation for each option
-    //   const isValid = options.every(option => {
-    //     // Ensure option is defined and marks property exists
-    //     if (option && option.marks !== undefined) {
-    //       const marks = option.marks;
-    //       return marks.trim() !== '' && !isNaN(parseInt(marks));
-    //     }
-    //     // return false; // Return false if option is undefined or marks is undefined
-    //   });
-    
-    //   // If all options pass validation or it's a leading question, return true
-    //   return isLeadingQuestion || isValid;
-    // }
-
-    else if ( selectedOption === "checkbox" ) {
+    else if (selectedOption === "checkbox") {
       console.log("validateMarks: checkbox");
       // Use every to check validation for each option
       const isValid = () => {
-
         let count = 0;
-        options.some(option => {
-        // Ensure option is defined and marks property exists
-        if (option && option.marks !== undefined && option.isCorrect === true) {
-          count++;
-          const marks = option.marks;
-          return marks.trim() !== '' && !isNaN(parseInt(marks));
-        }
-        console.log(`count: ${count}`);
-      });
-        return false; // Return false if option is undefined or marks is undefined
-      }
+        options.every(option => {
+          // Ensure option is defined and marks property exists
+          if (option.marks !== undefined && option.isCorrect === true) {
+              console.log(`option select: ${option.text}`);  
+              count++;
+              const marks = option.marks;
+              console.log("count increment");
+              return marks.trim() !== '' && !isNaN(parseInt(marks));
+          }
+          return true; // Return true to continue checking other options
+        });
+        // If count equals the number of correct options, return true
+        const isCorrectElems = options.filter(option => option.isCorrect).length
+        console.log(`isCorrectElems: ${isCorrectElems}`);
+        return count === isCorrectElems;
+      };
 
-      console.log(`validateMarks: ${isValid()}`);
-    
+      console.log(`isValid: ${isValid()}`);
+
       // If all options pass validation or it's a leading question, return true
       return isLeadingQuestion || isValid();
     }
-    
+
     // Case: when optionType is multipleChoiceGrid OR checkboxGrid
     else if (selectedOption === "multipleChoiceGrid" || selectedOption === "checkboxGrid") {
       console.log("validateMarks: grid");
@@ -1270,15 +1257,13 @@ class CreateQuestion extends Component {
 
   validateCountry = () => {
     const { country, showCountry } = this.state;
-    // case when "Specific Country" is switched on
+    // Case: when "Specific Country" is switched on
     if (showCountry) {
-      // case when a selectedCountry has been set
+      // Case: when a selectedCountry has been set
       if (country.selectedCountry) {
-        // console.log(`country validated`)
         return true;
       }
       else {
-        // console.log(`country IS NOT validated`)
         return false;
       }
     } else {
