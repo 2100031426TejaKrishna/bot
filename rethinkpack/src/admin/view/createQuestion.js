@@ -9,8 +9,8 @@ import CreateTitle from './createTitle';
 import FirstQuestionModal from './firstQuestionModal';
 
 // Switch URLs between Server and Local hosting here
-const destination = "localhost:5000";
-// const destination = "rtp.dusky.bond:5000";
+// const destination = "localhost:5000";
+const destination = "rtp.dusky.bond:5000";
 
 class CreateQuestion extends Component {
   constructor(props) {
