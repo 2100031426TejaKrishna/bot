@@ -330,29 +330,105 @@ class CreateQuestion extends Component {
     });
   };
 
+  // deleteGridRow = (index) => {
+  //   this.setState(prevState => {
+  //     const updatedRow = prevState.gridOptions.row.filter((_, idx) => idx !== index);
+  //     const updatedAnswers = prevState.gridOptions.answers.filter(answer => answer.rowIndex !== index);
+      
+  //     // Update the indices of rows greater than the deleted row
+  //     const updatedAnswersWithAdjustedRowIndices = updatedAnswers.map(answer => {
+  //       if (answer.rowIndex > index) {
+  //         return {
+  //           ...answer,
+  //           rowIndex: answer.rowIndex - 1
+  //         };
+  //       }
+  //       return answer;
+  //     });
+  
+  //     return {
+  //       gridOptions: {
+  //         ...prevState.gridOptions,
+  //         row: updatedRow,
+  //         answers: updatedAnswersWithAdjustedRowIndices
+  //       }
+  //     };
+  //   });
+  // };
+  
+  // deleteGridColumn = (index) => {
+  //   this.setState(prevState => {
+  //     const updatedColumn = prevState.gridOptions.column.filter((_, idx) => idx !== index);
+  //     const updatedAnswers = prevState.gridOptions.answers.filter(answer => answer.columnIndex !== index);
+      
+  //     // Update the indices of columns greater than the deleted column
+  //     const updatedAnswersWithAdjustedColumnIndices = updatedAnswers.map(answer => {
+  //       if (answer.columnIndex > index) {
+  //         return {
+  //           ...answer,
+  //           columnIndex: answer.columnIndex - 1
+  //         };
+  //       }
+  //       return answer;
+  //     });
+  
+  //     return {
+  //       gridOptions: {
+  //         ...prevState.gridOptions,
+  //         column: updatedColumn,
+  //         answers: updatedAnswersWithAdjustedColumnIndices
+  //       }
+  //     };
+  //   });
+  // };
+
   deleteGridRow = (index) => {
     this.setState(prevState => {
       const updatedRow = prevState.gridOptions.row.filter((_, idx) => idx !== index);
       const updatedAnswers = prevState.gridOptions.answers.filter(answer => answer.rowIndex !== index);
+      
+      // Update the indices of rows greater than the deleted row
+      const updatedAnswersWithAdjustedRowIndices = updatedAnswers.map(answer => {
+        if (answer.rowIndex > index) {
+          return {
+            ...answer,
+            rowIndex: answer.rowIndex - 1
+          };
+        }
+        return answer;
+      });
+  
       return {
         gridOptions: {
           ...prevState.gridOptions,
           row: updatedRow,
-          answers: updatedAnswers
+          answers: updatedAnswersWithAdjustedRowIndices
         }
       };
     });
   };
-
+  
   deleteGridColumn = (index) => {
     this.setState(prevState => {
       const updatedColumn = prevState.gridOptions.column.filter((_, idx) => idx !== index);
       const updatedAnswers = prevState.gridOptions.answers.filter(answer => answer.columnIndex !== index);
+      
+      // Update the indices of columns greater than the deleted column
+      const updatedAnswersWithAdjustedColumnIndices = updatedAnswers.map(answer => {
+        if (answer.columnIndex > index) {
+          return {
+            ...answer,
+            columnIndex: answer.columnIndex - 1
+          };
+        }
+        return answer;
+      });
+  
       return {
         gridOptions: {
           ...prevState.gridOptions,
           column: updatedColumn,
-          answers: updatedAnswers
+          answers: updatedAnswersWithAdjustedColumnIndices
         }
       };
     });
