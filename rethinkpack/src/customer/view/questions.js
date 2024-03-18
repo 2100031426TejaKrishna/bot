@@ -400,16 +400,25 @@ const Questions = () => {
         setShowModal(false);
         const lastAnswer = currentQuestion.optionType.includes('Grid') ? gridAnswers : currentQuestion.optionType === 'checkbox' ? selectedOptions : currentAnswer;
         updateAnswers(lastAnswer); 
-        console.log("Submitted Answers:", {
-            ...answers, 
-            [currentQuestionId]: lastAnswer 
+
+        const answeredQuestions = questions.filter(question => {
+            // Check if the question ID exists in the answers object and the answer is not empty
+            const answer = answers[question._id];
+            return answer !== undefined && ((Array.isArray(answer) && answer.length > 0) || (typeof answer === 'string' && answer.trim() !== '') || (typeof answer === 'object' && Object.keys(answer).length > 0));
         });
     
-        const userId = "1"; 
-        const formattedResponses = questions.map((question, index) => ({
-            questionId: question._id,
-            answer: answers[index] || lastAnswer,
-        }));
+        // Prepare the formattedResponses with only the questions that have answers
+        const formattedResponses = answeredQuestions.map(question => {
+            const answerForQuestion = answers[question._id]; // Fetch the answer using question ID
+            return {
+                questionId: question._id,
+                answer: answerForQuestion,
+            };
+        });
+    
+        console.log("Submitted Answers:", formattedResponses);
+    
+        const userId = "1";
     
         try {
             const response = await fetch(`http://${destination}/api/submitResponse`, {
@@ -417,7 +426,7 @@ const Questions = () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ userId, responses: formattedResponses }),
+                body: JSON.stringify({ userId, responses: formattedResponses, selectedCountries }),
             });
     
             if (!response.ok) {

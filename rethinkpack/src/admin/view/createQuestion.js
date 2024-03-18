@@ -375,9 +375,9 @@ class CreateQuestion extends Component {
     const { options } = this.state;
     this.setState({
       options: options.map((option, i) =>
-      i === index ? { ...option, marks: value } : option
+        i === index ? { ...option, marks: value } : option
       )    
-    }) 
+    }); 
   };
 
   handleRowChange = (index, e) => {
@@ -1022,7 +1022,7 @@ class CreateQuestion extends Component {
 
   toggleCorrectAnswer = (index) => {
     const { selectedOption  } = this.state;
-    if (selectedOption === 'multipleChoice' || selectedOption === 'checkbox') {
+    if (selectedOption === 'checkbox') {
       this.setState(prevState => ({
         options: prevState.options.map((option, i) => {
           if (i === index) {
@@ -1054,7 +1054,7 @@ class CreateQuestion extends Component {
         gridOptions.answers.splice(answerIndex, 1);
       } else {
         // If answer doesn't exist, add it
-        gridOptions.answers.push({ rowIndex, columnIndex: colIndex, isCorrect: true });
+        gridOptions.answers.push({ rowIndex, columnIndex: colIndex, isCorrect: true, marks: '' });
       }
     
       this.setState( { gridOptions } );
@@ -1069,7 +1069,7 @@ class CreateQuestion extends Component {
       }
   
       // Add the new answer with isCorrect set to true
-      gridOptions.answers.push({ rowIndex, columnIndex: colIndex, isCorrect: true });
+      gridOptions.answers.push({ rowIndex, columnIndex: colIndex, isCorrect: true, marks: ''  });
       this.setState( { gridOptions } );
     }
   };
@@ -1179,39 +1179,91 @@ class CreateQuestion extends Component {
   };
   
   validateMarks = () => {
-    const { options, isLeadingQuestion, showMarks } = this.state;
+    const { selectedOption, options, isLeadingQuestion, showMarks, gridOptions } = this.state;
   
     // Case: when marks is not required, then validation for marks not required
     if (!showMarks) {
       return true;
     }
-
-    // Use every to check validation for each option
-    const isValid = options.every(option => {
-      // Ensure option is defined and marks property exists
-      if (option && option.marks !== undefined) {
-        const marks = option.marks;
-        return marks.trim() !== '' && !isNaN(parseInt(marks));
+    
+    // Case: when optionType is multipleChoice OR dropdown
+    if (selectedOption === "multipleChoice" || selectedOption === "dropdown") {
+      
+      const isValid = () => {
+        return options.some(option => {
+          // Ensure option is defined and marks property exists
+          if (option && option.marks !== undefined) {
+            const marks = option.marks;
+            return marks.trim() !== '' && !isNaN(parseInt(marks));
+          }
+          return false; // If option or marks property is undefined
+        });
+      };
+      
+      // Case: when isValid is false OR undefined: all options did not have marks assigned
+      if (isValid() === false || isValid() === undefined) {
+        return false;
       }
-      return false; // Return false if option is undefined or marks is undefined
-    });
-  
-    // If all options pass validation or it's a leading question, return true
-    // return isLeadingQuestion || isValid;
-    return isLeadingQuestion || isValid;
+    
+      console.log(`validateMarks: ${isValid()}`);
+      // If all options pass validation or it's a leading question, return true
+      return isLeadingQuestion || isValid();
+    }
+
+    else if (selectedOption === "checkbox") {
+      console.log("validateMarks: checkbox");
+      // Use every to check validation for each option
+      const isValid = () => {
+        let count = 0;
+        options.every(option => {
+          // Ensure option is defined and marks property exists
+          if (option.marks !== undefined && option.isCorrect === true) {
+              console.log(`option select: ${option.text}`);  
+              count++;
+              const marks = option.marks;
+              console.log("count increment");
+              return marks.trim() !== '' && !isNaN(parseInt(marks));
+          }
+          return true; // Return true to continue checking other options
+        });
+        // If count equals the number of correct options, return true
+        const isCorrectElems = options.filter(option => option.isCorrect).length
+        console.log(`isCorrectElems: ${isCorrectElems}`);
+        return count === isCorrectElems;
+      };
+
+      console.log(`isValid: ${isValid()}`);
+
+      // If all options pass validation or it's a leading question, return true
+      return isLeadingQuestion || isValid();
+    }
+
+    // Case: when optionType is multipleChoiceGrid OR checkboxGrid
+    else if (selectedOption === "multipleChoiceGrid" || selectedOption === "checkboxGrid") {
+      console.log("validateMarks: grid");
+      // Use every to check validation for each option
+      const isValid = gridOptions.answers.every(answer => {
+        // Ensure option is defined and marks property exists
+        if (answer && answer.marks !== undefined) {
+          const marks = answer.marks;
+          return marks.trim() !== '' && !isNaN(parseInt(marks));
+        }
+        return false; // Return false if option is undefined or marks is undefined
+      });
+      // If all options pass validation or it's a leading question, return true
+      return isLeadingQuestion || isValid;
+    }
   };
 
   validateCountry = () => {
     const { country, showCountry } = this.state;
-    // case when "Specific Country" is switched on
+    // Case: when "Specific Country" is switched on
     if (showCountry) {
-      // case when a selectedCountry has been set
+      // Case: when a selectedCountry has been set
       if (country.selectedCountry) {
-        // console.log(`country validated`)
         return true;
       }
       else {
-        // console.log(`country IS NOT validated`)
         return false;
       }
     } else {
@@ -1551,18 +1603,34 @@ class CreateQuestion extends Component {
                     )
                   ))}
                   {/* Case: multiple choice grid and checkbox grid */}
-                  {!isLeadingQuestion && showMarks && gridOptions.answers.map((answers, index) => (
+                  {!isLeadingQuestion && showMarks && gridOptions.answers.map((selection, index) => (
                     // Check if the option is correct, and only render if it is
-                    answers.isCorrect && (
+                    selection.isCorrect && (
                       <div className="mb-3" key={index}>
-                        <a>{gridOptions.row[answers.rowIndex] ? gridOptions.row[answers.rowIndex].text : ''} / {gridOptions.column[answers.columnIndex] ? gridOptions.column[answers.columnIndex].text : ''}</a>
+                        <a>{gridOptions.row[selection.rowIndex] ? gridOptions.row[selection.rowIndex].text : ''} / {gridOptions.column[selection.columnIndex] ? gridOptions.column[selection.columnIndex].text : ''}</a>
+                        
                         <input
                           type="text"
                           className="form-control"
                           id="marks"
                           placeholder="Enter marks for this option"
-                          value={answers.marks}
-                          onChange={(e) => this.handleMarksChange(index, e.target.value)}
+                          value={selection.marks}
+                          onChange={(e) => {
+                            const { value } = e.target;
+                            const updatedAnswers = gridOptions.answers.map((answer, i) => {
+                              if (i === index) {
+                                return { ...answer, marks: value };
+                              }
+                              return answer;
+                            });
+                          
+                            this.setState(prevState => ({
+                              gridOptions: {
+                                ...prevState.gridOptions,
+                                answers: updatedAnswers
+                              }
+                            }));
+                          }}
                         />
                       </div>
                     )
