@@ -16,9 +16,38 @@ const TitleTab = ({ triggerRefresh }) => {
     const [editedSubTitle, setEditedSubTitle] = useState('');
     const [editedNestedTitle, setEditedNestedTitle] = useState('');
     const [titleId, setTitleId] = useState('');
+    const [showAddSubtitleModal, setShowAddSubtitleModal] = useState(false);
+    const [newSubtitle, setNewSubtitle] = useState('');
     // State variables for toast message
     const [showSuccessToast, setShowSuccessToast] = useState(false);
     // State variable for controlling modal visibility
+
+    const handleAddSubtitle = (titleId) => {
+        setTitleId(titleId);
+        setShowAddSubtitleModal(true);
+    };
+
+    const handleCloseAddSubtitleModal = () => {
+        setShowAddSubtitleModal(false);
+        setNewSubtitle('');
+    };
+
+    const handleSaveSubtitle = () => {
+        // Assuming the subtitle needs to be sent in an object with a key 'subtitle'
+        const subtitleData = {
+            subtitle: newSubtitle
+        };
+    
+        axios.post(`http://${destination}/api/insertSubtitle/${titleId}`, subtitleData)
+            .then(response => {
+                console.log('New subtitle added:', response.data);
+                setShowAddSubtitleModal(false); // Close the modal after saving
+                triggerRefresh(); // Trigger refresh to update the UI
+            })
+            .catch(error => {
+                console.error('Error adding subtitle:', error);
+            });
+    };
 
     const handleEditClick = (titleId) => {
         setTitleId(titleId);
@@ -170,6 +199,38 @@ const TitleTab = ({ triggerRefresh }) => {
 
                     {/* Delete button and modal for confirming deletion */}
                     <div className="question-actions">
+                        {/* Add button to add new subtitle */}
+                        <button className="btn btn-secondary" onClick={() => handleAddSubtitle(title._id)}>Add Subtitle</button>
+
+                        {/* Modal for adding new subtitle */}
+                        <div className={`modal ${showAddSubtitleModal ? 'show' : ''}`} tabIndex="-1" role="dialog" style={{ display: showAddSubtitleModal ? 'block' : 'none' }}>
+                            <div className="modal-dialog" role="document">
+                                <div className="modal-content">
+                                    <div className="modal-header">
+                                        <h5 className="modal-title">Add New Subtitle</h5>
+                                    </div>
+                                    <div className="modal-body">
+                                        <div className="form-group">
+                                            <label htmlFor="subtitleInput">Subtitle:</label>
+                                            <input
+                                                type="text"
+                                                className="form-control"
+                                                id="subtitleInput"
+                                                value={newSubtitle}
+                                                onChange={(e) => setNewSubtitle(e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="modal-footer">
+                                        <button type="button" className="btn btn-secondary" onClick={handleCloseAddSubtitleModal}>Close</button>
+                                        <button type="button" className="btn btn-primary" onClick={handleSaveSubtitle}>Save</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Add button to add new nested title */}
+                        <button className="btn btn-secondary" >Add Nested Title</button>
                         {/* Edit button */}
                         <button
                             className="btn btn-primary"
@@ -235,7 +296,7 @@ const TitleTab = ({ triggerRefresh }) => {
                                                         </div>
                                                         {Array.isArray(subTitle.nestedTitle) && subTitle.nestedTitle.length > 1 && (
                                                             <button
-                                                                className="btn btn-outline-secondary delete-button"                                          
+                                                                className="btn btn-outline-secondary delete-button"
                                                                 type="button"
                                                             >
                                                                 Delete Nestedtitle
@@ -252,10 +313,6 @@ const TitleTab = ({ triggerRefresh }) => {
                                                 ))}
                                             </div>
                                         ))}
-                                        {/* Add button to add new subtitle */}
-                                        <button className="btn btn-secondary" >Add Subtitle</button>
-                                        {/* Add button to add new nested title */}
-                                        <button className="btn btn-secondary" >Add Nested Title</button>
                                     </div>
 
 
@@ -266,7 +323,6 @@ const TitleTab = ({ triggerRefresh }) => {
                                 </div>
                             </div>
                         </div>
-
                         <button
                             className="btn btn-danger"
                             data-bs-toggle={`modal`}

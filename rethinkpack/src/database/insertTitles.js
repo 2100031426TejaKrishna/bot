@@ -71,6 +71,40 @@ router.put('/updateTitle/:id', async (req, res) => {
     }
 });
 
+// Route to insert a new subtitle
+router.post('/insertSubtitle/:titleId', async (req, res) => {
+    try {
+        // Extract the subtitle data from the request body
+        const { subtitle } = req.body;
+
+        // Fetch the corresponding title from the database
+        const titleId = req.params.titleId;
+        const existingTitle = await Titles.findById(titleId);
+
+        // Ensure that the title exists
+        if (!existingTitle) {
+            return res.status(404).json({ error: 'Title not found' });
+        }
+
+        // Create a new subtitle document
+        const newSubtitle = {
+            subTitleLabel: subtitle
+        };
+
+        // Push the new subtitle into the existing title
+        existingTitle.title.subTitle.push(newSubtitle);
+
+        // Save the updated title with the new subtitle
+        const updatedTitle = await existingTitle.save();
+
+        // Respond with the updated title
+        res.json(updatedTitle);
+    } catch (error) {
+        console.error("Error inserting subtitle:", error);
+        res.status(500).send("Error inserting subtitle");
+    }
+});
+
 
 
 module.exports = router;
