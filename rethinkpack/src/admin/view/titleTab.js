@@ -9,7 +9,7 @@ const destination = "localhost:5000";
 const TitleTab = ({ triggerRefresh }) => {
     const [titles, setTitles] = useState([]);
     const [titleToDelete, setTitleToDelete] = useState('');
-    const [showToast, setShowToast] = useState(false);
+    const [showDeleteToast, setShowDeleteToast] = useState(false);
     const [error, setError] = useState(null);
     // Define state variables to hold the updated data
     const [editedTitle, setEditedTitle] = useState('');
@@ -18,9 +18,46 @@ const TitleTab = ({ triggerRefresh }) => {
     const [titleId, setTitleId] = useState('');
     const [showAddSubtitleModal, setShowAddSubtitleModal] = useState(false);
     const [newSubtitle, setNewSubtitle] = useState('');
+    const [showAddNestedtitleModal, setShowAddNestedtitleModal] = useState(false);
+    const [newNestedtitle, setNewNestedtitle] = useState('');
+    const [selectedSubtitleId, setSelectedSubtitleId] = useState('');
     // State variables for toast message
-    const [showSuccessToast, setShowSuccessToast] = useState(false);
-    // State variable for controlling modal visibility
+    const [showEditSuccessToast, setShowEditSuccessToast] = useState(false);
+    const [showAddSubtitleToast, setShowAddSubtitleToast] = useState(false);
+    const [showAddNestedtitleToast, setShowAddNestedtitleToast] = useState(false);
+
+
+    const handleAddNestedtitle = (titleId, subtitleId) => {
+        setTitleId(titleId);
+        setSelectedSubtitleId(subtitleId); // Set the selected subtitle _id
+        setShowAddNestedtitleModal(true);
+    };
+
+    const handleCloseAddNestedtitleModal = () => {
+        setShowAddNestedtitleModal(false);
+        setNewNestedtitle('');
+        setSelectedSubtitleId(''); // Clear the selected subtitle _id
+    };
+
+    const handleSaveNestedtitle = () => {
+        // Assuming the subtitle needs to be sent in an object with a key 'subtitle'
+        const nestedtitleData = {
+            nestedTitle: newNestedtitle
+        };
+
+        axios.post(`http://${destination}/api/insertNestedtitle/${titleId}/${selectedSubtitleId}`, nestedtitleData)
+            .then(response => {
+                console.log('New nestedtitle added:', response.data);
+                setShowAddNestedtitleModal(false); // Close the modal after saving
+                setShowAddNestedtitleToast(true);
+                setTimeout(() => setShowAddNestedtitleToast(false), 5000);
+                triggerRefresh();
+            })
+            .catch(error => {
+                console.error('Error adding nestedtitle:', error);
+            });
+    };
+
 
     const handleAddSubtitle = (titleId) => {
         setTitleId(titleId);
@@ -37,12 +74,14 @@ const TitleTab = ({ triggerRefresh }) => {
         const subtitleData = {
             subtitle: newSubtitle
         };
-    
+
         axios.post(`http://${destination}/api/insertSubtitle/${titleId}`, subtitleData)
             .then(response => {
                 console.log('New subtitle added:', response.data);
                 setShowAddSubtitleModal(false); // Close the modal after saving
-                triggerRefresh(); // Trigger refresh to update the UI
+                setShowAddSubtitleToast(true);
+                setTimeout(() => setShowAddSubtitleToast(false), 5000);
+                triggerRefresh();
             })
             .catch(error => {
                 console.error('Error adding subtitle:', error);
@@ -93,8 +132,8 @@ const TitleTab = ({ triggerRefresh }) => {
             .then(response => {
                 // Handle success
                 console.log('Title updated:', response.data);
-                setShowSuccessToast(true); // Show the success toast
-                setTimeout(() => setShowSuccessToast(false), 5000); // Hide the toast after 5 seconds
+                setShowEditSuccessToast(true); // Show the success toast
+                setTimeout(() => setShowEditSuccessToast(false), 5000); // Hide the toast after 5 seconds
             })
             .catch(error => {
                 // Handle error
@@ -111,8 +150,8 @@ const TitleTab = ({ triggerRefresh }) => {
                 if (response.status === 200) {
                     setTitles(titles.filter(title => title._id !== titleToDelete));
                     setTitleToDelete('');
-                    setShowToast(true);
-                    setTimeout(() => setShowToast(false), 5000);
+                    setShowDeleteToast(true);
+                    setTimeout(() => setShowDeleteToast(false), 5000);
                     // Trigger refresh after deleting the title
                     triggerRefresh();
                 } else {
@@ -152,28 +191,54 @@ const TitleTab = ({ triggerRefresh }) => {
 
     return (
         <div className="questions-container">
-            {/* Success toast notification */}
-            {showSuccessToast && (
+            {/* Update title toast notification */}
+            {showEditSuccessToast && (
                 <div className="toast-container position-fixed bottom-0 end-0 p-3">
                     <div className="toast show bg-success text-white">
                         <div className="d-flex justify-content-between">
                             <div className="toast-body">
                                 Title updated successfully!
                             </div>
-                            <button type="button" className="btn-close btn-close-white me-2 m-auto" onClick={() => setShowSuccessToast(false)}></button>
+                            <button type="button" className="btn-close btn-close-white me-2 m-auto" onClick={() => setShowEditSuccessToast(false)}></button>
                         </div>
                     </div>
                 </div>
             )}
-            {/* Toast notification */}
-            {showToast && (
+            {/* Delete Toast notification */}
+            {showDeleteToast && (
                 <div className="toast-container position-fixed bottom-0 end-0 p-3">
                     <div className="toast show bg-dark text-white">
                         <div className="d-flex justify-content-between">
                             <div className="toast-body">
                                 Title deleted successfully!
                             </div>
-                            <button type="button" className="btn-close btn-close-white me-2 m-auto" onClick={() => setShowToast(false)}></button>
+                            <button type="button" className="btn-close btn-close-white me-2 m-auto" onClick={() => setShowDeleteToast(false)}></button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* AddSubtitle Toast notification */}
+            {showAddSubtitleToast && (
+                <div className="toast-container position-fixed bottom-0 end-0 p-3">
+                    <div className="toast show bg-success text-white">
+                        <div className="d-flex justify-content-between">
+                            <div className="toast-body">
+                                Subtitle added successfully!
+                            </div>
+                            <button type="button" className="btn-close btn-close-white me-2 m-auto" onClick={() => setShowAddSubtitleToast(false)}></button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* AddNestedtitle Toast notification */}
+            {showAddNestedtitleToast && (
+                <div className="toast-container position-fixed bottom-0 end-0 p-3">
+                    <div className="toast show bg-success text-white">
+                        <div className="d-flex justify-content-between">
+                            <div className="toast-body">
+                                Nestedtitle added successfully!
+                            </div>
+                            <button type="button" className="btn-close btn-close-white me-2 m-auto" onClick={() => setShowAddNestedtitleToast(false)}></button>
                         </div>
                     </div>
                 </div>
@@ -197,7 +262,7 @@ const TitleTab = ({ triggerRefresh }) => {
                         </div>
                     ))}
 
-                    {/* Delete button and modal for confirming deletion */}
+                    {/* Buttons and modal */}
                     <div className="question-actions">
                         {/* Add button to add new subtitle */}
                         <button className="btn btn-secondary" onClick={() => handleAddSubtitle(title._id)}>Add Subtitle</button>
@@ -230,7 +295,48 @@ const TitleTab = ({ triggerRefresh }) => {
                         </div>
 
                         {/* Add button to add new nested title */}
-                        <button className="btn btn-secondary" >Add Nested Title</button>
+                        <button className="btn btn-secondary" onClick={() => handleAddNestedtitle(title._id)}>Add Nested Title</button>
+
+
+                        {/* Modal for adding new nestedtitle */}
+                        <div className={`modal ${showAddNestedtitleModal ? 'show' : ''}`} tabIndex="-1" role="dialog" style={{ display: showAddNestedtitleModal ? 'block' : 'none' }}>
+                            <div className="modal-dialog" role="document">
+                                <div className="modal-content">
+                                    <div className="modal-header">
+                                        <h5 className="modal-title">Add New Nestedtitle</h5>
+                                    </div>
+                                    <div className="modal-body">
+                                        <div className="form-group">
+                                            {/* Dropdown menu to select subtitle */}
+                                            <label htmlFor="subtitleDropdown">Select Subtitle:</label>
+                                            <select className="form-control" id="subtitleDropdown" value={selectedSubtitleId} onChange={(e) => setSelectedSubtitleId(e.target.value)}>
+                                                {titles.map((title, index) => (
+                                                    title.title.subTitle.map(subTitle => ( // No need for subIndex
+                                                        <option key={subTitle._id} value={subTitle._id}>{subTitle.subTitleLabel}</option> // Use _id as value
+                                                    ))
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="form-group">
+                                            <label htmlFor="nestedtitleInput">Nestedtitle:</label>
+                                            <input
+                                                type="text"
+                                                className="form-control"
+                                                id="nestedtitleInput"
+                                                value={newNestedtitle}
+                                                onChange={(e) => setNewNestedtitle(e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="modal-footer">
+                                        <button type="button" className="btn btn-secondary" onClick={handleCloseAddNestedtitleModal}>Close</button>
+                                        <button type="button" className="btn btn-primary" onClick={handleSaveNestedtitle}>Save</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
                         {/* Edit button */}
                         <button
                             className="btn btn-primary"

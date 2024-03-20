@@ -109,6 +109,52 @@ router.post('/insertSubtitle/:titleId', async (req, res) => {
     }
 });
 
+// Route to insert a new nestedtitle
+router.post('/insertNestedtitle/:titleId/:subtitleId', async (req, res) => {
+    try {
+        const { nestedTitle } = req.body;
+        const titleId = req.params.titleId;
+        const subtitleId = req.params.subtitleId;
+
+        // Log the received payload and IDs for debugging
+        console.log("Received payload:", req.body);
+        console.log("Received titleId:", titleId);
+        console.log("Received subtitleId:", subtitleId);
+
+        // Log the received nested title
+        console.log("Received nestedTitle:", nestedTitle);
+
+        // Fetch the title document
+        const existingTitle = await Titles.findById(titleId);
+
+        if (!existingTitle) {
+            console.error("Title not found for ID:", titleId);
+            return res.status(404).json({ error: 'Title not found' });
+        }
+
+        // Find the correct subtitle by its _id
+        const selectedSubtitle = existingTitle.title.subTitle.find(subtitle => subtitle._id == subtitleId);
+
+        if (!selectedSubtitle) {
+            console.error("Subtitle not found for ID:", subtitleId);
+            return res.status(404).json({ error: 'Subtitle not found' });
+        }
+
+        // Push the new nested title into the selected subtitle's nestedTitle array
+        selectedSubtitle.nestedTitle.push({ nestedTitleLabel: nestedTitle });
+
+        // Save the updated title with the new nested title
+        const updatedTitle = await existingTitle.save();
+
+        // Respond with the updated title
+        res.json(updatedTitle);
+    } catch (error) {
+        console.error("Error inserting nested title:", error);
+        res.status(500).send("Error inserting nested title");
+    }
+});
+
+
 
 
 module.exports = router;
