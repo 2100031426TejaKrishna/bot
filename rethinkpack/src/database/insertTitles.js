@@ -8,11 +8,9 @@ const titlesSchema = new mongoose.Schema({
         subTitle: [
             {
                 subTitleLabel: String,
-                // questionsSubTitle: [String],
                 nestedTitle: [ 
                     { 
                         nestedTitleLabel: String,
-                        // questionsNestedTitle: [String] 
                     }
                 ]
             }

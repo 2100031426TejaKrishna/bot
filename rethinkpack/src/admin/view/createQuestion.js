@@ -104,7 +104,12 @@ class CreateQuestion extends Component {
       countryFirstQuestionId: '',
       countryFirstQuestionValue: '',
       countryFirstQuestionRender: false,
-      showMarks: true
+      nestedTitle: {
+        id: '',
+        firstQuestion: false
+      },
+      showMarks: true,
+      showFirstQuestionNestedTitleOption: false
     };
 
     this.initialState = { ...this.state };
@@ -229,7 +234,7 @@ class CreateQuestion extends Component {
   }
 
   handleTitleSelect = (e) => {
-    const { allQuestions } = this.state;
+    const { allQuestions, allTitles } = this.state;
     let valueArray = e.split(",");
 
     let titleQuestionsArray = [];
@@ -241,12 +246,58 @@ class CreateQuestion extends Component {
     };
     // console.log(`matching Qs Id: ${titleQuestionsArray}`)
 
+    this.handleFirstQuestionNestedTitleOption(e);
+
     this.setState({ 
       selectedTitle: valueArray[0],
       selectedTitleLabel: e,
       selectedTitleQuestions: titleQuestionsArray
     // });
     }, console.log(`selectedTitle: ${valueArray[0]} and ${valueArray[1]}`));
+  };
+
+  fetchNestedTitles = () => {
+    const { allTitles } = this.state;
+
+    // Determine nested titles
+    let nestedTitlesArray = [];
+    // loops through main titles
+    for (let i=0; i<allTitles.length; i++) {      
+      // loops through subtitles
+      for (let j=0; j<allTitles[i].title.subTitle.length; j++) {
+        // loops through nested titles
+        for (let k=0; k<allTitles[i].title.subTitle[j].nestedTitle.length; k++) {
+          // console.log(`nestedTitles label: ${allTitles[i].title.subTitle[j].nestedTitle[k].nestedTitleLabel}`)
+          nestedTitlesArray.push({nestedTitleLabel: allTitles[i].title.subTitle[j].nestedTitle[k].nestedTitleLabel, id: allTitles[i].title.subTitle[j].nestedTitle[k]._id});
+        };
+      };
+    };
+    return nestedTitlesArray;
+  };
+
+  handleFirstQuestionNestedTitleOption = (e) => {
+    let valueArray = e.split(",");
+    let nestedTitlesArray = this.fetchNestedTitles();
+
+    // Determine a match for nested title with the selected title
+    for (let i=0; i<nestedTitlesArray.length; i++) {
+      if (valueArray[0] === nestedTitlesArray[i].id) {
+        console.log(`match: ${nestedTitlesArray[i].nestedTitleLabel}`)
+        this.setState({ showFirstQuestionNestedTitleOption: true })
+        return;
+      } else {
+        this.setState({ showFirstQuestionNestedTitleOption: false })
+      }
+    };
+  };
+
+  toggleFirstQuestionNestedTitle = () => {
+    this.setState(prevState => ({
+      nestedTitle: {
+        ...prevState.nestedTitle,
+        firstQuestion: !prevState.nestedTitle.firstQuestion
+      }
+    }));
   };
 
   addOption = (e) => {
@@ -329,58 +380,6 @@ class CreateQuestion extends Component {
       };
     });
   };
-
-  // deleteGridRow = (index) => {
-  //   this.setState(prevState => {
-  //     const updatedRow = prevState.gridOptions.row.filter((_, idx) => idx !== index);
-  //     const updatedAnswers = prevState.gridOptions.answers.filter(answer => answer.rowIndex !== index);
-      
-  //     // Update the indices of rows greater than the deleted row
-  //     const updatedAnswersWithAdjustedRowIndices = updatedAnswers.map(answer => {
-  //       if (answer.rowIndex > index) {
-  //         return {
-  //           ...answer,
-  //           rowIndex: answer.rowIndex - 1
-  //         };
-  //       }
-  //       return answer;
-  //     });
-  
-  //     return {
-  //       gridOptions: {
-  //         ...prevState.gridOptions,
-  //         row: updatedRow,
-  //         answers: updatedAnswersWithAdjustedRowIndices
-  //       }
-  //     };
-  //   });
-  // };
-  
-  // deleteGridColumn = (index) => {
-  //   this.setState(prevState => {
-  //     const updatedColumn = prevState.gridOptions.column.filter((_, idx) => idx !== index);
-  //     const updatedAnswers = prevState.gridOptions.answers.filter(answer => answer.columnIndex !== index);
-      
-  //     // Update the indices of columns greater than the deleted column
-  //     const updatedAnswersWithAdjustedColumnIndices = updatedAnswers.map(answer => {
-  //       if (answer.columnIndex > index) {
-  //         return {
-  //           ...answer,
-  //           columnIndex: answer.columnIndex - 1
-  //         };
-  //       }
-  //       return answer;
-  //     });
-  
-  //     return {
-  //       gridOptions: {
-  //         ...prevState.gridOptions,
-  //         column: updatedColumn,
-  //         answers: updatedAnswersWithAdjustedColumnIndices
-  //       }
-  //     };
-  //   });
-  // };
 
   deleteGridRow = (index) => {
     this.setState(prevState => {
@@ -1508,7 +1507,7 @@ class CreateQuestion extends Component {
   };
 
   render() {
-    const { allTitles, selectedTitle, selectedTitleQuestions, selectedOption, options, showCountry, countries, country, isLeadingQuestion, showExplanation, firstQuestion, firstQuestionRender, countryFirstQuestionRender, validationErrors, allQuestions, nextQuestion, previousQuestion, showMarks, gridOptions } = this.state;
+    const { allTitles, selectedTitle, selectedTitleQuestions, selectedOption, options, showCountry, countries, country, isLeadingQuestion, showExplanation, firstQuestion, firstQuestionRender, countryFirstQuestionRender, validationErrors, allQuestions, nextQuestion, previousQuestion, showMarks, gridOptions, showFirstQuestionNestedTitleOption, nestedTitle } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
     const showNextQuestion = (isLeadingQuestion && (selectedOption === 'checkbox' || selectedOption === 'linear' || selectedOption === 'multipleChoiceGrid' || selectedOption === 'checkboxGrid')) || !isLeadingQuestion;
 
@@ -1585,6 +1584,38 @@ class CreateQuestion extends Component {
                       </div>
                     )}
                   </div>
+
+
+                  {/* First Question Nested Title */}
+                  {showFirstQuestionNestedTitleOption && (
+                    <div className="form-check form-switch form-check-inline">
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      role="switch"
+                      id="nestedTitleFirstQuestionCheck"
+                      checked={nestedTitle.firstQuestion}
+                      onChange={this.toggleFirstQuestionNestedTitle}
+                    />
+                    <label className="form-check-label" htmlFor="firstQuestionCheck">
+                      Nested Title's First Question
+                    </label>
+                    {/* {validationErrors.countryFirstQuestion && (
+                        <div style={{ color: 'red', fontSize: 12 }}>
+                          {validationErrors.countryFirstQuestion}
+                        </div>
+                      )}
+                      {countryFirstQuestionRender && (
+                        <div>
+                          {this.renderCountryFirstQuestionModal()}
+                        </div>
+                      )}  */}
+                    </div>
+                  )}
+
+
+
+
                   <div className="mb-3">
                     <label htmlFor="question" className="col-form-label">
                       Question:
