@@ -41,6 +41,10 @@ const questionSchema = new mongoose.Schema({
     recommendation: String,
     previousQuestion: String,
     nextQuestion: String,
+    nestedTitle: {
+        id: String,
+        firstQuestion: Boolean
+    },
     date: {
         type: Date,
         default: Date.now,

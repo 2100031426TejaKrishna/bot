@@ -252,8 +252,8 @@ class CreateQuestion extends Component {
       selectedTitle: valueArray[0],
       selectedTitleLabel: e,
       selectedTitleQuestions: titleQuestionsArray
-    // });
-    }, console.log(`selectedTitle: ${valueArray[0]} and ${valueArray[1]}`));
+    });
+    // }, console.log(`selectedTitle: ${valueArray[0]} and ${valueArray[1]}`));
   };
 
   fetchNestedTitles = () => {
@@ -282,8 +282,15 @@ class CreateQuestion extends Component {
     // Determine a match for nested title with the selected title
     for (let i=0; i<nestedTitlesArray.length; i++) {
       if (valueArray[0] === nestedTitlesArray[i].id) {
-        console.log(`match: ${nestedTitlesArray[i].nestedTitleLabel}`)
-        this.setState({ showFirstQuestionNestedTitleOption: true })
+        // console.log(`match: ${nestedTitlesArray[i].nestedTitleLabel}`)
+        this.setState({ 
+          showFirstQuestionNestedTitleOption: true,
+          nestedTitle: {
+            ...this.nestedTitle,
+            id: valueArray[0],
+            firstQuestion: false
+          }
+         });
         return;
       } else {
         this.setState({ showFirstQuestionNestedTitleOption: false })
@@ -292,6 +299,9 @@ class CreateQuestion extends Component {
   };
 
   toggleFirstQuestionNestedTitle = () => {
+    
+    this.validateFirstQuestionNestedTitle();
+    
     this.setState(prevState => ({
       nestedTitle: {
         ...prevState.nestedTitle,
@@ -1170,6 +1180,46 @@ class CreateQuestion extends Component {
       return true
     };
   };
+
+  validateFirstQuestionNestedTitle = () => {
+    const { allQuestions, nestedTitle } = this.state;
+
+    // Case: when nested title IS NOT selected, 
+    // is not possible as only way to execute this function is when a 
+    // nested title is currently selected
+
+    for (let i=0; i<allQuestions.length; i++) {
+      // console.log(`id: ${allQuestions[i].nestedTitle.id}`)
+      
+      // Case: same nested title AND first question is false
+      if (
+        nestedTitle.id === allQuestions[i].nestedTitle.id && 
+        allQuestions[i].nestedTitle.firstQuestion === false
+      ) {
+        console.log(`is vacant`)
+        return {
+          isNestedTitleFirstQuestionVacant: true
+        };
+      }
+
+      // Case: same nested title AND first question is true
+      else if (
+        nestedTitle.id === allQuestions[i].nestedTitle.id && 
+        allQuestions[i].nestedTitle.firstQuestion === true
+      ) {
+        console.log(`is taken`)
+        return {
+          isNestedTitleFirstQuestionVacant: false,
+          nestedTitleId: allQuestions[i].nestedTitle.id
+        };
+      }
+
+      // Case: different nested title
+      else {
+        //  do nothing
+      }
+    }
+  };
   
   validateQuestion = () => {
     const { question } = this.state;
@@ -1430,7 +1480,9 @@ class CreateQuestion extends Component {
       showExplanation,
       requireResponse,
       previousQuestion,
-      nextQuestion
+      nextQuestion,
+      showFirstQuestionNestedTitleOption,
+      nestedTitle
     } = this.state;
 
     const dataToInsert = {
@@ -1447,7 +1499,7 @@ class CreateQuestion extends Component {
       firstQuestion,
       requireResponse,
       previousQuestion: isLeadingQuestion ? undefined : previousQuestion,
-      nextQuestion: isLeadingQuestion ? undefined : nextQuestion
+      nextQuestion: isLeadingQuestion ? undefined : nextQuestion,
     };
 
     if (selectedOption === 'dropdown') {
@@ -1471,6 +1523,10 @@ class CreateQuestion extends Component {
         columns: gridOptions.column.map(column => ({ text: column.label })),
         answers: gridOptions.answers.filter(answer => answer.isCorrect)
       };
+    }
+
+    if (showFirstQuestionNestedTitleOption === true) {
+      dataToInsert.nestedTitle = nestedTitle;
     }
 
     try {
