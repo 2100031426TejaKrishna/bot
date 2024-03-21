@@ -108,8 +108,12 @@ class CreateQuestion extends Component {
         id: '',
         firstQuestion: false
       },
+      nestedTitleLabel: '',
       showMarks: true,
-      showFirstQuestionNestedTitleOption: false
+      showFirstQuestionNestedTitleOption: false,
+      nestedTitleFirstQuestionRender: false,
+      nestedTitleFirstQuestionId: '',
+      nestedTitleFirstQuestionValue: ''
     };
 
     this.initialState = { ...this.state };
@@ -228,10 +232,10 @@ class CreateQuestion extends Component {
   firstQuestionModalOnHide = () => {
     this.setState( {
       firstQuestionRender: false,
-      countryFirstQuestionRender: false
+      countryFirstQuestionRender: false,
+      nestedTitleFirstQuestionRender: false
     })
-
-  }
+  };
 
   handleTitleSelect = (e) => {
     const { allQuestions, allTitles } = this.state;
@@ -289,7 +293,8 @@ class CreateQuestion extends Component {
             ...this.nestedTitle,
             id: valueArray[0],
             firstQuestion: false
-          }
+          },
+          nestedTitleLabel: nestedTitlesArray[i].nestedTitleLabel
          });
         return;
       } else {
@@ -300,14 +305,25 @@ class CreateQuestion extends Component {
 
   toggleFirstQuestionNestedTitle = () => {
     
-    this.validateFirstQuestionNestedTitle();
+    // Validate whether nested title first question is vacant or not
+    const { 
+      isNestedTitleFirstQuestionVacant,
+      nestedTitleId 
+    } = this.validateFirstQuestionNestedTitle();
     
-    this.setState(prevState => ({
-      nestedTitle: {
-        ...prevState.nestedTitle,
-        firstQuestion: !prevState.nestedTitle.firstQuestion
-      }
-    }));
+    if (isNestedTitleFirstQuestionVacant === true) {
+      this.setState(prevState => ({
+        nestedTitle: {
+          ...prevState.nestedTitle,
+          firstQuestion: !prevState.nestedTitle.firstQuestion
+        }
+      }));
+      console.log(`is vacant`)
+    } else {
+      // render the firstQuestionModal here, pass in nestedTitleId
+      console.log(`is taken`)
+      this.setState({ nestedTitleFirstQuestionRender: true });
+    }
   };
 
   addOption = (e) => {
@@ -1091,6 +1107,29 @@ class CreateQuestion extends Component {
     );
   };
 
+  renderNestedTitleFirstQuestionModal = () => {
+    const { 
+      nestedTitle, 
+      nestedTitleLabel, 
+      nestedTitleFirstQuestionId, 
+      nestedTitleFirstQuestionValue
+    } = this.state;
+    return (
+      <>
+        <FirstQuestionModal
+          openFirstQuestionModal = {true}
+          type = {"nestedTitle"}
+          firstQuestionId = {nestedTitleFirstQuestionId}
+          firstQuestionValue = {nestedTitleFirstQuestionValue}
+          nestedTitleId = {nestedTitle.id}
+          nestedTitleLabel = {nestedTitleLabel}
+          // updateFirstQuestion = {this.updateNestedTitleFirstQuestion}
+          firstQuestionModalOnHide = {this.firstQuestionModalOnHide}
+        />
+      </>
+    );
+  };
+
   toggleRequireResponse = () => {
     this.setState(prevState => ({
       requireResponse: !prevState.requireResponse,
@@ -1189,16 +1228,15 @@ class CreateQuestion extends Component {
     // nested title is currently selected
 
     for (let i=0; i<allQuestions.length; i++) {
-      // console.log(`id: ${allQuestions[i].nestedTitle.id}`)
       
       // Case: same nested title AND first question is false
       if (
         nestedTitle.id === allQuestions[i].nestedTitle.id && 
         allQuestions[i].nestedTitle.firstQuestion === false
       ) {
-        console.log(`is vacant`)
         return {
-          isNestedTitleFirstQuestionVacant: true
+          isNestedTitleFirstQuestionVacant: true,
+          nestedTitleId: ''
         };
       }
 
@@ -1207,18 +1245,24 @@ class CreateQuestion extends Component {
         nestedTitle.id === allQuestions[i].nestedTitle.id && 
         allQuestions[i].nestedTitle.firstQuestion === true
       ) {
-        console.log(`is taken`)
+        // record the matched question
+        this.setState({
+          nestedTitleFirstQuestionId: allQuestions[i]._id,
+          nestedTitleFirstQuestionValue: allQuestions[i].question
+        })
         return {
           isNestedTitleFirstQuestionVacant: false,
           nestedTitleId: allQuestions[i].nestedTitle.id
         };
       }
-
-      // Case: different nested title
-      else {
-        //  do nothing
-      }
     }
+
+    // Case: nestedTitle.id doesn't match with any in the nestedTitle object array
+    // return vacant status
+    return {
+      isNestedTitleFirstQuestionVacant: true,
+      nestedTitleId: ''
+    };
   };
   
   validateQuestion = () => {
@@ -1563,7 +1607,7 @@ class CreateQuestion extends Component {
   };
 
   render() {
-    const { allTitles, selectedTitle, selectedTitleQuestions, selectedOption, options, showCountry, countries, country, isLeadingQuestion, showExplanation, firstQuestion, firstQuestionRender, countryFirstQuestionRender, validationErrors, allQuestions, nextQuestion, previousQuestion, showMarks, gridOptions, showFirstQuestionNestedTitleOption, nestedTitle } = this.state;
+    const { allTitles, selectedTitle, selectedTitleQuestions, selectedOption, options, showCountry, countries, country, isLeadingQuestion, showExplanation, firstQuestion, firstQuestionRender, countryFirstQuestionRender, validationErrors, allQuestions, nextQuestion, previousQuestion, showMarks, gridOptions, showFirstQuestionNestedTitleOption, nestedTitle, nestedTitleFirstQuestionRender } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
     const showNextQuestion = (isLeadingQuestion && (selectedOption === 'checkbox' || selectedOption === 'linear' || selectedOption === 'multipleChoiceGrid' || selectedOption === 'checkboxGrid')) || !isLeadingQuestion;
 
@@ -1666,6 +1710,11 @@ class CreateQuestion extends Component {
                           {this.renderCountryFirstQuestionModal()}
                         </div>
                       )}  */}
+                      {nestedTitleFirstQuestionRender && (
+                        <div>
+                          {this.renderNestedTitleFirstQuestionModal()}
+                        </div>
+                      )}
                     </div>
                   )}
 

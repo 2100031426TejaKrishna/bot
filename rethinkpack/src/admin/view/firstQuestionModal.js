@@ -12,30 +12,14 @@ class FirstQuestionModal extends Component {
     super(props);
     // Declare all state variables to observe below
     this.state = {
-      title: {
-        titleLabel: '',
-        subTitle: [
-          {
-            subTitleLabel: '',
-            nestedTitle: [
-              { 
-                nestedTitleLabel: '', 
-              }
-            ]
-          }
-        ],
-      },
-      validationErrors: {
-        titleLabel: '',
-        subTitleLabel: '',
-        nestedTitleLabel: ''
-      },
       showModal: false,
       openFirstQuestionModal: props.openFirstQuestionModal,
       type: props.type,
       country: props.country,
       firstQuestionId: props.firstQuestionId,
-      firstQuestionValue: props.firstQuestionValue
+      firstQuestionValue: props.firstQuestionValue,
+      nestedTitleId: props.nestedTitleId,
+      nestedTitleLabel: props.nestedTitleLabel
     };
 
     this.initialState = { ...this.state };
@@ -93,6 +77,44 @@ class FirstQuestionModal extends Component {
       country: {
         selectedCountry: country,
         countryFirstQuestion: false
+      }
+    };
+   
+    try {
+      const response = await fetch(`http://${destination}/api/update/${firstQuestionId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dataToUpdate),
+      })
+      if (response.ok) {
+        console.log('Data submitted successfully');
+        this.setState({ 
+          showModal: false,
+          showToast: true 
+        });
+        setTimeout(() => this.setState({ showToast: false }), 10000);
+
+        // Pass props to createQuestion.js to toggle firstQuestiont to true and dataToInsert
+        this.props.updateFirstQuestion();
+      } else {
+        console.error('Server responded with an error:', response.status, response.statusText);
+        const responseData = await response.json();
+        console.error('Server error data:', responseData);
+      }
+    } catch (error) {
+      console.error('Network error:', error);
+    }
+  };
+
+  removeNestedTitleExistingFirstQuestion = async (firstQuestionId) => {
+    const { nestedTitleId } = this.state;    
+
+    const dataToUpdate = {
+      nestedTitle: {
+        id: nestedTitleId,
+        firstQuestion: false
       }
     };
    
@@ -206,7 +228,7 @@ class FirstQuestionModal extends Component {
 
   render() {
 
-    const { validationErrors, firstQuestionId, firstQuestionValue, type, country } = this.state;
+    const { validationErrors, firstQuestionId, firstQuestionValue, type, country, nestedTitleLabel } = this.state;
 
     return (
 
@@ -227,6 +249,7 @@ class FirstQuestionModal extends Component {
             className="modal-header"
             closeButton
           >
+            {/* General */}
             {(type === "general") && (
               <Modal.Title
                 className="modal-title fs-5"
@@ -235,6 +258,7 @@ class FirstQuestionModal extends Component {
                 A first question already exists
               </Modal.Title>
             )}
+            {/* Country */}
             {(type === "country") && (
               <Modal.Title
                 className="modal-title fs-5"
@@ -242,7 +266,16 @@ class FirstQuestionModal extends Component {
               >
                 A first question already exists for {country} 
               </Modal.Title>
-            )} 
+            )}
+            {/* NestedTitle */}
+            {(type === "nestedTitle") && (
+              <Modal.Title
+                className="modal-title fs-5"
+                id="firstQuestionModalLabel"
+              >
+                A first question already exists for {nestedTitleLabel}
+              </Modal.Title>
+            )}  
           </Modal.Header>
           <Modal.Body>
             <form>
