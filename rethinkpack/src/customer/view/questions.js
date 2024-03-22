@@ -11,6 +11,7 @@ const Questions = () => {
         subtitle: '',
         nestedTitle: '',
     });
+    const [titlesDetails, setTitlesDetails] = useState([]);
     const [currentAnswer, setCurrentAnswer] = useState('');
     const [selectedOptions, setSelectedOptions] = useState([]);
     const [gridAnswers, setGridAnswers] = useState({});
@@ -100,7 +101,22 @@ const Questions = () => {
             }
         };
 
+        const fetchTitlesDetails = async () => {
+            try {
+                const response = await fetch(`http://${destination}/api/fetchTitlesWithDetails`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                setTitlesDetails(data); // Store fetched title details
+                console.log("Titles Details: ", data);
+            } catch (error) {
+                console.error("Error fetching titles with details:", error);
+            }
+        };
+
         fetchAllQuestions();
+        fetchTitlesDetails();
     }, []);
 
     useEffect(() => {
@@ -386,7 +402,7 @@ const Questions = () => {
         return <div>Loading questions...</div>;
     }
 
-    if (!questions.length) {
+    if (!questions.length && !titlesDetails.length) {
         return <div>No questions available</div>;
     }
 
@@ -699,6 +715,32 @@ const Questions = () => {
 
     return (
         <div className="survey-questions-container">
+            {titlesDetails.map((titleDetail, index) => (
+                <div key={index} className="title-details">
+                    <h4>{titleDetail.title}</h4>
+                    {titleDetail.subtitles.map((sub, subIndex) => (
+                        <div key={subIndex}>
+                            <h5>{sub.subtitleLabel}</h5>
+                            {sub.nestedTitles.map((nested, nestedIndex) => (
+                                <div key={nestedIndex}>
+                                    <h6>{nested.nestedTitleLabel}</h6>
+                                    {/* Render the question and its options */}
+                                    <div className="survey-questions-card">
+                                        {/* Check if a question is available */}
+                                        {nested.question && (
+                                            <>
+                                                <p>{nested.question.question}</p>
+                                                {/* Render options based on question type */}
+                                                {renderOptions(nested.question)}
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ))}
+                </div>
+            ))}
             {titleDetails.title && <h4>{titleDetails.title}</h4>}
             {titleDetails.subtitle && <h5>{titleDetails.subtitle}</h5>}
             {titleDetails.nestedTitle && <h6>{titleDetails.nestedTitle}</h6>}

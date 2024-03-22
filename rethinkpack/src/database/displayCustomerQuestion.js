@@ -170,4 +170,45 @@ router.get('/fetchTitleForQuestion/:questionId', async (req, res) => {
     }
 });
 
+router.get('/fetchTitlesWithDetails', async (req, res) => {
+    try {
+        const titles = await Titles.find().sort({date: -1});
+
+        let titlesDetails = await Promise.all(titles.map(async (title) => {
+            return {
+                title: title.title.titleLabel,
+                dateCreated: title.date,
+                subtitles: await Promise.all(title.title.subTitle.map(async (sub) => {
+                    return {
+                        subtitleLabel: sub.subTitleLabel,
+                        nestedTitles: await Promise.all(sub.nestedTitle.map(async (nested) => {
+                            // Ensure to convert _id to string format if needed before comparison
+                            const nestedTitleId = nested._id.toString(); // Converting MongoDB ObjectID to string if not already
+
+                            // Attempt to find the first question for the nested title
+                            const question = await Questions.findOne({
+                                'nestedTitle.id': nestedTitleId, // Make sure this matches correctly, considering the data types
+                                'nestedTitle.firstQuestion': true
+                            });
+
+                            let nestedTitleDetail = {
+                                nestedTitleLabel: nested.nestedTitleLabel,
+                                // Only add the question text if a question was found
+                                ...(question && { question })
+                            };
+
+                            return nestedTitleDetail;
+                        }))
+                    };
+                }))
+            };
+        }));
+
+        res.json(titlesDetails);
+    } catch (error) {
+        console.error("Error fetching titles with details:", error);
+        res.status(500).json({ message: "Error fetching title information" });
+    }
+});
+
 module.exports = router;
