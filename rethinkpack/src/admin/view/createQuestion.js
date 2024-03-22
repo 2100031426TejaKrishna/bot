@@ -147,7 +147,7 @@ class CreateQuestion extends Component {
     });
     this.fetchQuestions();
     this.fetchTitles();
-  }
+  };
 
   componentDidUpdate(prevProps) {
     if (this.props.questionsChanged !== prevProps.questionsChanged) {
@@ -224,8 +224,43 @@ class CreateQuestion extends Component {
     });
     this.setState({ allQuestions: updatedQuestions });
 
+    // Reset state value to false and update toggle to TRUE
     this.setState({ 
-      countryFirstQuestionRender: false
+      countryFirstQuestionRender: false,
+      country: {
+        ...this.country,
+        countryFirstQuestion: true,
+      },
+     });
+  };
+
+  updateNestedTitleFirstQuestion = () => {
+    console.log(`prop updateNestedTitleFirstQuestion executed.`)
+    
+    const { allQuestions, nestedTitleFirstQuestionId } = this.state;
+    const updatedQuestions = allQuestions.map(question => {
+      if (question._id === nestedTitleFirstQuestionId) {
+        console.log(`question._id === nestedTitleFirstQuestionId`)
+        return { 
+          ...question,
+          nestedTitle: {
+            ...question.nestedTitle,
+            firstQuestion: false,
+          },
+        };
+      } else {
+        return question;
+      }
+    });
+    this.setState({ allQuestions: updatedQuestions });
+
+    // Reset state value to false and update toggle to TRUE
+    this.setState({ 
+      nestedTitleFirstQuestionRender: false,
+      nestedTitle: {
+        ...this.nestedTitle,
+        firstQuestion: true
+      },
      });
   };
   
@@ -308,7 +343,6 @@ class CreateQuestion extends Component {
     // Validate whether nested title first question is vacant or not
     const { 
       isNestedTitleFirstQuestionVacant,
-      nestedTitleId 
     } = this.validateFirstQuestionNestedTitle();
     
     if (isNestedTitleFirstQuestionVacant === true) {
@@ -320,7 +354,7 @@ class CreateQuestion extends Component {
       }));
       console.log(`is vacant`)
     } else {
-      // render the firstQuestionModal here, pass in nestedTitleId
+      // render the firstQuestionModal here
       console.log(`is taken`)
       this.setState({ nestedTitleFirstQuestionRender: true });
     }
@@ -1123,7 +1157,7 @@ class CreateQuestion extends Component {
           firstQuestionValue = {nestedTitleFirstQuestionValue}
           nestedTitleId = {nestedTitle.id}
           nestedTitleLabel = {nestedTitleLabel}
-          // updateFirstQuestion = {this.updateNestedTitleFirstQuestion}
+          updateFirstQuestion = {this.updateNestedTitleFirstQuestion}
           firstQuestionModalOnHide = {this.firstQuestionModalOnHide}
         />
       </>
@@ -1700,16 +1734,6 @@ class CreateQuestion extends Component {
                     <label className="form-check-label" htmlFor="firstQuestionCheck">
                       Nested Title's First Question
                     </label>
-                    {/* {validationErrors.countryFirstQuestion && (
-                        <div style={{ color: 'red', fontSize: 12 }}>
-                          {validationErrors.countryFirstQuestion}
-                        </div>
-                      )}
-                      {countryFirstQuestionRender && (
-                        <div>
-                          {this.renderCountryFirstQuestionModal()}
-                        </div>
-                      )}  */}
                       {nestedTitleFirstQuestionRender && (
                         <div>
                           {this.renderNestedTitleFirstQuestionModal()}
@@ -1717,8 +1741,6 @@ class CreateQuestion extends Component {
                       )}
                     </div>
                   )}
-
-
 
 
                   <div className="mb-3">
@@ -2003,11 +2025,6 @@ class CreateQuestion extends Component {
                     <label className="form-check-label" htmlFor="firstQuestionCheck">
                       First Question
                     </label>
-                    {/* {validationErrors.firstQuestion && (
-                      <div>
-                        {this.renderFirstQuestionModal()}
-                      </div>
-                    )} */}
                     {firstQuestionRender && (
                         <div>
                           {this.renderFirstQuestionModal()}

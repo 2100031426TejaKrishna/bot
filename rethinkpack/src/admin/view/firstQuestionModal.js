@@ -33,8 +33,6 @@ class FirstQuestionModal extends Component {
     });
   }
 
-  /*--------------onClick-----------------*/
-
   /*--------------API-----------------*/
 
   removeExistingFirstQuestion = async (firstQuestionId) => {
@@ -96,7 +94,7 @@ class FirstQuestionModal extends Component {
         });
         setTimeout(() => this.setState({ showToast: false }), 10000);
 
-        // Pass props to createQuestion.js to toggle firstQuestiont to true and dataToInsert
+        // Pass props to createQuestion.js to toggle firstQuestion to true and dataToInsert
         this.props.updateFirstQuestion();
       } else {
         console.error('Server responded with an error:', response.status, response.statusText);
@@ -134,7 +132,7 @@ class FirstQuestionModal extends Component {
         });
         setTimeout(() => this.setState({ showToast: false }), 10000);
 
-        // Pass props to createQuestion.js to toggle firstQuestiont to true and dataToInsert
+        // Pass props to createQuestion.js to toggle firstQuestion to true and dataToInsert
         this.props.updateFirstQuestion();
       } else {
         console.error('Server responded with an error:', response.status, response.statusText);
@@ -149,58 +147,13 @@ class FirstQuestionModal extends Component {
   /*-------------MODAL-----------------*/
 
   componentDidMount() {
-    const { showModal, openFirstQuestionModal, firstQuestionValue } = this.state;
-    // console.log(`showModal: ${showModal}`)
-    console.log(`openFirstQuestionModal: ${openFirstQuestionModal}`)
-    console.log(`firstQuestionValue: ${firstQuestionValue}`)
-
+    const { openFirstQuestionModal } = this.state;
     this.setState({ showModal: openFirstQuestionModal });
-    
   }
 
   componentWillUnmount() {
-
+    
   }
-
-  /*----------- function helpers ----------------------*/
-
-  
-
-
-  // --------------- VALIDATIONS---------------------------------
-
-  validateTitleLabel = () => {
-    const { title } = this.state;
-    return title.titleLabel.trim() !== '';
-  };
-  
-  validateSubTitleLabel = () => {
-    const { title } = this.state;
-
-    for (let i=0; i<title.subTitle.length; i++) {
-      // case when field is empty
-      if (title.subTitle[i].subTitleLabel.trim() === '') {
-        return false;
-      }
-    };
-    // case when all fields are not empty
-    return true;
-  };
-
-  validateNestedTitleLabel = () => {
-    const { title } = this.state;
-
-    for (let i=0; i<title.subTitle.length; i++) {
-      for (let j=0; j<title.subTitle[i].nestedTitle.length; j++) {
-        // case when field is empty
-        if (title.subTitle[i].nestedTitle[j].nestedTitleLabel.trim() === '') {
-          return false;
-        }
-      }
-    };
-    // case when all fields are not empty
-    return true;
-  };
 
   renderToast() {
     if (this.state.showToast) {
@@ -220,15 +173,11 @@ class FirstQuestionModal extends Component {
     return null;
   }
 
-  // -------------------------- HANDLE SUBMIT ------------------------------
-
-  
-
   /*---------------------RENDER----------------------------------*/
 
   render() {
 
-    const { validationErrors, firstQuestionId, firstQuestionValue, type, country, nestedTitleLabel } = this.state;
+    const { firstQuestionId, firstQuestionValue, type, country, nestedTitleLabel } = this.state;
 
     return (
 
@@ -296,7 +245,14 @@ class FirstQuestionModal extends Component {
               <button 
                 className="btn btn-primary" 
                 id="btKeep"
-                onClick={() => this.setState({ showModal: false })}
+                onClick={() => 
+                  {
+                    this.props.firstQuestionModalOnHide();
+                    this.setState({ showModal: false },
+                      this.resetState
+                    )
+                  } 
+                }
               >
                 Keep
               </button>
@@ -314,6 +270,15 @@ class FirstQuestionModal extends Component {
                   className="btn btn-danger" 
                   id="btRemove"
                   onClick={() => this.removeCountryExistingFirstQuestion(firstQuestionId)}
+                >
+                  Remove
+                </button>
+              )}
+              {(type === "nestedTitle") && (
+                <button 
+                  className="btn btn-danger" 
+                  id="btRemove"
+                  onClick={() => this.removeNestedTitleExistingFirstQuestion(firstQuestionId)}
                 >
                   Remove
                 </button>
