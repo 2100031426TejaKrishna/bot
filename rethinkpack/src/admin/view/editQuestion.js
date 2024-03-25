@@ -66,7 +66,7 @@ class EditQuestion extends Component {
         "Vanuatu", "Vatican City", "Venezuela", "Vietnam", "Yemen",
         "Zambia", "Zimbabwe"
       ],
-      selectedCountries: [],
+      selectedCountry: [],
       isFirstQuestion: false,
       isLeadingQuestion: false,
       showExplanation: false,
@@ -341,13 +341,13 @@ fetchQuestion = async (questionId) => {
   handleInputChange = (e) => {
     if (e.target.id === "country") {
       const options = e.target.options;
-      const selectedCountries = [];
+      const selectedCountry = [];
       for (let i = 0; i < options.length; i++) {
         if (options[i].selected) {
-          selectedCountries.push(options[i].value);
+          selectedCountry.push(options[i].value);
         }
       }
-      this.setState({ selectedCountries });
+      this.setState({ selectedCountry });
     } else {
       this.setState({ [e.target.id]: e.target.value });
     }
@@ -1066,15 +1066,15 @@ fetchQuestion = async (questionId) => {
   handleCountryChange = (event) => {
     const { value } = event.target;
     this.setState((prevState) => {
-      if (prevState.selectedCountries.includes(value)) {
+      if (prevState.selectedCountry.includes(value)) {
         return {
-          selectedCountries: prevState.selectedCountries.filter(
+          selectedCountry: prevState.selectedCountry.filter(
             (country) => country !== value
           ),
         };
       } else {
         return {
-          selectedCountries: [...prevState.selectedCountries, value],
+          selectedCountry: [...prevState.selectedCountry, value],
         };
       }
     });
@@ -1176,8 +1176,8 @@ fetchQuestion = async (questionId) => {
   };
   
   validateCountries = () => {
-    const { selectedCountries, showCountry } = this.state;
-    return !showCountry || (selectedCountries.length > 0);
+    const { selectedCountry, showCountry } = this.state;
+    return !showCountry || (selectedCountry.length > 0);
   };
   
   validateExplanation = () => {
@@ -1251,7 +1251,7 @@ fetchQuestion = async (questionId) => {
       gridOptions,
       isLeadingQuestion,
       showCountry,
-      selectedCountries,
+      selectedCountry,
       explanation,
       showExplanation,
       requireResponse,
@@ -1268,7 +1268,7 @@ fetchQuestion = async (questionId) => {
       linearScale: this.state.questionList.linearScale,
       openEndedText: this.state.questionList.openEndedText,
       marks: isLeadingQuestion ? undefined : parseFloat(this.state.questionList.marks),
-      countries: showCountry ? selectedCountries : undefined,
+      countries: showCountry ? selectedCountry : undefined,
       explanation: showExplanation ? explanation : undefined,
       firstQuestion: this.state.questionList.firstQuestion,
       isLeadingQuestion,
@@ -1321,7 +1321,7 @@ fetchQuestion = async (questionId) => {
 
   render() {
 
-    const { showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, validationErrors, questionId, questionIndex, allQuestions } = this.state;
+    const { showCountry, countries, selectedCountry, isLeadingQuestion, showExplanation, validationErrors, questionId, questionIndex, allQuestions } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
     const { filteredQuestions } = this.state;
 
@@ -1496,7 +1496,7 @@ fetchQuestion = async (questionId) => {
                           type="checkbox"
                           id={country}
                           value={country}
-                          checked={selectedCountries.includes(country)}
+                          checked={selectedCountry.includes(country)}
                           onChange={this.handleCountryChange}
                           className="form-check-input"
                           size={5}
