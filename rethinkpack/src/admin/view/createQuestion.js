@@ -76,7 +76,6 @@ class CreateQuestion extends Component {
       },
       isLeadingQuestion: false,
       showExplanation: false,
-      firstQuestion: false,
       showToast: false,
       minScale: 1,
       maxScale: 5,
@@ -89,7 +88,6 @@ class CreateQuestion extends Component {
         marks: '',
         country: '',
         explanation: '',
-        firstQuestion: '',
         countryFirstQuestion: '',
       },
       requireResponse: false,
@@ -181,29 +179,6 @@ class CreateQuestion extends Component {
     createQuestionModal.removeEventListener('hidden.bs.modal', this.resetState);
   };
 
-  updateFirstQuestion = () => {
-    console.log(`prop updateFirstQuestion executed.`)
-    
-    const { allQuestions } = this.state;
-    const updatedQuestions = allQuestions.map(question => {
-      if (question.firstQuestion === true) {
-        return { ...question, firstQuestion: false };
-      } else {
-        return question;
-      }
-    });
-    this.setState({ allQuestions: updatedQuestions });
-
-    this.setState({ 
-      // set validation
-      isFirstQuestionValid: true,
-      validationErrors: {
-        firstQuestion: true
-      },
-      firstQuestion: true
-     });
-  };
-
   updateCountryFirstQuestion = () => {
     console.log(`prop updateCountryFirstQuestion executed.`)
     
@@ -266,14 +241,13 @@ class CreateQuestion extends Component {
   
   firstQuestionModalOnHide = () => {
     this.setState( {
-      firstQuestionRender: false,
       countryFirstQuestionRender: false,
       nestedTitleFirstQuestionRender: false
     })
   };
 
   handleTitleSelect = (e) => {
-    const { allQuestions, allTitles } = this.state;
+    const { allQuestions } = this.state;
     let valueArray = e.split(",");
 
     let titleQuestionsArray = [];
@@ -971,22 +945,6 @@ class CreateQuestion extends Component {
     }));
   };
 
-
-  validateFirstQuestion = () => {
-    const { allQuestions } = this.state;
-    for (let i=0; i < allQuestions.length; i++){
-      // case when a first question exists
-      if (allQuestions[i].firstQuestion === true) {
-        this.setState({
-          firstQuestionId: allQuestions[i]._id,
-          firstQuestionValue: allQuestions[i].question
-        });
-        return { exists: true, id: allQuestions[i]._id, value: allQuestions[i].question };
-      }
-    };
-    return { exists: false, id: null, value: null };
-  };
-
   validateCountryFirstQuestion = () => {
     const { allQuestions, country } = this.state;
 
@@ -1013,46 +971,6 @@ class CreateQuestion extends Component {
       }
     };
     return { exists: false, id: null, value: null };
-  };
-
-  renderFirstQuestionModal = () => {
-    const { firstQuestionId, firstQuestionValue } = this.state;
-    // console.log(`render values: ${id},${value}`);
-    return (
-      <>
-        <FirstQuestionModal
-          openFirstQuestionModal = {true}
-          type = {"general"}
-          firstQuestionId = {firstQuestionId}
-          firstQuestionValue = {firstQuestionValue}
-          updateFirstQuestion = {this.updateFirstQuestion}
-          firstQuestionModalOnHide = {this.firstQuestionModalOnHide}
-        />
-      </>
-    );
-  };
-
-  toggleFirstQuestion = () => {
-    const { firstQuestion } = this.state;
-    const { exists, id, value } = this.validateFirstQuestion();
-    // case when a first question does not exist
-    if (exists === false) {
-      this.setState(prevState => ({
-        firstQuestion: !prevState.firstQuestion,
-      }));
-    }
-    // case when a first question exists AND toggle is currently set FALSE
-    // this way when editing THE first question, the toggle may be turned from TRUE to FALSE without executing this validation 
-    else if (exists === true && firstQuestion === false) {
-      console.log(`A first question already exists: ${id}-${value}`)
-      // this.renderFirstQuestionModal();
-      this.setState({
-        firstQuestionRender: exists
-        // validationErrors: {
-        //   firstQuestion: !exists ? '' : `A first question already exists: "${value}"`
-        // }
-      });
-    };
   };
 
   toggleCountryFirstQuestion = () => {
@@ -1509,8 +1427,6 @@ class CreateQuestion extends Component {
     const isCountryValid = this.validateCountry();
     const isExplanationValid = this.validateExplanation();
     const isGridValid = this.validateGrid();
-    const { exists } = this.validateFirstQuestion();
-    const isFirstQuestionValid = !exists;
 
     this.setState({
       validationErrors: {
@@ -1549,7 +1465,6 @@ class CreateQuestion extends Component {
       minScale,
       maxScale,
       isLeadingQuestion,
-      firstQuestion,
       marks,
       country,
       showCountry,
@@ -1574,7 +1489,6 @@ class CreateQuestion extends Component {
       explanation: showExplanation ? explanation : undefined,
       isLeadingQuestion,
       showCountry,
-      firstQuestion,
       requireResponse,
       previousQuestion: isLeadingQuestion ? undefined : previousQuestion,
       nextQuestion: isLeadingQuestion ? undefined : nextQuestion,
@@ -1641,7 +1555,7 @@ class CreateQuestion extends Component {
   };
 
   render() {
-    const { allTitles, selectedTitle, selectedTitleQuestions, selectedOption, options, showCountry, countries, country, isLeadingQuestion, showExplanation, firstQuestion, firstQuestionRender, countryFirstQuestionRender, validationErrors, allQuestions, nextQuestion, previousQuestion, showMarks, gridOptions, showFirstQuestionNestedTitleOption, nestedTitle, nestedTitleFirstQuestionRender } = this.state;
+    const { allTitles, selectedTitle, selectedTitleQuestions, selectedOption, options, showCountry, countries, country, isLeadingQuestion, showExplanation, countryFirstQuestionRender, validationErrors, allQuestions, nextQuestion, previousQuestion, showMarks, gridOptions, showFirstQuestionNestedTitleOption, nestedTitle, nestedTitleFirstQuestionRender } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
     const showNextQuestion = (isLeadingQuestion && (selectedOption === 'checkbox' || selectedOption === 'linear' || selectedOption === 'multipleChoiceGrid' || selectedOption === 'checkboxGrid')) || !isLeadingQuestion;
 
@@ -1675,8 +1589,8 @@ class CreateQuestion extends Component {
               </div>
               <div className="modal-body">
                 <form>
+                {/* Select title dropdown */}
                 <div className="mb-3">
-                      {/* Insert title dropdown selection here */}
                       <label className="col-form-label">
                           Select a title to insert into:
                       </label>
@@ -2012,26 +1926,6 @@ class CreateQuestion extends Component {
                       </label>
                     </div>
                   </div>
-                  {!showCountry && (
-                  <div className="form-check form-switch form-check-inline">
-                    <input
-                      className="form-check-input"
-                      type="checkbox"
-                      role="switch"
-                      id="firstQuestionCheck"
-                      checked={firstQuestion}
-                      onChange={this.toggleFirstQuestion}
-                    />
-                    <label className="form-check-label" htmlFor="firstQuestionCheck">
-                      First Question
-                    </label>
-                    {firstQuestionRender && (
-                        <div>
-                          {this.renderFirstQuestionModal()}
-                        </div>
-                    )} 
-                  </div>
-                  )}
                   <button type="button" className="btn btn-dark" onClick={this.handleSubmit}>
                     Submit
                   </button>

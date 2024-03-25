@@ -18,7 +18,6 @@ class EditQuestion extends Component {
       marks: '',
       explanation: '',
       nextQuestion: '',
-      questionType: '',
       selectedOption: 'multipleChoice',
       options: [{ label: 'Option 1', value: 'Option 1', isCorrect: false }],
       defaultLinearArray: [ { scale: 1, label: 'Strongly Disagree' }, { scale: 5, label: 'Strongly Agree' },  ],
@@ -67,12 +66,11 @@ class EditQuestion extends Component {
         "Zambia", "Zimbabwe"
       ],
       selectedCountries: [],
-      isFirstQuestion: false,
       isLeadingQuestion: false,
       showExplanation: false,
       showToast: false,
       validationErrors: {
-        questionType: '',
+        title: '',
         question: '',
         optionType: '',
         grid: '',
@@ -87,15 +85,17 @@ class EditQuestion extends Component {
       questionIndex: props.index,
       questionId: props.questionId,
       allQuestions: [],
+      allTitles:[],
+      selectedTitle: '',
+      selectedTitleLabel: '',
+      selectedTitleQuestions: [],
       questionList: {
         question: null, 
-        questionType: '',
         optionType: 'multipleChoice',
         options: [{ label: 'Option 1', value: 'Option 1', isCorrect: false, optionsNextQuestion: null }],
         linearScale: [],
         openEndedText: '',
         marks: '',
-        firstQuestion: false,
         nextQuestion: null
       },
       openEndedWordLimit: 500,
@@ -133,27 +133,27 @@ class EditQuestion extends Component {
 
 /*--------------API-----------------*/
   
-fetchQuestion = async (questionId) => {
-  try {
-    const response = await fetch(`http://${destination}/api/read/${questionId}`);
-    const data = await response.json();
-    if (data) {
-      // Check if selectedCountry field is present and has a value
-      const showCountry = data.country && data.country.selectedCountry;
+  fetchQuestion = async (questionId) => {
+    try {
+      const response = await fetch(`http://${destination}/api/read/${questionId}`);
+      const data = await response.json();
+      if (data) {
+        // Check if selectedCountry field is present and has a value
+        const showCountry = data.country && data.country.selectedCountry;
 
-      this.setState({
-        showModal: true, 
-        questionList: data,
-        selectedOption: data.optionType,
-        gridOptions: data.grid,
-        isLeadingQuestion: (data.marks) ? false : true,
-        showCountry: showCountry // Set showCountry based on selectedCountry field
-      });
+        this.setState({
+          showModal: true, 
+          questionList: data,
+          selectedOption: data.optionType,
+          gridOptions: data.grid,
+          isLeadingQuestion: (data.marks) ? false : true,
+          showCountry: showCountry // Set showCountry based on selectedCountry field
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching questions:', error);
     }
-  } catch (error) {
-    console.error('Error fetching questions:', error);
-  }
-};
+  };
 
   fetchQuestions = async () => {
     try {
@@ -197,17 +197,27 @@ fetchQuestion = async (questionId) => {
     // console.log(`questionList: ${JSON.stringify(this.state.questionList)}`)
   };
 
-      // Add this method to fetch filtered questions
-      async fetchFilteredQuestions() {
-        try {
-          const response = await fetch(`http://${destination}/api/filtered-questions`);
-          const filteredQuestions = await response.json();
-      
-          this.setState({ filteredQuestions }); // Update state with fetched questions
-        } catch (error) {
-          console.error('Error fetching filtered questions:', error);
-        }
-      }
+  // Add this method to fetch filtered questions
+  async fetchFilteredQuestions() {
+    try {
+      const response = await fetch(`http://${destination}/api/filtered-questions`);
+      const filteredQuestions = await response.json();
+  
+      this.setState({ filteredQuestions }); // Update state with fetched questions
+    } catch (error) {
+      console.error('Error fetching filtered questions:', error);
+    }
+  };
+
+  fetchTitles = async () => {
+    try {
+      const response = await fetch(`http://${destination}/api/displayTitles`);
+      const titles = await response.json();
+      this.setState({ allTitles: titles });
+    } catch (error) {
+      console.error('Error fetching questions:', error);
+    }
+  };
 
 /*-------------MODAL-----------------*/
 
@@ -216,7 +226,15 @@ fetchQuestion = async (questionId) => {
     const editQuestionModal = document.getElementById("editQuestion");
     editQuestionModal.addEventListener('hidden.bs.modal', this.resetState);
     this.fetchFilteredQuestions();
+    this.fetchTitles();
   }
+
+  componentDidUpdate(prevProps) {
+    if (this.props.questionsChanged !== prevProps.questionsChanged) {
+      // this.fetchQuestions();
+      this.fetchTitles();
+    }
+  };
 
   componentWillUnmount() {
     const editQuestionModal = document.getElementById("editQuestion");
@@ -225,11 +243,32 @@ fetchQuestion = async (questionId) => {
 
 /*----------- function helpers ----------------------*/
 
-  handleQuestionTypeRadio = (e) => {
-    this.setState( (prevState) => ({
-      questionList: { ...prevState.questionList, questionType: e.target.value }
-    }))
-  }
+  handleTitleSelect = (e) => {
+    const { allQuestions } = this.state;
+    let valueArray = e.split(",");
+
+    let titleQuestionsArray = [];
+    for (let i=0; i<allQuestions.length; i++) {
+      if (valueArray[0] === allQuestions[i].titleId) {
+        titleQuestionsArray.push(allQuestions[i])
+        // console.log(`matching Qs: ${allQuestions[i].question}`)
+      };
+    };
+    // console.log(`matching Qs Id: ${titleQuestionsArray}`)
+
+    this.handleFirstQuestionNestedTitleOption(e);
+
+    this.setState({ 
+      selectedTitle: valueArray[0],
+      selectedTitleLabel: e,
+      selectedTitleQuestions: titleQuestionsArray
+    });
+    // }, console.log(`selectedTitle: ${valueArray[0]} and ${valueArray[1]}`));
+  };
+
+  handleFirstQuestionNestedTitleOption = () => {
+    // TO DO
+  };
 
   handleQuestionText = (e) => {
     this.setState( (prevState) => ({
@@ -957,12 +996,6 @@ fetchQuestion = async (questionId) => {
     }));
   };
 
-  toggleFirstQuestion = () => {
-    this.setState(prevState => ({
-      questionList: { ...prevState.questionList, firstQuestion: !prevState.questionList.firstQuestion }
-    }));
-  };
-
   toggleLeadingQuestion = () => {
     this.setState(prevState => ({
       isLeadingQuestion: !prevState.isLeadingQuestion
@@ -1082,9 +1115,16 @@ fetchQuestion = async (questionId) => {
 
   // --------------- VALIDATIONS---------------------------------
 
-  validateQuestionType = () => {
-    const { questionList } = this.state;
-    return questionList.questionType !== '';
+  validateTitleSelect = () => {
+    const { selectedTitle } = this.state;
+    if (
+      selectedTitle.trim() === '' || 
+      selectedTitle.trim() === 'Select Title'
+      ) {
+        return false
+    } else {
+      return true
+    };
   };
   
   validateQuestion = () => {
@@ -1208,7 +1248,7 @@ fetchQuestion = async (questionId) => {
   handleSubmit = async (e) => {
     e.preventDefault();
 
-    const isQuestionTypeValid = this.validateQuestionType();
+    const isTitleSelectValid = this.validateTitleSelect();
     const isQuestionValid = this.validateQuestion();
     const isOptionTypeValid = this.validateOptionType();
     const isOptionsValid = this.validateOptions();
@@ -1221,7 +1261,7 @@ fetchQuestion = async (questionId) => {
 
     this.setState({
       validationErrors: {
-        questionType: isQuestionTypeValid ? '' : 'Select one question type',
+        title: isTitleSelectValid ? '' : 'Select a title',
         question: isQuestionValid ? '' : 'Enter the question',
         optionType: isOptionTypeValid ? '' : 'Select an option type',
         grid: isGridValid ? '' : 'Complete all grid data entry and ensure there is one selection per row',
@@ -1234,7 +1274,7 @@ fetchQuestion = async (questionId) => {
     });
 
     if (
-      !isQuestionTypeValid || 
+      
       !isQuestionValid || 
       !isOptionTypeValid || 
       !isGridValid || 
@@ -1260,7 +1300,6 @@ fetchQuestion = async (questionId) => {
     } = this.state;
 
     const dataToUpdate = {
-      questionType: this.state.questionList.questionType,
       question: this.state.questionList.question,
       optionType: this.state.questionList.optionType,
       options: this.state.questionList.options,
@@ -1270,7 +1309,6 @@ fetchQuestion = async (questionId) => {
       marks: isLeadingQuestion ? undefined : parseFloat(this.state.questionList.marks),
       countries: showCountry ? selectedCountries : undefined,
       explanation: showExplanation ? explanation : undefined,
-      firstQuestion: this.state.questionList.firstQuestion,
       isLeadingQuestion,
       showCountry,
       requireResponse,
@@ -1321,7 +1359,7 @@ fetchQuestion = async (questionId) => {
 
   render() {
 
-    const { showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, validationErrors, questionId, questionIndex, allQuestions } = this.state;
+    const { showCountry, countries, selectedCountries, isLeadingQuestion, showExplanation, validationErrors, questionId, questionIndex, allQuestions, allTitles } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
     const { filteredQuestions } = this.state;
 
@@ -1356,43 +1394,50 @@ fetchQuestion = async (questionId) => {
           </Modal.Header>
           <Modal.Body>
             <form>
+            {/* Select title dropdown */}
             <div className="mb-3">
-                <div className="d-flex">
-                  <div className="form-check form-check-inline">
-                    <input
-                      className="form-check-input"
-                      type="radio"
-                      name="questionType"
-                      id="formProductInfoRadio"
-                      value="productInfo"
-                      checked={this.state.questionList.questionType === 'productInfo'}
-                      onChange={this.handleQuestionTypeRadio}
-                    />
-                    <label className="form-check-label" htmlFor="productInfoRadio">
-                      Product Information
-                    </label>
+                <label className="col-form-label">
+                    Select title:
+                </label>
+                  <div className="d-flex align-items-left">
+                    <div className="d-flex flex-grow-1">
+                    <select
+                      className="form-select"
+                      style={{ flex: '1' }}
+                      value={this.state.selectedTitleLabel}
+                      onChange={(e) => this.handleTitleSelect(e.target.value)}
+                    >
+                      <option value="">Select Title</option>
+                      {/* title loop */}
+                      {allTitles.map((titleObject) => (
+                        <optgroup key={titleObject.title.titleLabel} label={titleObject.title.titleLabel}>
+                          {/* Render subTitleLabel as options */}
+                          {titleObject.title.subTitle.map((subTitleObject) => (
+                            <React.Fragment key={subTitleObject._id}>
+                              <option value={[subTitleObject._id, subTitleObject.subTitleLabel]}>
+                                {subTitleObject.subTitleLabel}
+                              </option>
+
+                              {/* Render nestedTitleLabel as options */}
+                              {subTitleObject.nestedTitle.map((nestedTitleObject) => (
+                                <option key={nestedTitleObject._id} value={[nestedTitleObject._id, nestedTitleObject.nestedTitleLabel]}>
+                                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{nestedTitleObject.nestedTitleLabel} {/* Add one more level of indentation for nestedTitleLabel */}
+                                </option>
+                              ))}
+                            </React.Fragment>
+                          ))}
+                        </optgroup>
+                      ))}
+                    </select>
+                    </div>
                   </div>
-                  <div className="form-check form-check-inline">
-                    <input
-                      className="form-check-input"
-                      type="radio"
-                      name="questionType"
-                      id="formPackagingInfoRadio"
-                      value="packagingInfo"
-                      checked={this.state.questionList.questionType === 'packagingInfo'}
-                      onChange={this.handleQuestionTypeRadio}
-                    />
-                    <label className="form-check-label" htmlFor="packagingInfoRadio">
-                      Packaging Information
-                    </label>
-                  </div>
+              {validationErrors.title && (
+                <div style={{ color: 'red', fontSize: 12 }}>
+                  {validationErrors.title}
                 </div>
-                {validationErrors.questionType && (
-                  <div style={{ color: 'red', fontSize: 12 }}>
-                    {validationErrors.questionType}
-                  </div>
-                )}
-              </div>
+              )}
+            </div>
+            
               
               {/* Question label */}
               <div className="mb-3">
@@ -1582,19 +1627,6 @@ fetchQuestion = async (questionId) => {
                 </label>
               </div>
             </div>
-            <div className="form-check form-switch form-check-inline">
-                    <input
-                      className="form-check-input"
-                      type="checkbox"
-                      role="switch"
-                      id="firstQuestion"
-                      checked={this.state.questionList.firstQuestion}
-                      onChange={this.toggleFirstQuestion}
-                    />
-                    <label className="form-check-label" htmlFor="firstQuestionCheck">
-                      First Question
-                    </label>
-              </div>
             <button type="button" className="btn btn-dark" onClick={this.handleSubmit}>
             Submit
             </button>

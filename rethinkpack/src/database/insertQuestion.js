@@ -37,7 +37,6 @@ const questionSchema = new mongoose.Schema({
         countryFirstQuestion: Boolean
     },
     explanation: String,
-    firstQuestion: Boolean,
     recommendation: String,
     previousQuestion: String,
     nextQuestion: String,
