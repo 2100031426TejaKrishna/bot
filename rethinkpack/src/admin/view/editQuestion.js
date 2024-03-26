@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
 import Modal from 'react-bootstrap/Modal';
-//
 import Form from 'react-bootstrap/Form';
 import InputGroup from 'react-bootstrap/InputGroup';
 
@@ -87,7 +86,7 @@ class EditQuestion extends Component {
       allQuestions: [],
       allTitles:[],
       selectedTitle: '',
-      selectedTitleLabel: '',
+      selectedTitleLabel: [],
       selectedTitleQuestions: [],
       questionList: {
         question: null, 
@@ -129,7 +128,7 @@ class EditQuestion extends Component {
       // Load specific question
       this.fetchQuestion(id)
     );
-  }
+  };
 
 /*--------------API-----------------*/
   
@@ -141,9 +140,13 @@ class EditQuestion extends Component {
         // Check if selectedCountry field is present and has a value
         const showCountry = data.country && data.country.selectedCountry;
 
+        let titleLabelArray = this.fetchExistingTitleLabel(data.titleId);
+        console.log(`fetch titleLabel: ${titleLabelArray} `)
+
         this.setState({
           showModal: true, 
           questionList: data,
+          selectedTitleLabel: titleLabelArray,
           selectedOption: data.optionType,
           gridOptions: data.grid,
           isLeadingQuestion: (data.marks) ? false : true,
@@ -243,6 +246,41 @@ class EditQuestion extends Component {
 
 /*----------- function helpers ----------------------*/
 
+
+  fetchExistingTitleLabel = (id) => {
+    const { allTitles } = this.state;
+
+    let titleLabelArray = [];
+
+    // loops through main titles
+    for (let i=0; i<allTitles.length; i++) {
+
+      if (id === allTitles[i]._id) {
+        // console.log(`titleLabel: ${allTitles[i].title.titleLabel} `)
+        titleLabelArray = [allTitles[i].title._id, allTitles[i].title.titleLabel];
+      }
+
+      // loops through subtitles
+      for (let j=0; j<allTitles[i].title.subTitle.length; j++) {
+
+        if (id === allTitles[i].title.subTitle[j]._id) {
+          // console.log(`subtitleLabel: ${allTitles[i].title.subTitle[j].subTitleLabel} `)
+          titleLabelArray = [allTitles[i].title.subTitle[j]._id, allTitles[i].title.subTitle[j].subTitleLabel];
+        }
+      
+        // loops through nested titles
+        for (let k=0; k<allTitles[i].title.subTitle[j].nestedTitle.length; k++) {
+
+          if (id === allTitles[i].title.subTitle[j].nestedTitle[k]._id) {
+            // console.log(`nested title label: ${allTitles[i].title.subTitle[j].nestedTitle[k].nestedTitleLabel} `)
+            titleLabelArray = [allTitles[i].title.subTitle[j].nestedTitle[k]._id, allTitles[i].title.subTitle[j].nestedTitle[k].nestedTitleLabel];
+          }
+        };
+      };
+    };
+    return titleLabelArray;
+  };
+
   handleTitleSelect = (e) => {
     const { allQuestions } = this.state;
     let valueArray = e.split(",");
@@ -261,7 +299,12 @@ class EditQuestion extends Component {
     this.setState({ 
       selectedTitle: valueArray[0],
       selectedTitleLabel: e,
-      selectedTitleQuestions: titleQuestionsArray
+      selectedTitleQuestions: titleQuestionsArray,
+      // 240326 add questionList.titleId state update
+      // questionList: {
+      //   ...this.questionList,
+      //   titleId: valueArray[0]
+      // }
     });
     // }, console.log(`selectedTitle: ${valueArray[0]} and ${valueArray[1]}`));
   };
@@ -1296,23 +1339,25 @@ class EditQuestion extends Component {
       showExplanation,
       requireResponse,
       questionList,
-      questionId
+      questionId,
+      selectedTitle
     } = this.state;
 
     const dataToUpdate = {
-      question: this.state.questionList.question,
-      optionType: this.state.questionList.optionType,
-      options: this.state.questionList.options,
-      grid: this.state.gridOptions,
-      linearScale: this.state.questionList.linearScale,
-      openEndedText: this.state.questionList.openEndedText,
-      marks: isLeadingQuestion ? undefined : parseFloat(this.state.questionList.marks),
+      titleId: selectedTitle,
+      question: questionList.question,
+      optionType: questionList.optionType,
+      options: questionList.options,
+      grid: gridOptions,
+      linearScale: questionList.linearScale,
+      openEndedText: questionList.openEndedText,
+      marks: isLeadingQuestion ? undefined : parseFloat(questionList.marks),
       countries: showCountry ? selectedCountry : undefined,
       explanation: showExplanation ? explanation : undefined,
       isLeadingQuestion,
       showCountry,
       requireResponse,
-      nextQuestion: isLeadingQuestion ? undefined : this.state.questionList.nextQuestion
+      nextQuestion: isLeadingQuestion ? undefined : questionList.nextQuestion
     };
 
     // Leading Question Marks check
@@ -1359,7 +1404,7 @@ class EditQuestion extends Component {
 
   render() {
 
-    const { showCountry, countries, selectedCountry, isLeadingQuestion, showExplanation, validationErrors, questionId, questionIndex, allQuestions, allTitles } = this.state;
+    const { questionList, showCountry, countries, selectedCountry, isLeadingQuestion, showExplanation, validationErrors, questionId, questionIndex, allQuestions, allTitles, showModal } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
     const { filteredQuestions } = this.state;
 
@@ -1375,7 +1420,7 @@ class EditQuestion extends Component {
         </button>
 
         <Modal
-          show={this.state.showModal === true}
+          show={showModal === true}
           onHide={() => this.setState({ showModal: false })}
           className="modal-lg"
           ref={this.editQuestionModalRef}
@@ -1417,7 +1462,6 @@ class EditQuestion extends Component {
                               <option value={[subTitleObject._id, subTitleObject.subTitleLabel]}>
                                 {subTitleObject.subTitleLabel}
                               </option>
-
                               {/* Render nestedTitleLabel as options */}
                               {subTitleObject.nestedTitle.map((nestedTitleObject) => (
                                 <option key={nestedTitleObject._id} value={[nestedTitleObject._id, nestedTitleObject.nestedTitleLabel]}>
