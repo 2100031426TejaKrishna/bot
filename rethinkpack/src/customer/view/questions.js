@@ -101,22 +101,23 @@ const Questions = () => {
             }
         };
 
-        const fetchTitlesDetails = async () => {
+        const fetchQuestionsDetails = async () => {
             try {
-                const response = await fetch(`http://${destination}/api/fetchTitlesWithDetails`);
+                const response = await fetch(`http://${destination}/api/fetchQuestionsDetails`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const data = await response.json();
                 setTitlesDetails(data); // Store fetched title details
-                console.log("Titles Details: ", data);
+                setIsLoading(false);
+                console.log("Questions Details: ", data);
             } catch (error) {
                 console.error("Error fetching titles with details:", error);
             }
         };
 
-        fetchAllQuestions();
-        fetchTitlesDetails();
+        // fetchAllQuestions();
+        fetchQuestionsDetails();
     }, []);
 
     useEffect(() => {
@@ -399,11 +400,11 @@ const Questions = () => {
     };
 
     if (isLoading) {
-        return <div>Loading questions...</div>;
+        return <div>Loading questions details...</div>;
     }
 
-    if (!questions.length && !titlesDetails.length) {
-        return <div>No questions available</div>;
+    if (!titlesDetails.length) {
+        return <div>No questions details available</div>;
     }
 
     const currentQuestion = questions.find(q => q._id === currentQuestionId);
@@ -724,14 +725,14 @@ const Questions = () => {
                             {sub.nestedTitles.map((nested, nestedIndex) => (
                                 <div key={nestedIndex}>
                                     <h6>{nested.nestedTitleLabel}</h6>
-                                    {/* Render the question and its options */}
                                     <div className="survey-questions-card">
-                                        {/* Check if a question is available */}
                                         {nested.question && (
                                             <>
-                                                <p>{nested.question.question}</p>
-                                                {/* Render options based on question type */}
-                                                {renderOptions(nested.question)}
+                                                <h6>{nested.question.question}</h6>
+                                                <div className="options-container">
+                                                    {renderOptions(nested.question)}
+                                                </div>
+                                                
                                             </>
                                         )}
                                     </div>
@@ -741,7 +742,7 @@ const Questions = () => {
                     ))}
                 </div>
             ))}
-            {titleDetails.title && <h4>{titleDetails.title}</h4>}
+            {/* {titleDetails.title && <h4>{titleDetails.title}</h4>}
             {titleDetails.subtitle && <h5>{titleDetails.subtitle}</h5>}
             {titleDetails.nestedTitle && <h6>{titleDetails.nestedTitle}</h6>}
             <div className="survey-questions-card">
@@ -749,7 +750,7 @@ const Questions = () => {
                 <div className="options-container">
                     {renderOptions(currentQuestion)}
                 </div>
-            </div>
+            </div> */}
             {/* <div className="survey-questions-progress-bar-container">
                 <div className="survey-questions-progress-bar">
                     <div className="survey-questions-progress-bar-fill" style={{ width: `${(currentQuestionIndex + 1) / questions.length * 100}%` }}></div>
@@ -776,7 +777,8 @@ const Questions = () => {
             )}
             <footer className="survey-questions-footer">
                 <div className="survey-questions-navigation-buttons">
-                    {(currentQuestionId !== questions[0]._id || hasSelectedCountries) && (
+                    {/* {(currentQuestionId !== questions[0]._id || hasSelectedCountries) && ( */}
+                    {(hasSelectedCountries) && (
                         <button className="survey-questions-button" onClick={() => setShowCountrySelection(true)}>Back to Country Selection</button>
                     )}
                     {navigationHistory.length > 1 && (

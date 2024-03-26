@@ -170,7 +170,7 @@ router.get('/fetchTitleForQuestion/:questionId', async (req, res) => {
     }
 });
 
-router.get('/fetchTitlesWithDetails', async (req, res) => {
+router.get('/fetchQuestionsDetails', async (req, res) => {
     try {
         const titles = await Titles.find().sort({date: -1});
 
