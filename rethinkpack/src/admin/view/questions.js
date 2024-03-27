@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import './questions.css';
 import EditQuestion from './editQuestion';
+import duplicateQuestion from './duplicateQuestion'; // Import the duplicate function
 
 // Switch URLs between Server and Local hosting here
-// const destination = "localhost:5000";
-const destination = "rtp.dusky.bond:5000";
+const destination = "localhost:5000";
+// const destination = "rtp.dusky.bond:5000";
 
 const Questions = ({ triggerRefresh }) => {
     const [questions, setQuestions] = useState([]);
@@ -13,9 +14,9 @@ const Questions = ({ triggerRefresh }) => {
     const [error, setError] = useState(null);
     const [questionsUpdated, setQuestionsUpdated] = useState(false);
     const [editUpdateToggle, setEditUpdateToggle] = useState(false);
-    //
     const [clearNextQuestion, setClearNextQuestion] = useState([]);
     const [clearOptionsNextQuestion, setClearOptionsNextQuestion] = useState([]);
+    const [duplicateMessage, setDuplicateMessage] = useState('');
 
     // editQuestion.js refresh functionality
     const refreshQuestions = () => {
@@ -25,6 +26,13 @@ const Questions = ({ triggerRefresh }) => {
         } else {
             setEditUpdateToggle(true);
         }
+    };
+
+    const handleDuplicate = (question) => {
+        const duplicatedQuestion = duplicateQuestion(question); // Call the duplicate function
+        setQuestions([...questions, duplicatedQuestion]); // Add the duplicated question to the questions array
+        setDuplicateMessage('Duplicate question created!'); // Display the message
+        setTimeout(() => setDuplicateMessage(''), 3000); // Clear the message after 3 seconds
     };
 
     const deleteAction = async () => {
@@ -252,13 +260,25 @@ const Questions = ({ triggerRefresh }) => {
     }
 
     return (
-        <div className="questions-container">
-            {showToast && (
-                <div className="toast-container position-fixed bottom-0 end-0 p-3">
-                    <div className="toast show bg-dark text-white">
-                        <div className="d-flex justify-content-between">
-                            <div className="toast-body">
-                                Question deleted successfully!
+<div className="questions-container">
+    {duplicateMessage && (
+        <div className="toast-container position-fixed bottom-0 end-0 p-3">
+            <div className="toast show bg-dark text-white">
+                <div className="d-flex justify-content-between">
+                    <div className="toast-body">
+                        {duplicateMessage}
+                    </div>
+                    <button type="button" className="btn-close btn-close-white me-2 m-auto" onClick={() => setDuplicateMessage('')}></button>
+                </div>
+            </div>
+        </div>
+    )}
+    {showToast && (
+        <div className="toast-container position-fixed bottom-0 end-0 p-3">
+            <div className="toast show bg-dark text-white">
+                <div className="d-flex justify-content-between">
+                    <div className="toast-body">
+                        Question deleted successfully!
                             </div>
                             <button type="button" className="btn-close btn-close-white me-2 m-auto" onClick={() => setShowToast(false)}></button>
                         </div>
@@ -269,13 +289,14 @@ const Questions = ({ triggerRefresh }) => {
                 <div key={index} className="question-card">
                     {question.firstQuestion && <h5 style={{ fontWeight: 'bold', color: 'red' }}>Question 1</h5>}
                     <h6>
-                    {question.questionType === 'productInfo' ? 'Product Information' : 
-                    question.questionType === 'packagingInfo' ? 'Packaging Information' : ''}
+                        {question.questionType === 'productInfo' ? 'Product Information' : 
+                        question.questionType === 'packagingInfo' ? 'Packaging Information' : ''}
                     </h6>
                     <h4>{question.question}</h4>
+                    {/* Render question details based on optionType */}
                     {question.optionType === 'multipleChoice' && 
                         <div className="option-container">
-                            {question.options.map((option) => (
+                            {question.options.map((option, optionIndex) => (
                                 <div key={option._id} className="option">
                                     <label>
                                         <input 
@@ -293,6 +314,7 @@ const Questions = ({ triggerRefresh }) => {
                             ))}
                         </div>
                     }
+                    {/* Additional code for other option types */}
                     {question.optionType === 'checkbox' && 
                         <div className="option-container">
                             {question.options.map((option) => (
@@ -311,6 +333,7 @@ const Questions = ({ triggerRefresh }) => {
                             ))}
                         </div>
                     }
+                    {/* Repeat similar code for other option types like dropdown, linear, grid, etc. */}
                     {question.optionType === 'dropdown' && (
                         <select 
                             className="form-select" 
@@ -345,42 +368,6 @@ const Questions = ({ triggerRefresh }) => {
                             </div>
                             <div className="scale-label-right">{question.linearScale[1].label}</div>
                         </div>
-                    )}
-                    {question.optionType === 'multipleChoiceGrid' && (
-                        <table className="multiple-choice-grid">
-                            <thead>
-                                <tr>
-                                    <th> </th>
-                                    {question.grid.columns.map((column, columnIndex) => (
-                                        <th key={columnIndex}>{column.text}</th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {question.grid.rows.map((row, rowIndex) => (
-                                    <tr key={rowIndex}>
-                                        <td>{row.text}</td>
-                                        {question.grid.columns.map((column, columnIndex) => {
-                                            const isCorrect = question.grid.answers.some(answer => 
-                                                answer.rowIndex === rowIndex && answer.columnIndex === columnIndex && answer.isCorrect
-                                            );
-                                            return (
-                                                <td key={columnIndex}>
-                                                    <input 
-                                                        type="radio" 
-                                                        name={`${row.text}-${column.text}`} 
-                                                        value={`${row.text}-${column.text}`}
-                                                        checked={isCorrect}
-                                                        disabled={true}  
-                                                        className="form-check-input"
-                                                    />
-                                                </td>
-                                            );
-                                        })}
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
                     )}
                     {question.optionType === 'checkboxGrid' && (
                         <table className="checkbox-grid">
@@ -418,33 +405,23 @@ const Questions = ({ triggerRefresh }) => {
                             </tbody>
                         </table>
                     )}
-                    {(question.optionType === 'multipleChoiceGrid' || question.optionType === 'checkboxGrid') && (
-                        <div className="form-check form-switch mt-3">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                id={`requireResponseSwitch-${question._id}`}
-                                checked={question.requireResponse}
-                                disabled={true}  
-                            />
-                            <label className="form-check-label" htmlFor={`requireResponseSwitch-${question._id}`}>
-                                Require a response in each row
-                            </label>
-                        </div>
-                    )}
-                        {question.marks && <p className="question-marks">Marks: {question.marks}</p>}
-                        {question.country && question.country.selectedCountry && (
+                    {/* Include marks, country, explanation, and other details */}
+                    {question.marks && <p className="question-marks">Marks: {question.marks}</p>}
+                    {question.country && question.country.selectedCountry && (
                         <p className="question-country">Country: {question.country.selectedCountry}</p>
-                        )}
-                        {question.explanation && <p className="question-explanation">Explanation: {question.explanation}</p>}
-                        {question.nextQuestionTitle && <p className="next-question">Next Question: {question.nextQuestionTitle}</p>}
-                        <p className="question-date">Date created: {formatDate(question.date)}</p>
-                        <div className="question-actions">
-                            <EditQuestion 
-                                index={index}
-                                questionId={question._id} 
-                                refreshQuestions={refreshQuestions}
-                            />
+                    )}
+                    {question.explanation && <p className="question-explanation">Explanation: {question.explanation}</p>}
+                    {/* Render "Next Question" details if applicable */}
+                    {question.nextQuestionTitle && <p className="next-question">Next Question: {question.nextQuestionTitle}</p>}
+                    {/* Render date created */}
+                    <p className="question-date">Date created: {formatDate(question.date)}</p>
+                    {/* Render question actions */}
+                    <div className="question-actions">
+                        <EditQuestion 
+                            index={index}
+                            questionId={question._id} 
+                            refreshQuestions={refreshQuestions}
+                        />
                         <button 
                             className="btn btn-danger" 
                             data-bs-toggle="modal" 
@@ -453,9 +430,16 @@ const Questions = ({ triggerRefresh }) => {
                         >
                             Delete
                         </button>
+                        <button 
+                            className="btn btn-secondary" 
+                            onClick={() => handleDuplicate(question)} // Duplicate button
+                        >
+                            Duplicate
+                        </button>
                     </div>
                 </div>
             ))}
+            {/* Modal for confirmation */}
             <div className="modal fade" id="exampleModal" tabIndex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
                 <div className="modal-dialog">
                     <div className="modal-content">
@@ -467,21 +451,21 @@ const Questions = ({ triggerRefresh }) => {
                             Are you sure you want to delete this question?
                         </div>
                         <div className="modal-footer">
-                            <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            <button 
-                                type="button" 
-                                className="btn btn-danger" 
-                                onClick={handleDelete}
-                                data-bs-dismiss="modal"
-                            >
-                                Delete
-                            </button>
-                        </div>
+                        <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button 
+                            type="button" 
+                            className="btn btn-danger" 
+                            onClick={handleDelete}
+                            data-bs-dismiss="modal"
+                        >
+                            Delete
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
-    );
-};
-
+    </div>
+);
+    
+                }
 export default Questions;
