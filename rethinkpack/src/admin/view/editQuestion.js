@@ -4,6 +4,7 @@ import 'bootstrap/dist/js/bootstrap.bundle.min';
 import Modal from 'react-bootstrap/Modal';
 import Form from 'react-bootstrap/Form';
 import InputGroup from 'react-bootstrap/InputGroup';
+import FirstQuestionModal from './firstQuestionModal';
 
 // const destination = "localhost:5000";
 const destination = "rtp.dusky.bond:5000";
@@ -86,7 +87,6 @@ class EditQuestion extends Component {
       allQuestions: [],
       allTitles:[],
       selectedTitle: '',
-      selectedTitleLabel: [],
       selectedTitleQuestions: [],
       questionList: {
         question: null, 
@@ -97,6 +97,15 @@ class EditQuestion extends Component {
         marks: '',
         nextQuestion: null
       },
+      nestedTitle: {
+        id: '',
+        firstQuestion: false
+      },
+      nestedTitleLabel: '',
+      showFirstQuestionNestedTitleOption: false,
+      nestedTitleFirstQuestionRender: false,
+      nestedTitleFirstQuestionId: '',
+      nestedTitleFirstQuestionValue: '',
       openEndedWordLimit: 500,
       openEndedWordCount: 0,
       stateQuestionId: '',
@@ -120,6 +129,13 @@ class EditQuestion extends Component {
     });
   }
 
+  firstQuestionModalOnHide = () => {
+    this.setState( {
+      // countryFirstQuestionRender: false,
+      nestedTitleFirstQuestionRender: false
+    })
+  };
+
 /*--------------onClick-----------------*/
 
   onEditClickHandler = (id) => {
@@ -140,13 +156,17 @@ class EditQuestion extends Component {
         // Check if selectedCountry field is present and has a value
         const showCountry = data.country && data.country.selectedCountry;
 
-        let titleLabelArray = this.fetchExistingTitleLabel(data.titleId);
-        console.log(`fetch titleLabel: ${titleLabelArray} `)
+        // If nested title, show the first question option
+        this.handleFirstQuestionNestedTitleOption(data.titleId);
 
         this.setState({
           showModal: true, 
+          nestedTitle: {
+            ...this.nestedTitle,
+            firstQuestion: data.nestedTitle.firstQuestion
+          },
           questionList: data,
-          selectedTitleLabel: titleLabelArray,
+          selectedTitle: data.titleId,
           selectedOption: data.optionType,
           gridOptions: data.grid,
           isLeadingQuestion: (data.marks) ? false : true,
@@ -246,71 +266,112 @@ class EditQuestion extends Component {
 
 /*----------- function helpers ----------------------*/
 
-
-  fetchExistingTitleLabel = (id) => {
-    const { allTitles } = this.state;
-
-    let titleLabelArray = [];
-
-    // loops through main titles
-    for (let i=0; i<allTitles.length; i++) {
-
-      if (id === allTitles[i]._id) {
-        // console.log(`titleLabel: ${allTitles[i].title.titleLabel} `)
-        titleLabelArray = [allTitles[i].title._id, allTitles[i].title.titleLabel];
-      }
-
-      // loops through subtitles
-      for (let j=0; j<allTitles[i].title.subTitle.length; j++) {
-
-        if (id === allTitles[i].title.subTitle[j]._id) {
-          // console.log(`subtitleLabel: ${allTitles[i].title.subTitle[j].subTitleLabel} `)
-          titleLabelArray = [allTitles[i].title.subTitle[j]._id, allTitles[i].title.subTitle[j].subTitleLabel];
-        }
-      
-        // loops through nested titles
-        for (let k=0; k<allTitles[i].title.subTitle[j].nestedTitle.length; k++) {
-
-          if (id === allTitles[i].title.subTitle[j].nestedTitle[k]._id) {
-            // console.log(`nested title label: ${allTitles[i].title.subTitle[j].nestedTitle[k].nestedTitleLabel} `)
-            titleLabelArray = [allTitles[i].title.subTitle[j].nestedTitle[k]._id, allTitles[i].title.subTitle[j].nestedTitle[k].nestedTitleLabel];
-          }
-        };
-      };
-    };
-    return titleLabelArray;
-  };
-
   handleTitleSelect = (e) => {
     const { allQuestions } = this.state;
-    let valueArray = e.split(",");
 
     let titleQuestionsArray = [];
     for (let i=0; i<allQuestions.length; i++) {
-      if (valueArray[0] === allQuestions[i].titleId) {
+      if (e === allQuestions[i].titleId) {
         titleQuestionsArray.push(allQuestions[i])
         // console.log(`matching Qs: ${allQuestions[i].question}`)
       };
     };
-    // console.log(`matching Qs Id: ${titleQuestionsArray}`)
+    // console.log(`matching Qs Id: ${JSON.stringify(titleQuestionsArray)}`)
 
     this.handleFirstQuestionNestedTitleOption(e);
 
     this.setState({ 
-      selectedTitle: valueArray[0],
-      selectedTitleLabel: e,
+      selectedTitle: e,
       selectedTitleQuestions: titleQuestionsArray,
-      // 240326 add questionList.titleId state update
-      // questionList: {
-      //   ...this.questionList,
-      //   titleId: valueArray[0]
-      // }
     });
-    // }, console.log(`selectedTitle: ${valueArray[0]} and ${valueArray[1]}`));
   };
 
-  handleFirstQuestionNestedTitleOption = () => {
-    // TO DO
+  fetchNestedTitles = () => {
+    const { allTitles } = this.state;
+
+    // Determine nested titles
+    let nestedTitlesArray = [];
+    // loops through main titles
+    for (let i=0; i<allTitles.length; i++) {      
+      // loops through subtitles
+      for (let j=0; j<allTitles[i].title.subTitle.length; j++) {
+        // loops through nested titles
+        for (let k=0; k<allTitles[i].title.subTitle[j].nestedTitle.length; k++) {
+          // console.log(`nestedTitles label: ${allTitles[i].title.subTitle[j].nestedTitle[k].nestedTitleLabel}`)
+          nestedTitlesArray.push({nestedTitleLabel: allTitles[i].title.subTitle[j].nestedTitle[k].nestedTitleLabel, id: allTitles[i].title.subTitle[j].nestedTitle[k]._id});
+        };
+      };
+    };
+    return nestedTitlesArray;
+  };
+
+  handleFirstQuestionNestedTitleOption = (e) => {
+    
+    let nestedTitlesArray = this.fetchNestedTitles();
+
+    // Determine a match for nested title with the selected title
+    for (let i=0; i<nestedTitlesArray.length; i++) {
+      if (e === nestedTitlesArray[i].id) {
+        // console.log(`match: ${nestedTitlesArray[i].nestedTitleLabel}`)
+        this.setState({ 
+          showFirstQuestionNestedTitleOption: true,
+          nestedTitle: {
+            ...this.nestedTitle,
+            id: e,
+            firstQuestion: false
+          },
+          nestedTitleLabel: nestedTitlesArray[i].nestedTitleLabel
+         });
+        return;
+      } else {
+        this.setState({ showFirstQuestionNestedTitleOption: false })
+      }
+    };
+  };
+
+  toggleFirstQuestionNestedTitle = () => {
+    
+    // Validate whether nested title first question is vacant or not
+    const { 
+      isNestedTitleFirstQuestionVacant,
+    } = this.validateFirstQuestionNestedTitle();
+    
+    if (isNestedTitleFirstQuestionVacant === true) {
+      this.setState(prevState => ({
+        nestedTitle: {
+          ...prevState.nestedTitle,
+          firstQuestion: !prevState.nestedTitle.firstQuestion
+        }
+      }));
+      console.log(`is vacant`)
+    } else {
+      // render the firstQuestionModal here
+      console.log(`is taken`)
+      this.setState({ nestedTitleFirstQuestionRender: true });
+    }
+  };
+
+  renderNestedTitleFirstQuestionModal = () => {
+    const { 
+      nestedTitle, 
+      nestedTitleLabel, 
+      nestedTitleFirstQuestionId, 
+      nestedTitleFirstQuestionValue
+    } = this.state;
+    return (
+      <>
+        <FirstQuestionModal
+          openFirstQuestionModal = {true}
+          type = {"nestedTitle"}
+          firstQuestionId = {nestedTitleFirstQuestionId}
+          firstQuestionValue = {nestedTitleFirstQuestionValue}
+          nestedTitleId = {nestedTitle.id}
+          nestedTitleLabel = {nestedTitleLabel}
+          updateFirstQuestion = {this.updateNestedTitleFirstQuestion}
+          firstQuestionModalOnHide = {this.firstQuestionModalOnHide}
+        />
+      </>
+    );
   };
 
   handleQuestionText = (e) => {
@@ -1169,6 +1230,51 @@ class EditQuestion extends Component {
       return true
     };
   };
+
+  validateFirstQuestionNestedTitle = () => {
+    const { allQuestions, nestedTitle } = this.state;
+
+    // Case: when nested title IS NOT selected, 
+    // is not possible as only way to execute this function is when a 
+    // nested title is currently selected
+
+    for (let i=0; i<allQuestions.length; i++) {
+      
+      // Case: same nested title AND first question is false
+      if (
+        nestedTitle.id === allQuestions[i].nestedTitle.id && 
+        allQuestions[i].nestedTitle.firstQuestion === false
+      ) {
+        return {
+          isNestedTitleFirstQuestionVacant: true,
+          nestedTitleId: ''
+        };
+      }
+
+      // Case: same nested title AND first question is true
+      else if (
+        nestedTitle.id === allQuestions[i].nestedTitle.id && 
+        allQuestions[i].nestedTitle.firstQuestion === true
+      ) {
+        // record the matched question
+        this.setState({
+          nestedTitleFirstQuestionId: allQuestions[i]._id,
+          nestedTitleFirstQuestionValue: allQuestions[i].question
+        })
+        return {
+          isNestedTitleFirstQuestionVacant: false,
+          nestedTitleId: allQuestions[i].nestedTitle.id
+        };
+      }
+    }
+
+    // Case: nestedTitle.id doesn't match with any in the nestedTitle object array
+    // return vacant status
+    return {
+      isNestedTitleFirstQuestionVacant: true,
+      nestedTitleId: ''
+    };
+  };
   
   validateQuestion = () => {
     const { questionList } = this.state;
@@ -1404,7 +1510,7 @@ class EditQuestion extends Component {
 
   render() {
 
-    const { questionList, showCountry, countries, selectedCountry, isLeadingQuestion, showExplanation, validationErrors, questionId, questionIndex, allQuestions, allTitles, showModal } = this.state;
+    const { questionList, showCountry, countries, selectedCountry, isLeadingQuestion, showExplanation, validationErrors, questionId, questionIndex, allQuestions, allTitles, showModal, showFirstQuestionNestedTitleOption, nestedTitle, nestedTitleFirstQuestionRender } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
     const { filteredQuestions } = this.state;
 
@@ -1449,7 +1555,7 @@ class EditQuestion extends Component {
                     <select
                       className="form-select"
                       style={{ flex: '1' }}
-                      value={this.state.selectedTitleLabel}
+                      value={this.state.selectedTitle}
                       onChange={(e) => this.handleTitleSelect(e.target.value)}
                     >
                       <option value="">Select Title</option>
@@ -1459,12 +1565,12 @@ class EditQuestion extends Component {
                           {/* Render subTitleLabel as options */}
                           {titleObject.title.subTitle.map((subTitleObject) => (
                             <React.Fragment key={subTitleObject._id}>
-                              <option value={[subTitleObject._id, subTitleObject.subTitleLabel]}>
+                              <option value={subTitleObject._id}>
                                 {subTitleObject.subTitleLabel}
                               </option>
                               {/* Render nestedTitleLabel as options */}
                               {subTitleObject.nestedTitle.map((nestedTitleObject) => (
-                                <option key={nestedTitleObject._id} value={[nestedTitleObject._id, nestedTitleObject.nestedTitleLabel]}>
+                                <option key={nestedTitleObject._id} value={nestedTitleObject._id}>
                                   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{nestedTitleObject.nestedTitleLabel} {/* Add one more level of indentation for nestedTitleLabel */}
                                 </option>
                               ))}
@@ -1481,151 +1587,173 @@ class EditQuestion extends Component {
                 </div>
               )}
             </div>
-            
-              
-              {/* Question label */}
-              <div className="mb-3">
-                <label htmlFor="question" className="col-form-label">
-                  Question:
-                </label>
-                <div>
-                  <input 
-                    type="text" 
-                    className="form-control" 
-                    id="formQuestion" 
-                    value={this.state.questionList.question}
-                    onChange={this.handleQuestionText}
-                  />
-                </div>
-                {validationErrors.question && (
-                  <div style={{ color: 'red', fontSize: 12 }}>
-                    {validationErrors.question}
+
+            {/* First Question Nested Title */}
+            {showFirstQuestionNestedTitleOption && (
+              <div className="form-check form-switch form-check-inline">
+              <input
+                className="form-check-input"
+                type="checkbox"
+                role="switch"
+                id="nestedTitleFirstQuestionCheck"
+                checked={nestedTitle.firstQuestion}
+                onChange={this.toggleFirstQuestionNestedTitle}
+              />
+              <label className="form-check-label" htmlFor="firstQuestionCheck">
+                Nested Title's First Question
+              </label>
+                {nestedTitleFirstQuestionRender && (
+                  <div>
+                    {this.renderNestedTitleFirstQuestionModal()}
                   </div>
                 )}
               </div>
+            )}
+                
+            {/* Question label */}
+            <div className="mb-3">
+              <label htmlFor="question" className="col-form-label">
+                Question:
+              </label>
+              <div>
+                <input 
+                  type="text" 
+                  className="form-control" 
+                  id="formQuestion" 
+                  value={this.state.questionList.question}
+                  onChange={this.handleQuestionText}
+                />
+              </div>
+              {validationErrors.question && (
+                <div style={{ color: 'red', fontSize: 12 }}>
+                  {validationErrors.question}
+                </div>
+              )}
+            </div>
 
-              {/* Options Type */}
+            {/* Options Type */}
+            <div className="mb-3">
+              <label htmlFor="optionsType" className="col-form-label">
+                Options Types:
+              </label>
+              <select
+                className="form-select"
+                id="formOptionsType"
+                value={this.state.questionList.optionType}
+                onChange={this.handleQuestionOptionType}
+              >
+                <option value="multipleChoice">Multiple Choice</option>
+                <option value="checkbox">Checkbox</option>
+                <option value="dropdown">Dropdown</option>
+                <option value="linear">Linear Scale</option>
+                <option value="multipleChoiceGrid">Multiple Choice Grid</option>
+                <option value="checkboxGrid">Checkbox Grid</option>
+                <option value="openEnded">Open-Ended</option>
+              </select>
+              {validationErrors.optionType && (
+                <div style={{ color: 'red', fontSize: 12 }}>
+                  {validationErrors.optionType}
+                </div>
+              )}
+            </div>
+            
+            {/* Options */}
+            <div className="mb-3" id="optionsArea">
+              {this.renderOptionsArea()}
+              {validationErrors.options && (
+                <div style={{ color: 'red', fontSize: 12 }}>
+                  {validationErrors.options}
+                </div>
+              )}
+            </div>
+            {showExplanation && (
               <div className="mb-3">
-                <label htmlFor="optionsType" className="col-form-label">
-                  Options Types:
+                <label htmlFor="explanation" className="col-form-label">
+                  {explanationLabel}:
+                </label>
+                <textarea className="form-control" id="explanation" value={this.state.explanation} onChange={this.handleInputChange}></textarea>
+                {validationErrors.explanation && (
+                  <div style={{ color: 'red', fontSize: 12 }}>
+                    {validationErrors.explanation}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Marks */}
+            {!isLeadingQuestion && (
+              <div className="mb-3">
+                <label htmlFor="mark" className="col-form-label">
+                  Marks:
+                </label>
+                <input 
+                  type="text" 
+                  className="form-control" 
+                  id="formMarks" 
+                  value={this.state.questionList.marks}
+                  onChange={this.handleQuestionMarks} 
+                />
+                {validationErrors.marks && (
+                  <div style={{ color: 'red', fontSize: 12 }}>
+                    {validationErrors.marks}
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* Country */}
+            {showCountry && (
+              <div className="mb-3">
+                <label className="col-form-label">Country:</label>
+                <div style={{ maxHeight: '130px', overflowY: 'auto'}}>
+                  {countries.map((country, index) => (
+                    <div key={index} className="form-check">
+                      <input
+                        type="checkbox"
+                        id={country}
+                        value={country}
+                        checked={selectedCountry.includes(country)}
+                        onChange={this.handleCountryChange}
+                        className="form-check-input"
+                        size={5}
+                      />
+                      <label htmlFor={country} className="form-check-label">
+                        {country}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+                {validationErrors.country && (
+                  <div style={{ color: 'red', fontSize: 12 }}>
+                    {validationErrors.country}
+                  </div>
+                )} 
+              </div>
+            )}
+
+            {/* Next Question */}
+            {!isLeadingQuestion && filteredQuestions && (
+              <div className="mb-3">
+                <label htmlFor="nextQuestion" className="col-form-label">
+                  Next Question:
                 </label>
                 <select
                   className="form-select"
-                  id="formOptionsType"
-                  value={this.state.questionList.optionType}
-                  onChange={this.handleQuestionOptionType}
+                  id="nextQuestion"
+                  value={this.state.questionList.nextQuestion}
+                  onChange={this.handleQuestionNextQuestion}
                 >
-                  <option value="multipleChoice">Multiple Choice</option>
-                  <option value="checkbox">Checkbox</option>
-                  <option value="dropdown">Dropdown</option>
-                  <option value="linear">Linear Scale</option>
-                  <option value="multipleChoiceGrid">Multiple Choice Grid</option>
-                  <option value="checkboxGrid">Checkbox Grid</option>
-                  <option value="openEnded">Open-Ended</option>
-                </select>
-                {validationErrors.optionType && (
-                  <div style={{ color: 'red', fontSize: 12 }}>
-                    {validationErrors.optionType}
-                  </div>
-                )}
-              </div>
-              
-              {/* Options */}
-              <div className="mb-3" id="optionsArea">
-                {this.renderOptionsArea()}
-                {validationErrors.options && (
-                  <div style={{ color: 'red', fontSize: 12 }}>
-                    {validationErrors.options}
-                  </div>
-                )}
-              </div>
-              {showExplanation && (
-                <div className="mb-3">
-                  <label htmlFor="explanation" className="col-form-label">
-                    {explanationLabel}:
-                  </label>
-                  <textarea className="form-control" id="explanation" value={this.state.explanation} onChange={this.handleInputChange}></textarea>
-                  {validationErrors.explanation && (
-                    <div style={{ color: 'red', fontSize: 12 }}>
-                      {validationErrors.explanation}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Marks */}
-              {!isLeadingQuestion && (
-                <div className="mb-3">
-                  <label htmlFor="mark" className="col-form-label">
-                    Marks:
-                  </label>
-                  <input 
-                    type="text" 
-                    className="form-control" 
-                    id="formMarks" 
-                    value={this.state.questionList.marks}
-                    onChange={this.handleQuestionMarks} 
-                  />
-                  {validationErrors.marks && (
-                    <div style={{ color: 'red', fontSize: 12 }}>
-                      {validationErrors.marks}
-                    </div>
-                  )}
-                </div>
-              )}
-              
-              {/* Country */}
-              {showCountry && (
-                <div className="mb-3">
-                  <label className="col-form-label">Country:</label>
-                  <div style={{ maxHeight: '130px', overflowY: 'auto'}}>
-                    {countries.map((country, index) => (
-                      <div key={index} className="form-check">
-                        <input
-                          type="checkbox"
-                          id={country}
-                          value={country}
-                          checked={selectedCountry.includes(country)}
-                          onChange={this.handleCountryChange}
-                          className="form-check-input"
-                          size={5}
-                        />
-                        <label htmlFor={country} className="form-check-label">
-                          {country}
-                        </label>
-                      </div>
+                  <option value="">Select Next Question</option>
+                  {filteredQuestions
+                    .filter(question => !question.firstQuestion && !this.isOptionNextQuestionUsed(question))
+                    .map((question) => (
+                      <option key={question._id} value={question._id}>
+                        {question.question}
+                      </option>
                     ))}
-                  </div>
-                  {validationErrors.country && (
-                    <div style={{ color: 'red', fontSize: 12 }}>
-                      {validationErrors.country}
-                    </div>
-                  )} 
-                </div>
-              )}
-                {/* Next Question */}
-                {!isLeadingQuestion && filteredQuestions && (
-                  <div className="mb-3">
-                    <label htmlFor="nextQuestion" className="col-form-label">
-                      Next Question:
-                    </label>
-                    <select
-                      className="form-select"
-                      id="nextQuestion"
-                      value={this.state.questionList.nextQuestion}
-                      onChange={this.handleQuestionNextQuestion}
-                    >
-                      <option value="">Select Next Question</option>
-                      {filteredQuestions
-                        .filter(question => !question.firstQuestion && !this.isOptionNextQuestionUsed(question))
-                        .map((question) => (
-                          <option key={question._id} value={question._id}>
-                            {question.question}
-                          </option>
-                        ))}
-                    </select>
-                  </div>
-                )}
+                </select>
+              </div>
+            )}
             </form>
         </Modal.Body>
         <Modal.Footer>

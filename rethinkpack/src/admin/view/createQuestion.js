@@ -94,7 +94,6 @@ class CreateQuestion extends Component {
       allQuestions: [],
       allTitles:[],
       selectedTitle: '',
-      selectedTitleLabel: '',
       selectedTitleQuestions: [],
       firstQuestionId: '',
       firstQuestionValue: '',
@@ -248,11 +247,10 @@ class CreateQuestion extends Component {
 
   handleTitleSelect = (e) => {
     const { allQuestions } = this.state;
-    let valueArray = e.split(",");
 
     let titleQuestionsArray = [];
     for (let i=0; i<allQuestions.length; i++) {
-      if (valueArray[0] === allQuestions[i].titleId) {
+      if (e === allQuestions[i].titleId) {
         titleQuestionsArray.push(allQuestions[i])
         // console.log(`matching Qs: ${allQuestions[i].question}`)
       };
@@ -262,8 +260,7 @@ class CreateQuestion extends Component {
     this.handleFirstQuestionNestedTitleOption(e);
 
     this.setState({ 
-      selectedTitle: valueArray[0],
-      selectedTitleLabel: e,
+      selectedTitle: e,
       selectedTitleQuestions: titleQuestionsArray
     });
     // }, console.log(`selectedTitle: ${valueArray[0]} and ${valueArray[1]}`));
@@ -289,18 +286,18 @@ class CreateQuestion extends Component {
   };
 
   handleFirstQuestionNestedTitleOption = (e) => {
-    let valueArray = e.split(",");
+    
     let nestedTitlesArray = this.fetchNestedTitles();
 
     // Determine a match for nested title with the selected title
     for (let i=0; i<nestedTitlesArray.length; i++) {
-      if (valueArray[0] === nestedTitlesArray[i].id) {
+      if (e === nestedTitlesArray[i].id) {
         // console.log(`match: ${nestedTitlesArray[i].nestedTitleLabel}`)
         this.setState({ 
           showFirstQuestionNestedTitleOption: true,
           nestedTitle: {
             ...this.nestedTitle,
-            id: valueArray[0],
+            id: e,
             firstQuestion: false
           },
           nestedTitleLabel: nestedTitlesArray[i].nestedTitleLabel
@@ -1599,7 +1596,7 @@ class CreateQuestion extends Component {
                           <select
                             className="form-select"
                             style={{ flex: '1' }}
-                            value={this.state.selectedTitleLabel}
+                            value={this.state.selectedTitle}
                             onChange={(e) => this.handleTitleSelect(e.target.value)}
                           >
                             <option value="">Select Title</option>
@@ -1609,13 +1606,13 @@ class CreateQuestion extends Component {
                                 {/* Render subTitleLabel as options */}
                                 {titleObject.title.subTitle.map((subTitleObject) => (
                                   <React.Fragment key={subTitleObject._id}>
-                                    <option value={[subTitleObject._id, subTitleObject.subTitleLabel]}>
+                                    <option value={subTitleObject._id}>
                                       {subTitleObject.subTitleLabel}
                                     </option>
 
                                     {/* Render nestedTitleLabel as options */}
                                     {subTitleObject.nestedTitle.map((nestedTitleObject) => (
-                                      <option key={nestedTitleObject._id} value={[nestedTitleObject._id, nestedTitleObject.nestedTitleLabel]}>
+                                      <option key={nestedTitleObject._id} value={nestedTitleObject._id}>
                                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{nestedTitleObject.nestedTitleLabel} {/* Add one more level of indentation for nestedTitleLabel */}
                                       </option>
                                     ))}
@@ -1632,7 +1629,6 @@ class CreateQuestion extends Component {
                       </div>
                     )}
                   </div>
-
 
                   {/* First Question Nested Title */}
                   {showFirstQuestionNestedTitleOption && (
@@ -1656,7 +1652,7 @@ class CreateQuestion extends Component {
                     </div>
                   )}
 
-
+                  {/* Question */}
                   <div className="mb-3">
                     <label htmlFor="question" className="col-form-label">
                       Question:
