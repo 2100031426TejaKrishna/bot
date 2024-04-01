@@ -1183,10 +1183,8 @@ class CreateQuestion extends Component {
         nestedTitle.id === allQuestions[i].nestedTitle.id && 
         allQuestions[i].nestedTitle.firstQuestion === false
       ) {
-        return {
-          isNestedTitleFirstQuestionVacant: true,
-          nestedTitleId: ''
-        };
+        // do nothing, as want to ensure loop through entire array, 
+        // if nothing found, after loop is done will return isNestedTitleFirstQuestionVacant: true
       }
 
       // Case: same nested title AND first question is true
@@ -1206,8 +1204,16 @@ class CreateQuestion extends Component {
       }
     }
 
+    console.log(`no match`)
+    console.log(`nestedTitle.id: ${nestedTitle.id}`)
+    for (let i=0; i<allQuestions.length; i++) {
+      console.log(`allQuestions${[i]}: ${allQuestions[i].nestedTitle.id}`)
+      console.log(`allQuestions${[i]}: ${allQuestions[i].nestedTitle.id}`)
+    }
+    
     // Case: nestedTitle.id doesn't match with any in the nestedTitle object array
     // return vacant status
+
     return {
       isNestedTitleFirstQuestionVacant: true,
       nestedTitleId: ''
