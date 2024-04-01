@@ -4,8 +4,8 @@ import EditQuestion from './editQuestion';
 import duplicateQuestion from './duplicateQuestion'; // Import the duplicate function
 
 // Switch URLs between Server and Local hosting here
-const destination = "localhost:5000";
-// const destination = "rtp.dusky.bond:5000";
+// const destination = "localhost:5000";
+const destination = "rtp.dusky.bond:5000";
 
 const Questions = ({ triggerRefresh }) => {
     const [questions, setQuestions] = useState([]);
