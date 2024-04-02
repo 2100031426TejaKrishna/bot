@@ -14,6 +14,7 @@ class EditQuestion extends Component {
     super(props);
     // Declare all state variables to observe below
     this.state = {
+      initialData: '',
       question: '',
       marks: '',
       explanation: '',
@@ -116,7 +117,7 @@ class EditQuestion extends Component {
     this.resetState = this.resetState.bind(this);
     // Modal ref
     this.editQuestionModalRef = React.createRef();
-    // bind API?
+    // bind API
     this.fetchQuestion = this.fetchQuestion.bind(this);
     this.onEditClickHandler = this.onEditClickHandler.bind(this);
     this.updateQuestion = this.updateQuestion.bind(this);
@@ -137,12 +138,12 @@ class EditQuestion extends Component {
   };
 
   updateNestedTitleFirstQuestion = () => {
-    console.log(`prop updateNestedTitleFirstQuestion executed.`)
+    // console.log(`prop updateNestedTitleFirstQuestion executed.`)
     
     const { allQuestions, nestedTitleFirstQuestionId } = this.state;
     const updatedQuestions = allQuestions.map(question => {
       if (question._id === nestedTitleFirstQuestionId) {
-        console.log(`question._id === nestedTitleFirstQuestionId`)
+        // console.log(`question._id === nestedTitleFirstQuestionId`)
         return { 
           ...question,
           nestedTitle: {
@@ -157,16 +158,6 @@ class EditQuestion extends Component {
     });
     this.setState({ allQuestions: updatedQuestions });
 
-    // if (isNestedTitleFirstQuestionVacant === true) {
-    //   this.setState(prevState => ({
-    //     nestedTitle: {
-    //       ...prevState.nestedTitle,
-    //       firstQuestion: !prevState.nestedTitle.firstQuestion
-    //     }
-    //   }));
-    //   console.log(`is vacant`)
-    // }
-
     // Reset state value to false and update toggle to TRUE
     this.setState(prevState => ({ 
       nestedTitleFirstQuestionRender: false,
@@ -175,14 +166,6 @@ class EditQuestion extends Component {
         firstQuestion: true
       },
      }));
-
-    // this.setState({ 
-    //   nestedTitleFirstQuestionRender: false,
-    //   nestedTitle: {
-    //     ...this.nestedTitle,
-    //     firstQuestion: true
-    //   },
-    // });
 
     this.fetchQuestions();
   };
@@ -211,6 +194,7 @@ class EditQuestion extends Component {
         this.handleFirstQuestionNestedTitleOption(data.titleId);
 
         this.setState({
+          initialData: data,
           showModal: true, 
           nestedTitle: data.nestedTitle,
           questionList: data,
@@ -378,14 +362,17 @@ class EditQuestion extends Component {
   };
 
   toggleFirstQuestionNestedTitle = () => {
-    const { nestedTitle } = this.state;
+    const { initialData, nestedTitle } = this.state;
 
-    // Case when switch is OFF, no need to validate if already is existing first question
-    if(nestedTitle.firstQuestion === false) {
+    // Case: No need to validate if initial nestedTitle.id already is the existing first question
+    // OR Case: when switch is initially ON, no need to validate
+    if(
+      initialData.nestedTitle.id !== nestedTitle.id ||
+      initialData.nestedTitle.firstQuestion === false
+      ) {
       // Validate whether nested title first question is vacant or not
       const { 
         isNestedTitleFirstQuestionVacant,
-        nestedTitleId
       } = this.validateFirstQuestionNestedTitle();
       
       if (isNestedTitleFirstQuestionVacant === true) {
@@ -395,10 +382,8 @@ class EditQuestion extends Component {
             firstQuestion: !prevState.nestedTitle.firstQuestion
           }
         }));
-        console.log(`is vacant`)
       } else {
         // render the firstQuestionModal here
-        console.log(`is taken`)
         this.setState({ nestedTitleFirstQuestionRender: true });
       }
     } else {
@@ -1294,9 +1279,6 @@ class EditQuestion extends Component {
   validateFirstQuestionNestedTitle = () => {
     const { allQuestions, nestedTitle } = this.state;
 
-    console.log(`nestedTitle.id: ${nestedTitle.id}`)
-
-
     // Case: when nested title IS NOT selected, 
     // is not possible as only way to execute this function is when a 
     // nested title is currently selected
@@ -1323,8 +1305,7 @@ class EditQuestion extends Component {
           nestedTitleFirstQuestionValue: allQuestions[i].question
         })
         return {
-          isNestedTitleFirstQuestionVacant: false,
-          // nestedTitleId: allQuestions[i].nestedTitle.id
+          isNestedTitleFirstQuestionVacant: false
         };
       }
     }
@@ -1332,8 +1313,7 @@ class EditQuestion extends Component {
     // Case: nestedTitle.id doesn't match with any in the nestedTitle object array
     // return vacant status
     return {
-      isNestedTitleFirstQuestionVacant: true,
-      // nestedTitleId: nestedTitle.id
+      isNestedTitleFirstQuestionVacant: true
     };
   };
   
@@ -1484,7 +1464,6 @@ class EditQuestion extends Component {
     });
 
     if (
-      
       !isQuestionValid || 
       !isOptionTypeValid || 
       !isGridValid || 
@@ -1566,7 +1545,6 @@ class EditQuestion extends Component {
     }
 
     if (showFirstQuestionNestedTitleOption === true) {
-      console.log(`submit ${JSON.stringify(nestedTitle)})`)
       dataToUpdate.nestedTitle = nestedTitle;
     }
     

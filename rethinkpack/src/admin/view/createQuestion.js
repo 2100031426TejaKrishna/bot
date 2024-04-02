@@ -209,16 +209,17 @@ class CreateQuestion extends Component {
   };
 
   updateNestedTitleFirstQuestion = () => {
-    console.log(`prop updateNestedTitleFirstQuestion executed.`)
+    // console.log(`prop updateNestedTitleFirstQuestion executed.`)
     
     const { allQuestions, nestedTitleFirstQuestionId } = this.state;
     const updatedQuestions = allQuestions.map(question => {
       if (question._id === nestedTitleFirstQuestionId) {
-        console.log(`question._id === nestedTitleFirstQuestionId`)
+        // console.log(`question._id === nestedTitleFirstQuestionId`)
         return { 
           ...question,
           nestedTitle: {
             ...question.nestedTitle,
+            id: nestedTitleFirstQuestionId,
             firstQuestion: false,
           },
         };
@@ -229,13 +230,13 @@ class CreateQuestion extends Component {
     this.setState({ allQuestions: updatedQuestions });
 
     // Reset state value to false and update toggle to TRUE
-    this.setState({ 
+    this.setState(prevState => ({ 
       nestedTitleFirstQuestionRender: false,
       nestedTitle: {
-        ...this.nestedTitle,
+        ...prevState.nestedTitle,
         firstQuestion: true
       },
-     });
+     }));
   };
   
   firstQuestionModalOnHide = () => {
@@ -323,10 +324,8 @@ class CreateQuestion extends Component {
           firstQuestion: !prevState.nestedTitle.firstQuestion
         }
       }));
-      console.log(`is vacant`)
     } else {
       // render the firstQuestionModal here
-      console.log(`is taken`)
       this.setState({ nestedTitleFirstQuestionRender: true });
     }
   };
@@ -1203,17 +1202,9 @@ class CreateQuestion extends Component {
         };
       }
     }
-
-    console.log(`no match`)
-    console.log(`nestedTitle.id: ${nestedTitle.id}`)
-    for (let i=0; i<allQuestions.length; i++) {
-      console.log(`allQuestions${[i]}: ${allQuestions[i].nestedTitle.id}`)
-      console.log(`allQuestions${[i]}: ${allQuestions[i].nestedTitle.id}`)
-    }
     
     // Case: nestedTitle.id doesn't match with any in the nestedTitle object array
     // return vacant status
-
     return {
       isNestedTitleFirstQuestionVacant: true,
       nestedTitleId: ''
