@@ -62,8 +62,8 @@ router.get('/filtered-questions', async (req, res) => {
             return acc;
         }, []);
 
-        console.log('All Question IDs:', allQuestions.map(q => q._id.toString()));
-        console.log('Used Question IDs:', usedQuestionIds);
+        // console.log('All Question IDs:', allQuestions.map(q => q._id.toString()));
+        // console.log('Used Question IDs:', usedQuestionIds);
 
         // Filter questions based on criteria
         const filteredQuestions = allQuestions.filter(question => (
@@ -71,7 +71,7 @@ router.get('/filtered-questions', async (req, res) => {
             !question.marks // Exclude leading questions by checking if marks property is falsy
         ));
 
-        console.log('Filtered Questions IDs:', filteredQuestions.map(q => q._id.toString()));
+        // console.log('Filtered Questions IDs:', filteredQuestions.map(q => q._id.toString()));
 
         res.json(filteredQuestions);
     } catch (error) {

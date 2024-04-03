@@ -50,7 +50,7 @@ const fetchNextQuestion = async (nextQuestionId) => {
   // Function to fetch option text by ID
   const fetchOptionText = async (optionId) => {
     try {
-      console.log("Fetching option text for ID:", optionId);
+      // console.log("Fetching option text for ID:", optionId);
   
       const question = await Questions.findOne({ "options._id": new mongoose.Types.ObjectId(optionId) });
   
@@ -59,7 +59,7 @@ const fetchNextQuestion = async (nextQuestionId) => {
   
         if (selectedOption) {
           const optionText = selectedOption.text;
-          console.log("Found option text:", optionText);
+          // console.log("Found option text:", optionText);
           return optionText;
         } else {
           console.error("Selected option not found for ID:", optionId);
@@ -107,7 +107,7 @@ router.get('/optionText/:id', async (req, res) => {
     const optionId = req.params.id;
     const optionText = await fetchOptionText(optionId);
 
-    console.log("Found option text:", optionText);
+    // console.log("Found option text:", optionText);
     res.json({ texts: optionText }); // Return the text property in the correct format
   } catch (error) {
     const errorMessage = error.message || "Internal Server Error";

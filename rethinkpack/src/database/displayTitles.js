@@ -7,7 +7,7 @@ const Titles = mongoose.model('titles');
 const fetchTitles = async () => {
     try {
         const titles = await Titles.find({});
-        console.log(titles);
+        // console.log(titles);
         return titles;
     } catch (error) {
         console.error("Error fetching titles:", error);
