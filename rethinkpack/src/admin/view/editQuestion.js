@@ -355,8 +355,17 @@ class EditQuestion extends Component {
           nestedTitleLabel: nestedTitlesArray[i].nestedTitleLabel
          });
         return;
-      } else {
-        this.setState({ showFirstQuestionNestedTitleOption: false })
+      } 
+      // Case: when a subtitle is selected
+      else {
+        this.setState({
+          showFirstQuestionNestedTitleOption: false,
+          nestedTitle: {
+            ...this.nestedTitle,
+            id: '',
+            firstQuestion: false
+          }
+        });
       }
     };
   };
@@ -364,12 +373,41 @@ class EditQuestion extends Component {
   toggleFirstQuestionNestedTitle = () => {
     const { initialData, nestedTitle } = this.state;
 
-    // Case: No need to validate if initial nestedTitle.id already is the existing first question
-    // OR Case: when switch is initially ON, no need to validate
-    if(
-      initialData.nestedTitle.id !== nestedTitle.id ||
-      initialData.nestedTitle.firstQuestion === false
+    // Case: when changing a nested title to another nested title
+    if (initialData.nestedTitle) {
+      // Case: No need to validate if initial nestedTitle.id already is the existing first question
+      // OR Case: when switch is initially ON, no need to validate
+      if(
+        initialData.nestedTitle.id !== nestedTitle.id ||
+        initialData.nestedTitle.firstQuestion === false
       ) {
+        // Validate whether nested title first question is vacant or not
+        const { 
+          isNestedTitleFirstQuestionVacant,
+        } = this.validateFirstQuestionNestedTitle();
+        
+        if (isNestedTitleFirstQuestionVacant === true) {
+          this.setState(prevState => ({
+            nestedTitle: {
+              ...prevState.nestedTitle,
+              firstQuestion: !prevState.nestedTitle.firstQuestion
+            }
+          }));
+        } else {
+          // render the firstQuestionModal here
+          this.setState({ nestedTitleFirstQuestionRender: true });
+        }
+      } else {
+        this.setState(prevState => ({
+          nestedTitle: {
+            ...prevState.nestedTitle,
+            firstQuestion: !prevState.nestedTitle.firstQuestion
+          }
+        }));
+      }
+    } 
+    // Case: when changing a subtitle to a nested title
+    else {
       // Validate whether nested title first question is vacant or not
       const { 
         isNestedTitleFirstQuestionVacant,
@@ -386,13 +424,6 @@ class EditQuestion extends Component {
         // render the firstQuestionModal here
         this.setState({ nestedTitleFirstQuestionRender: true });
       }
-    } else {
-      this.setState(prevState => ({
-        nestedTitle: {
-          ...prevState.nestedTitle,
-          firstQuestion: !prevState.nestedTitle.firstQuestion
-        }
-      }));
     }
   };
 
@@ -1505,7 +1536,8 @@ class EditQuestion extends Component {
       isLeadingQuestion,
       showCountry,
       requireResponse,
-      nextQuestion: isLeadingQuestion ? undefined : questionList.nextQuestion
+      nextQuestion: isLeadingQuestion ? undefined : questionList.nextQuestion,
+      nestedTitle: nestedTitle
     };
 
     // Leading Question Marks check
@@ -1544,10 +1576,6 @@ class EditQuestion extends Component {
       dataToUpdate.grid = { rows: [], columns: [], answers: [] }
     }
 
-    if (showFirstQuestionNestedTitleOption === true) {
-      dataToUpdate.nestedTitle = nestedTitle;
-    }
-    
     // Update database server API
     this.updateQuestion(questionId, dataToUpdate)
   };
