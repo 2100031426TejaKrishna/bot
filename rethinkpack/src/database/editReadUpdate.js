@@ -1,63 +1,83 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
-
 const Questions = mongoose.model('questions');
 
-const fetchQuestionsToEdit = async () => {
-    try {
-        
-        /*
-        // Test run to fetch question field from first document of database
-        const firstResultQuestion = await Questions.findOne();
-    
-        if (firstResultQuestion) {
-            console.log(`Found a document: `);
-            console.log(`Question: ${firstResultQuestion.question}`);
-            
-            // return values
-            return firstResultQuestion.question;
-        } else {
-            console.log(`No document found.`)
-        }
-        */
-        
-        
-        const questionsToEdit = await Questions.find({});
-    
-        if (questionsToEdit) {
-            console.log(`Found list: `);
-            console.log(`Question: ${questionsToEdit}`);
-            return questionsToEdit;
-        } else {
-            console.log(`No document found.`)
-        }
-    
+// Fetch question by ID from database
+router.get('/read/:id', getQuestion, (req, res) => {
+    // res.send(res.question.question)
+    res.json(res.question);
+});
 
+
+// Update question by ID from database
+router.patch('/update/:id', async (req, res) => {
+    console.log(`updateQuestion router executed`);
+    try {
+        const update = await Questions.updateOne(
+            { _id: req.params.id },
+            { $set: req.body }
+          );
+          res.json(update);
     } catch (error) {
-        console.error("Error fetching questions:", error);
-        throw error;
+        console.log(`ERROR: editReadUpdate/id`)
+        res.status(500).send("Unable to fetch questions");
     }
+});
+
+// Function to fetch question by Id
+async function getQuestion(req, res, next) {
+    let question 
+    try {
+        question = await Questions.findById(req.params.id);
+
+        if (question == null) {
+            return res.status(404).json({message: "Cannot find question"})
+        }
+    } catch (err) {
+        return res.status(500).json({message: "error message"})
+    }
+    res.question = question
+    next()
 }
 
-// Trial: Fetch question field from first document of database
-router.get('/editReadUpdate', async (req, res) => {
+// Add this route to get the filtered questions
+router.get('/filtered-questions', async (req, res) => {
     try {
-        const questions = await fetchQuestionsToEdit();
-        res.json(questions);
+        // Fetch all questions
+        const allQuestions = await Questions.find();
+
+        // Fetch used question IDs from nextQuestion and optionsNextQuestion fields
+        const usedQuestionIds = allQuestions.reduce((acc, question) => {
+            if (question.nextQuestion) {
+                acc.push(question.nextQuestion.toString()); // Convert ObjectId to string
+            }
+            if (question.options) {
+                question.options.forEach(option => {
+                    if (option.optionsNextQuestion) {
+                        acc.push(option.optionsNextQuestion.toString()); // Convert ObjectId to string
+                    }
+                });
+            }
+            return acc;
+        }, []);
+
+        // console.log('All Question IDs:', allQuestions.map(q => q._id.toString()));
+        // console.log('Used Question IDs:', usedQuestionIds);
+
+        // Filter questions based on criteria
+        const filteredQuestions = allQuestions.filter(question => (
+            !usedQuestionIds.includes(question._id.toString()) &&
+            !question.marks // Exclude leading questions by checking if marks property is falsy
+        ));
+
+        // console.log('Filtered Questions IDs:', filteredQuestions.map(q => q._id.toString()));
+
+        res.json(filteredQuestions);
     } catch (error) {
-        res.status(500).send("Unable to fetch questions");
+        console.error('Error fetching filtered questions:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
     }
 });
 
-// Fetch ALL questions from database
-router.get('/editReadUpdate/:id', async (req, res) => {
-    try {
-        const questions = await Questions.findById(req.params.id);
-        res.json(questions);
-    } catch (error) {
-        res.status(500).send("Unable to fetch questions");
-    }
-});
-
-module.exports = { router, fetchQuestionsToEdit };
+module.exports = router;

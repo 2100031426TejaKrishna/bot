@@ -3,12 +3,13 @@ const mongoose = require('mongoose');
 const router = express.Router();
 
 const questionSchema = new mongoose.Schema({
-    questionType: String,
+    titleId: String,
     question: String,
     optionType: String,
     options: [{
         text: String,
         isCorrect: Boolean,
+        marks: Number,
         optionsNextQuestion: String
     }],
     linearScale: [{
@@ -20,15 +21,29 @@ const questionSchema = new mongoose.Schema({
             text: String,
         }],
         columns: [{
-        text: String
+            text: String
+        }],
+        answers: [{
+            rowIndex: Number,
+            columnIndex: Number,
+            isCorrect: Boolean,
+            marks: Number
         }]
     },
     requireResponse: Boolean,  
     marks: Number,
-    countries: [String],
+    country: {
+        selectedCountry: String,
+        countryFirstQuestion: Boolean
+    },
     explanation: String,
     recommendation: String,
+    previousQuestion: String,
     nextQuestion: String,
+    nestedTitle: {
+        id: String,
+        firstQuestion: Boolean
+    },
     date: {
         type: Date,
         default: Date.now,
@@ -46,12 +61,16 @@ router.post('/insertQuestion', async (req, res) => {
             questionData.recommendation = questionData.explanation;
             delete questionData.explanation;
             delete questionData.marks;
-            delete questionData.nextQuestion;
+            if (questionData.optionType !== 'multipleChoiceGrid' && questionData.optionType !== 'checkboxGrid') {
+                delete questionData.nextQuestion;
+            }
         } else {
-            questionData.options = questionData.options.map(option => {
-                delete option.optionsNextQuestion;
-                return option;
-            });
+            if (questionData.optionType !== 'multipleChoiceGrid' && questionData.optionType !== 'checkboxGrid') {
+                questionData.options = questionData.options.map(option => {
+                    delete option.optionsNextQuestion;
+                    return option;
+                });
+            }
         }
 
         if (!questionData.showCountry) {

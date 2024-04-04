@@ -1,0 +1,41 @@
+.scrollable-table-container {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* Spacing for table cells (td) */
+.grid-row-spacing td {
+  padding-bottom: 10px; /* Space below each cell in a row */
+}
+
+/* General styling for tables */
+table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: separate; /* Needed for border-spacing to work */
+  border-spacing: 0 10px; /* Horizontal and vertical spacing */
+}
+
+th:first-child, td:first-child {
+  width: 200px;
+}
+
+th, td {
+  width: 200px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Adjusted CSS classes for different scenarios */
+.last-column-space {
+  width: 30px; /* Adjust as needed for delete button */
+}
+
+.last-column-no-space {
+  width: 0; /* No extra space when there's only one row */
+}
+
+.delete-column-btn {
+  margin-left: 10px;
+  margin-right: 20px;
+}
