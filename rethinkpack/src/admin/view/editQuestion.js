@@ -66,7 +66,11 @@ class EditQuestion extends Component {
         "Vanuatu", "Vatican City", "Venezuela", "Vietnam", "Yemen",
         "Zambia", "Zimbabwe"
       ],
-      selectedCountry: [],
+      selectedCountry: [], // omit this line when `selectedCountry` is redundant
+      country: {
+        selectedCountry: '',
+        countryFirstQuestion: false
+      },
       isLeadingQuestion: false,
       showExplanation: false,
       showToast: false,
@@ -557,16 +561,26 @@ class EditQuestion extends Component {
     }));
   };
 
+  // handleInputChange = (e) => {
+  //   if (e.target.id === "country") {
+  //     const options = e.target.options;
+  //     const selectedCountry = [];
+  //     for (let i = 0; i < options.length; i++) {
+  //       if (options[i].selected) {
+  //         selectedCountry.push(options[i].value);
+  //       }
+  //     }
+  //     this.setState({ selectedCountry });
+  //   } else {
+  //     this.setState({ [e.target.id]: e.target.value });
+  //   }
+  // };
+
   handleInputChange = (e) => {
     if (e.target.id === "country") {
-      const options = e.target.options;
-      const selectedCountry = [];
-      for (let i = 0; i < options.length; i++) {
-        if (options[i].selected) {
-          selectedCountry.push(options[i].value);
-        }
-      }
-      this.setState({ selectedCountry });
+      const { selectedCountry } = this.state;
+      // const options = e.target.options;
+      this.setState({ selectedCountry: e.target.options });
     } else {
       this.setState({ [e.target.id]: e.target.value });
     }
@@ -720,6 +734,16 @@ class EditQuestion extends Component {
     const { options } = this.state.questionList;
   
     return options.some(option => option.optionsNextQuestion === question._id);
+  };
+
+  handleCountryChange = (e) => {
+    this.setState( (prevState) => ({
+      country: { 
+        ...prevState.country, 
+        selectedCountry: e.target.value, 
+        countryFirstQuestion: false 
+      }
+    }));
   };
   
 
@@ -1436,10 +1460,6 @@ class EditQuestion extends Component {
     return isLeadingQuestion || (questionList.marks !== '' && !isNaN(questionList.marks));
   };
   
-  validateCountries = () => {
-    const { selectedCountry, showCountry } = this.state;
-    return !showCountry || (selectedCountry.length > 0);
-  };
   
   validateExplanation = () => {
     const { explanation, showExplanation } = this.state;
@@ -1475,7 +1495,6 @@ class EditQuestion extends Component {
     const isOptionsValid = this.validateOptions();
     const isOpenEndedValid = this.validateOpenEnded();
     const isMarksValid = this.validateMarks();
-    const isCountriesValid = this.validateCountries();
     const isExplanationValid = this.validateExplanation();
     const isGridValid = this.validateGrid();
 
@@ -1489,7 +1508,6 @@ class EditQuestion extends Component {
         options: isOptionsValid ? '' : 'Add at least two options and at least one selection',
         openEnded: isOpenEndedValid  ? '' : 'Ensure entry is less than the word limit',
         marks: isMarksValid ? '' : 'Enter the marks (an integer value) for this question',
-        country: isCountriesValid ? '' : 'Select at least one country',
         explanation: isExplanationValid ? '' : (this.state.isLeadingQuestion ? 'Enter the recommendation for this question' : 'Enter the explanation for the correct answer'),
       },
     });
@@ -1501,7 +1519,6 @@ class EditQuestion extends Component {
       !isOptionsValid || 
       !isOpenEndedValid ||
       !isMarksValid || 
-      !isCountriesValid || 
       !isExplanationValid
     ) {
       return;
@@ -1535,6 +1552,7 @@ class EditQuestion extends Component {
       explanation: showExplanation ? explanation : undefined,
       isLeadingQuestion,
       showCountry,
+      country: showCountry ? selectedCountry : undefined,
       requireResponse,
       nextQuestion: isLeadingQuestion ? undefined : questionList.nextQuestion,
       nestedTitle: nestedTitle
@@ -1584,7 +1602,7 @@ class EditQuestion extends Component {
 
   render() {
 
-    const { questionList, showCountry, countries, selectedCountry, isLeadingQuestion, showExplanation, validationErrors, questionId, questionIndex, allQuestions, allTitles, showModal, showFirstQuestionNestedTitleOption, nestedTitle, nestedTitleFirstQuestionRender } = this.state;
+    const { questionList, showCountry, countries, selectedCountry, isLeadingQuestion, showExplanation, validationErrors, questionId, questionIndex, allQuestions, allTitles, showModal, showFirstQuestionNestedTitleOption, nestedTitle, nestedTitleFirstQuestionRender, country } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
     const { filteredQuestions } = this.state;
 
@@ -1775,7 +1793,8 @@ class EditQuestion extends Component {
               </div>
             )}
             
-            {/* Country */}
+            {/* OLD Country */}
+          {/*             
             {showCountry && (
               <div className="mb-3">
                 <label className="col-form-label">Country:</label>
@@ -1802,6 +1821,63 @@ class EditQuestion extends Component {
                     {validationErrors.country}
                   </div>
                 )} 
+              </div>
+            )} */}
+
+            {/* Specific Country */}
+            {showCountry && (
+              <div className="mb-3">
+                <label className="col-form-label">Country:</label>
+                <div style={{ maxHeight: '130px', overflowY: 'auto'}}>
+                  {countries.map((country, index) => (
+                    <div key={index} className="form-check">
+                      <input
+                        type="radio"
+                        id={country}
+                        value={country}
+                        checked={this.state.country.selectedCountry === country}
+                        onChange={this.handleCountryChange}
+                        className="form-check-input"
+                        size={8}
+                      />
+                      <label htmlFor={country} className="form-check-label">
+                        {country}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+                {validationErrors.country && (
+                  <div style={{ color: 'red', fontSize: 12 }}>
+                    {validationErrors.country}
+                  </div>
+                )} 
+
+              {/* Country First Question */}
+              <p></p>
+              <div className="form-check form-switch form-check-inline">
+              <input
+                className="form-check-input"
+                type="checkbox"
+                role="switch"
+                id="countryFirstQuestionCheck"
+                checked={country.countryFirstQuestion}
+                onChange={this.toggleCountryFirstQuestion}
+              />
+              <label className="form-check-label" htmlFor="firstQuestionCheck">
+                First Question
+              </label>
+              {validationErrors.countryFirstQuestion && (
+                  <div style={{ color: 'red', fontSize: 12 }}>
+                    {validationErrors.countryFirstQuestion}
+                  </div>
+                )}
+                {/* {countryFirstQuestionRender && (
+                  <div>
+                    {this.renderCountryFirstQuestionModal()}
+                  </div>
+                )}  */}
+              </div>
+
               </div>
             )}
 
