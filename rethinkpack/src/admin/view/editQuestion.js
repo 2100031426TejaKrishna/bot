@@ -561,29 +561,8 @@ class EditQuestion extends Component {
     }));
   };
 
-  // handleInputChange = (e) => {
-  //   if (e.target.id === "country") {
-  //     const options = e.target.options;
-  //     const selectedCountry = [];
-  //     for (let i = 0; i < options.length; i++) {
-  //       if (options[i].selected) {
-  //         selectedCountry.push(options[i].value);
-  //       }
-  //     }
-  //     this.setState({ selectedCountry });
-  //   } else {
-  //     this.setState({ [e.target.id]: e.target.value });
-  //   }
-  // };
-
   handleInputChange = (e) => {
-    if (e.target.id === "country") {
-      const { selectedCountry } = this.state;
-      // const options = e.target.options;
-      this.setState({ selectedCountry: e.target.options });
-    } else {
-      this.setState({ [e.target.id]: e.target.value });
-    }
+    this.setState({ [e.target.id]: e.target.value });
   };
 
   handleOptionChangeText = (index, value) => {
@@ -735,6 +714,22 @@ class EditQuestion extends Component {
   
     return options.some(option => option.optionsNextQuestion === question._id);
   };
+
+  // handleCountryChange = (event) => {
+  //   const { value } = event.target;
+  //   this.setState((prevState) => {
+  //     if (prevState.selectedCountries.includes(value)) {
+  //       return {
+  //         selectedCountries: prevState.selectedCountries.filter(
+  //           (country) => country !== value
+  //         ),
+  //       };
+  //     } else {
+  //       return {
+  //         selectedCountries: [...prevState.selectedCountries, value],
+  //       };
+  //     }
+  //   });
 
   handleCountryChange = (e) => {
     this.setState( (prevState) => ({
@@ -1300,23 +1295,6 @@ class EditQuestion extends Component {
     }
   };
 
-  handleCountryChange = (event) => {
-    const { value } = event.target;
-    this.setState((prevState) => {
-      if (prevState.selectedCountry.includes(value)) {
-        return {
-          selectedCountry: prevState.selectedCountry.filter(
-            (country) => country !== value
-          ),
-        };
-      } else {
-        return {
-          selectedCountry: [...prevState.selectedCountry, value],
-        };
-      }
-    });
-  };
-
   // --------------- VALIDATIONS---------------------------------
 
   validateTitleSelect = () => {
@@ -1464,7 +1442,51 @@ class EditQuestion extends Component {
   validateExplanation = () => {
     const { explanation, showExplanation } = this.state;
     return !showExplanation || explanation.trim() !== '';
-  };  
+  };
+
+  validateCountry = () => {
+    const { country, showCountry } = this.state;
+    // Case: when "Specific Country" is switched on
+    if (showCountry) {
+      // Case: when a selectedCountry has been set
+      if (country.selectedCountry) {
+        return true;
+      }
+      else {
+        return false;
+      }
+    } else {
+      return true;
+    }
+  };
+
+  validateCountryFirstQuestion = () => {
+    const { allQuestions, country } = this.state;
+
+    for (let i=0; i < allQuestions.length; i++){
+      // Case: same country AND first question exists
+      if (
+        country.selectedCountry === allQuestions[i].country.selectedCountry && 
+        allQuestions[i].country.countryFirstQuestion === true
+      ) {
+          console.log(`A first question already exists: ${allQuestions[i].country.selectedCountry}`)
+          this.setState({
+            countryFirstQuestionId: allQuestions[i]._id,
+            countryFirstQuestionValue: allQuestions[i].question
+          });
+        return { 
+          exists: true, 
+          id: allQuestions[i]._id, 
+          value: allQuestions[i].question, 
+          countryValue: allQuestions[i].country.selectedCountry, 
+          countryFirstQuestionBoolean: allQuestions[i].country.countryFirstQuestion
+        };
+      } else {
+        console.log(`A country first question is vacant`)
+      }
+    };
+    return { exists: false, id: null, value: null };
+  };
   
   renderToast() {
     if (this.state.showToast) {
@@ -1497,6 +1519,7 @@ class EditQuestion extends Component {
     const isMarksValid = this.validateMarks();
     const isExplanationValid = this.validateExplanation();
     const isGridValid = this.validateGrid();
+    const isCountryValid = this.validateCountry();
 
 
     this.setState({
@@ -1509,6 +1532,7 @@ class EditQuestion extends Component {
         openEnded: isOpenEndedValid  ? '' : 'Ensure entry is less than the word limit',
         marks: isMarksValid ? '' : 'Enter the marks (an integer value) for this question',
         explanation: isExplanationValid ? '' : (this.state.isLeadingQuestion ? 'Enter the recommendation for this question' : 'Enter the explanation for the correct answer'),
+        country: isCountryValid ? '' : 'Select at least one country',
       },
     });
 
@@ -1519,7 +1543,8 @@ class EditQuestion extends Component {
       !isOptionsValid || 
       !isOpenEndedValid ||
       !isMarksValid || 
-      !isExplanationValid
+      !isExplanationValid ||
+      !isCountryValid
     ) {
       return;
     }
@@ -1793,37 +1818,6 @@ class EditQuestion extends Component {
               </div>
             )}
             
-            {/* OLD Country */}
-          {/*             
-            {showCountry && (
-              <div className="mb-3">
-                <label className="col-form-label">Country:</label>
-                <div style={{ maxHeight: '130px', overflowY: 'auto'}}>
-                  {countries.map((country, index) => (
-                    <div key={index} className="form-check">
-                      <input
-                        type="checkbox"
-                        id={country}
-                        value={country}
-                        checked={selectedCountry.includes(country)}
-                        onChange={this.handleCountryChange}
-                        className="form-check-input"
-                        size={5}
-                      />
-                      <label htmlFor={country} className="form-check-label">
-                        {country}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-                {validationErrors.country && (
-                  <div style={{ color: 'red', fontSize: 12 }}>
-                    {validationErrors.country}
-                  </div>
-                )} 
-              </div>
-            )} */}
-
             {/* Specific Country */}
             {showCountry && (
               <div className="mb-3">
