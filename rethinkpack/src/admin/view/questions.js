@@ -28,12 +28,42 @@ const Questions = ({ triggerRefresh }) => {
         }
     };
 
-    const handleDuplicate = (question) => {
-        const duplicatedQuestion = duplicateQuestion(question); // Call the duplicate function
-        setQuestions([...questions, duplicatedQuestion]); // Add the duplicated question to the questions array
-        setDuplicateMessage('Duplicate question created!'); // Display the message
-        setTimeout(() => setDuplicateMessage(''), 3000); // Clear the message after 3 seconds
+    const saveDuplicateQuestion = async (question) => {
+        try {
+            const response = await fetch(`http://${destination}/api/duplicateQuestion`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ question }), // Send the question data to the backend
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            console.log('Duplicate question saved:', data);
+    
+            // For example, show a success toast message
+            setDuplicateMessage('Duplicate question created!'); // Display the message
+            setTimeout(() => setDuplicateMessage(''), 3000); // Clear the message after 3 seconds
+    
+            // Trigger a refresh of the questions list if needed
+            refreshQuestions();
+        } catch (error) {
+            console.error('Error saving duplicate question:', error);
+        }
     };
+
+        const handleDuplicate = (question) => {
+            const duplicatedQuestion = duplicateQuestion(question); // Call the duplicate function
+            setQuestions([...questions, duplicatedQuestion]); // Add the duplicated question to the questions array
+            setDuplicateMessage('Duplicate question created!'); // Display the message
+            setTimeout(() => setDuplicateMessage(''), 3000); // Clear the message after 3 seconds
+    
+            // Save the duplicate question to the database
+            saveDuplicateQuestion(duplicatedQuestion);
+        };
+
 
     const deleteAction = async () => {
         if (questionToDelete) {

@@ -209,16 +209,17 @@ class CreateQuestion extends Component {
   };
 
   updateNestedTitleFirstQuestion = () => {
-    console.log(`prop updateNestedTitleFirstQuestion executed.`)
+    // console.log(`prop updateNestedTitleFirstQuestion executed.`)
     
     const { allQuestions, nestedTitleFirstQuestionId } = this.state;
     const updatedQuestions = allQuestions.map(question => {
       if (question._id === nestedTitleFirstQuestionId) {
-        console.log(`question._id === nestedTitleFirstQuestionId`)
+        // console.log(`question._id === nestedTitleFirstQuestionId`)
         return { 
           ...question,
           nestedTitle: {
             ...question.nestedTitle,
+            id: nestedTitleFirstQuestionId,
             firstQuestion: false,
           },
         };
@@ -229,13 +230,13 @@ class CreateQuestion extends Component {
     this.setState({ allQuestions: updatedQuestions });
 
     // Reset state value to false and update toggle to TRUE
-    this.setState({ 
+    this.setState(prevState => ({ 
       nestedTitleFirstQuestionRender: false,
       nestedTitle: {
-        ...this.nestedTitle,
+        ...prevState.nestedTitle,
         firstQuestion: true
       },
-     });
+     }));
   };
   
   firstQuestionModalOnHide = () => {
@@ -323,10 +324,8 @@ class CreateQuestion extends Component {
           firstQuestion: !prevState.nestedTitle.firstQuestion
         }
       }));
-      console.log(`is vacant`)
     } else {
       // render the firstQuestionModal here
-      console.log(`is taken`)
       this.setState({ nestedTitleFirstQuestionRender: true });
     }
   };
@@ -1183,10 +1182,8 @@ class CreateQuestion extends Component {
         nestedTitle.id === allQuestions[i].nestedTitle.id && 
         allQuestions[i].nestedTitle.firstQuestion === false
       ) {
-        return {
-          isNestedTitleFirstQuestionVacant: true,
-          nestedTitleId: ''
-        };
+        // do nothing, as want to ensure loop through entire array, 
+        // if nothing found, after loop is done will return isNestedTitleFirstQuestionVacant: true
       }
 
       // Case: same nested title AND first question is true
@@ -1205,7 +1202,7 @@ class CreateQuestion extends Component {
         };
       }
     }
-
+    
     // Case: nestedTitle.id doesn't match with any in the nestedTitle object array
     // return vacant status
     return {

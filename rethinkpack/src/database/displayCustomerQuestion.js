@@ -182,22 +182,61 @@ router.get('/fetchQuestionsDetails', async (req, res) => {
                     return {
                         subtitleLabel: sub.subTitleLabel,
                         nestedTitles: await Promise.all(sub.nestedTitle.map(async (nested) => {
-                            // Ensure to convert _id to string format if needed before comparison
-                            const nestedTitleId = nested._id.toString(); // Converting MongoDB ObjectID to string if not already
+                            // Converting MongoDB ObjectID to string if not already
+                            const nestedTitleId = nested._id.toString(); 
 
-                            // Attempt to find the first question for the nested title
-                            const question = await Questions.findOne({
-                                'nestedTitle.id': nestedTitleId, // Make sure this matches correctly, considering the data types
+                            // Initialize a queue to process the questions in order
+                            let queue = [];
+                            let allQuestions = new Map();
+
+                            // Find the first question for the nested title
+                            let firstQuestion = await Questions.findOne({
+                                'nestedTitle.id': nestedTitleId, 
                                 'nestedTitle.firstQuestion': true
                             });
 
-                            let nestedTitleDetail = {
-                                nestedTitleLabel: nested.nestedTitleLabel,
-                                // Only add the question text if a question was found
-                                ...(question && { question })
-                            };
+                            if (firstQuestion) {
+                                queue.push(firstQuestion);
+                            }
 
-                            return nestedTitleDetail;
+                            while (queue.length > 0) {
+                                let currentQuestion = queue.shift();
+                                allQuestions.set(currentQuestion._id.toString(), currentQuestion);
+
+                                // Enqueue the next question
+                                if (currentQuestion.nextQuestion) {
+                                    let nextQuestionId = new mongoose.Types.ObjectId(currentQuestion.nextQuestion);
+                                    if (!allQuestions.has(nextQuestionId.toString())) {
+                                        let nextQuestion = await Questions.findById(nextQuestionId);
+                                        if (nextQuestion) {
+                                            queue.push(nextQuestion);
+                                        }
+                                    }
+                                }
+
+                                // Enqueue the next questions from options
+                                if (currentQuestion.options && currentQuestion.options.length > 0) {
+                                    for (let option of currentQuestion.options) {
+                                        if (option.optionsNextQuestion) {
+                                            let optionNextQuestionId = new mongoose.Types.ObjectId(option.optionsNextQuestion);
+                                            if (!allQuestions.has(optionNextQuestionId.toString())) {
+                                                let nextQuestion = await Questions.findById(optionNextQuestionId);
+                                                if (nextQuestion) {
+                                                    queue.push(nextQuestion);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Convert the allQuestions map to an array of questions
+                            let questionsArray = Array.from(allQuestions.values());
+
+                            return {
+                                nestedTitleLabel: nested.nestedTitleLabel,
+                                questions: questionsArray
+                            };
                         }))
                     };
                 }))

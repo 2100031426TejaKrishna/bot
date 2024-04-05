@@ -82,6 +82,7 @@ const Questions = () => {
     const destination = "rtp.dusky.bond:5000";
 
     useEffect(() => {
+        // If you need to see the previous question logic, uncomment line 120
         const fetchAllQuestions = async () => {
             try {
                 const response = await fetch(`http://${destination}/api/fetchQuestions`);
@@ -101,6 +102,7 @@ const Questions = () => {
             }
         };
 
+        // This is the new logic to display the question, but it is still failed to display the question individually
         const fetchQuestionsDetails = async () => {
             try {
                 const response = await fetch(`http://${destination}/api/fetchQuestionsDetails`);

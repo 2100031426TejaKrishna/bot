@@ -14,6 +14,7 @@ class EditQuestion extends Component {
     super(props);
     // Declare all state variables to observe below
     this.state = {
+      initialData: '',
       question: '',
       marks: '',
       explanation: '',
@@ -65,7 +66,11 @@ class EditQuestion extends Component {
         "Vanuatu", "Vatican City", "Venezuela", "Vietnam", "Yemen",
         "Zambia", "Zimbabwe"
       ],
-      selectedCountry: [],
+      selectedCountry: [], // omit this line when `selectedCountry` is redundant
+      country: {
+        selectedCountry: '',
+        countryFirstQuestion: false
+      },
       isLeadingQuestion: false,
       showExplanation: false,
       showToast: false,
@@ -116,7 +121,7 @@ class EditQuestion extends Component {
     this.resetState = this.resetState.bind(this);
     // Modal ref
     this.editQuestionModalRef = React.createRef();
-    // bind API?
+    // bind API
     this.fetchQuestion = this.fetchQuestion.bind(this);
     this.onEditClickHandler = this.onEditClickHandler.bind(this);
     this.updateQuestion = this.updateQuestion.bind(this);
@@ -134,6 +139,39 @@ class EditQuestion extends Component {
       // countryFirstQuestionRender: false,
       nestedTitleFirstQuestionRender: false
     })
+  };
+
+  updateNestedTitleFirstQuestion = () => {
+    // console.log(`prop updateNestedTitleFirstQuestion executed.`)
+    
+    const { allQuestions, nestedTitleFirstQuestionId } = this.state;
+    const updatedQuestions = allQuestions.map(question => {
+      if (question._id === nestedTitleFirstQuestionId) {
+        // console.log(`question._id === nestedTitleFirstQuestionId`)
+        return { 
+          ...question,
+          nestedTitle: {
+            ...question.nestedTitle,
+            id: nestedTitleFirstQuestionId,
+            firstQuestion: false,
+          },
+        };
+      } else {
+        return question;
+      }
+    });
+    this.setState({ allQuestions: updatedQuestions });
+
+    // Reset state value to false and update toggle to TRUE
+    this.setState(prevState => ({ 
+      nestedTitleFirstQuestionRender: false,
+      nestedTitle: {
+        ...prevState.nestedTitle,
+        firstQuestion: true
+      },
+     }));
+
+    this.fetchQuestions();
   };
 
 /*--------------onClick-----------------*/
@@ -160,11 +198,9 @@ class EditQuestion extends Component {
         this.handleFirstQuestionNestedTitleOption(data.titleId);
 
         this.setState({
+          initialData: data,
           showModal: true, 
-          nestedTitle: {
-            ...this.nestedTitle,
-            firstQuestion: data.nestedTitle.firstQuestion
-          },
+          nestedTitle: data.nestedTitle,
           questionList: data,
           selectedTitle: data.titleId,
           selectedOption: data.optionType,
@@ -254,7 +290,7 @@ class EditQuestion extends Component {
 
   componentDidUpdate(prevProps) {
     if (this.props.questionsChanged !== prevProps.questionsChanged) {
-      // this.fetchQuestions();
+      this.fetchQuestions();
       this.fetchTitles();
     }
   };
@@ -323,31 +359,75 @@ class EditQuestion extends Component {
           nestedTitleLabel: nestedTitlesArray[i].nestedTitleLabel
          });
         return;
-      } else {
-        this.setState({ showFirstQuestionNestedTitleOption: false })
+      } 
+      // Case: when a subtitle is selected
+      else {
+        this.setState({
+          showFirstQuestionNestedTitleOption: false,
+          nestedTitle: {
+            ...this.nestedTitle,
+            id: '',
+            firstQuestion: false
+          }
+        });
       }
     };
   };
 
   toggleFirstQuestionNestedTitle = () => {
-    
-    // Validate whether nested title first question is vacant or not
-    const { 
-      isNestedTitleFirstQuestionVacant,
-    } = this.validateFirstQuestionNestedTitle();
-    
-    if (isNestedTitleFirstQuestionVacant === true) {
-      this.setState(prevState => ({
-        nestedTitle: {
-          ...prevState.nestedTitle,
-          firstQuestion: !prevState.nestedTitle.firstQuestion
+    const { initialData, nestedTitle } = this.state;
+
+    // Case: when changing a nested title to another nested title
+    if (initialData.nestedTitle) {
+      // Case: No need to validate if initial nestedTitle.id already is the existing first question
+      // OR Case: when switch is initially ON, no need to validate
+      if(
+        initialData.nestedTitle.id !== nestedTitle.id ||
+        initialData.nestedTitle.firstQuestion === false
+      ) {
+        // Validate whether nested title first question is vacant or not
+        const { 
+          isNestedTitleFirstQuestionVacant,
+        } = this.validateFirstQuestionNestedTitle();
+        
+        if (isNestedTitleFirstQuestionVacant === true) {
+          this.setState(prevState => ({
+            nestedTitle: {
+              ...prevState.nestedTitle,
+              firstQuestion: !prevState.nestedTitle.firstQuestion
+            }
+          }));
+        } else {
+          // render the firstQuestionModal here
+          this.setState({ nestedTitleFirstQuestionRender: true });
         }
-      }));
-      console.log(`is vacant`)
-    } else {
-      // render the firstQuestionModal here
-      console.log(`is taken`)
-      this.setState({ nestedTitleFirstQuestionRender: true });
+      } else {
+        this.setState(prevState => ({
+          nestedTitle: {
+            ...prevState.nestedTitle,
+            firstQuestion: !prevState.nestedTitle.firstQuestion
+          }
+        }));
+      }
+    } 
+    // Case: when changing a subtitle to a nested title
+    else {
+      // Validate whether nested title first question is vacant or not
+      const { 
+        isNestedTitleFirstQuestionVacant,
+      } = this.validateFirstQuestionNestedTitle();
+      
+      if (isNestedTitleFirstQuestionVacant === true) {
+        this.setState(prevState => ({
+          nestedTitle: {
+            ...prevState.nestedTitle,
+            firstQuestion: !prevState.nestedTitle.firstQuestion
+          }
+        }));
+      } else {
+        // render the firstQuestionModal here
+        this.setState({ nestedTitleFirstQuestionRender: true });
+      }
     }
   };
 
@@ -481,16 +561,26 @@ class EditQuestion extends Component {
     }));
   };
 
+  // handleInputChange = (e) => {
+  //   if (e.target.id === "country") {
+  //     const options = e.target.options;
+  //     const selectedCountry = [];
+  //     for (let i = 0; i < options.length; i++) {
+  //       if (options[i].selected) {
+  //         selectedCountry.push(options[i].value);
+  //       }
+  //     }
+  //     this.setState({ selectedCountry });
+  //   } else {
+  //     this.setState({ [e.target.id]: e.target.value });
+  //   }
+  // };
+
   handleInputChange = (e) => {
     if (e.target.id === "country") {
-      const options = e.target.options;
-      const selectedCountry = [];
-      for (let i = 0; i < options.length; i++) {
-        if (options[i].selected) {
-          selectedCountry.push(options[i].value);
-        }
-      }
-      this.setState({ selectedCountry });
+      const { selectedCountry } = this.state;
+      // const options = e.target.options;
+      this.setState({ selectedCountry: e.target.options });
     } else {
       this.setState({ [e.target.id]: e.target.value });
     }
@@ -644,6 +734,16 @@ class EditQuestion extends Component {
     const { options } = this.state.questionList;
   
     return options.some(option => option.optionsNextQuestion === question._id);
+  };
+
+  handleCountryChange = (e) => {
+    this.setState( (prevState) => ({
+      country: { 
+        ...prevState.country, 
+        selectedCountry: e.target.value, 
+        countryFirstQuestion: false 
+      }
+    }));
   };
   
 
@@ -1245,10 +1345,8 @@ class EditQuestion extends Component {
         nestedTitle.id === allQuestions[i].nestedTitle.id && 
         allQuestions[i].nestedTitle.firstQuestion === false
       ) {
-        return {
-          isNestedTitleFirstQuestionVacant: true,
-          nestedTitleId: ''
-        };
+        // do nothing, as want to ensure loop through entire array, 
+        // if nothing found, after loop is done will return isNestedTitleFirstQuestionVacant: true
       }
 
       // Case: same nested title AND first question is true
@@ -1262,8 +1360,7 @@ class EditQuestion extends Component {
           nestedTitleFirstQuestionValue: allQuestions[i].question
         })
         return {
-          isNestedTitleFirstQuestionVacant: false,
-          nestedTitleId: allQuestions[i].nestedTitle.id
+          isNestedTitleFirstQuestionVacant: false
         };
       }
     }
@@ -1271,8 +1368,7 @@ class EditQuestion extends Component {
     // Case: nestedTitle.id doesn't match with any in the nestedTitle object array
     // return vacant status
     return {
-      isNestedTitleFirstQuestionVacant: true,
-      nestedTitleId: ''
+      isNestedTitleFirstQuestionVacant: true
     };
   };
   
@@ -1364,10 +1460,6 @@ class EditQuestion extends Component {
     return isLeadingQuestion || (questionList.marks !== '' && !isNaN(questionList.marks));
   };
   
-  validateCountries = () => {
-    const { selectedCountry, showCountry } = this.state;
-    return !showCountry || (selectedCountry.length > 0);
-  };
   
   validateExplanation = () => {
     const { explanation, showExplanation } = this.state;
@@ -1403,7 +1495,6 @@ class EditQuestion extends Component {
     const isOptionsValid = this.validateOptions();
     const isOpenEndedValid = this.validateOpenEnded();
     const isMarksValid = this.validateMarks();
-    const isCountriesValid = this.validateCountries();
     const isExplanationValid = this.validateExplanation();
     const isGridValid = this.validateGrid();
 
@@ -1417,20 +1508,17 @@ class EditQuestion extends Component {
         options: isOptionsValid ? '' : 'Add at least two options and at least one selection',
         openEnded: isOpenEndedValid  ? '' : 'Ensure entry is less than the word limit',
         marks: isMarksValid ? '' : 'Enter the marks (an integer value) for this question',
-        country: isCountriesValid ? '' : 'Select at least one country',
         explanation: isExplanationValid ? '' : (this.state.isLeadingQuestion ? 'Enter the recommendation for this question' : 'Enter the explanation for the correct answer'),
       },
     });
 
     if (
-      
       !isQuestionValid || 
       !isOptionTypeValid || 
       !isGridValid || 
       !isOptionsValid || 
       !isOpenEndedValid ||
       !isMarksValid || 
-      !isCountriesValid || 
       !isExplanationValid
     ) {
       return;
@@ -1446,7 +1534,9 @@ class EditQuestion extends Component {
       requireResponse,
       questionList,
       questionId,
-      selectedTitle
+      selectedTitle,
+      showFirstQuestionNestedTitleOption,
+      nestedTitle
     } = this.state;
 
     const dataToUpdate = {
@@ -1462,8 +1552,10 @@ class EditQuestion extends Component {
       explanation: showExplanation ? explanation : undefined,
       isLeadingQuestion,
       showCountry,
+      country: showCountry ? selectedCountry : undefined,
       requireResponse,
-      nextQuestion: isLeadingQuestion ? undefined : questionList.nextQuestion
+      nextQuestion: isLeadingQuestion ? undefined : questionList.nextQuestion,
+      nestedTitle: nestedTitle
     };
 
     // Leading Question Marks check
@@ -1501,7 +1593,7 @@ class EditQuestion extends Component {
       // clear grid
       dataToUpdate.grid = { rows: [], columns: [], answers: [] }
     }
-    
+
     // Update database server API
     this.updateQuestion(questionId, dataToUpdate)
   };
@@ -1510,7 +1602,7 @@ class EditQuestion extends Component {
 
   render() {
 
-    const { questionList, showCountry, countries, selectedCountry, isLeadingQuestion, showExplanation, validationErrors, questionId, questionIndex, allQuestions, allTitles, showModal, showFirstQuestionNestedTitleOption, nestedTitle, nestedTitleFirstQuestionRender } = this.state;
+    const { questionList, showCountry, countries, selectedCountry, isLeadingQuestion, showExplanation, validationErrors, questionId, questionIndex, allQuestions, allTitles, showModal, showFirstQuestionNestedTitleOption, nestedTitle, nestedTitleFirstQuestionRender, country } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
     const { filteredQuestions } = this.state;
 
@@ -1701,7 +1793,8 @@ class EditQuestion extends Component {
               </div>
             )}
             
-            {/* Country */}
+            {/* OLD Country */}
+          {/*             
             {showCountry && (
               <div className="mb-3">
                 <label className="col-form-label">Country:</label>
@@ -1728,6 +1821,63 @@ class EditQuestion extends Component {
                     {validationErrors.country}
                   </div>
                 )} 
+              </div>
+            )} */}
+
+            {/* Specific Country */}
+            {showCountry && (
+              <div className="mb-3">
+                <label className="col-form-label">Country:</label>
+                <div style={{ maxHeight: '130px', overflowY: 'auto'}}>
+                  {countries.map((country, index) => (
+                    <div key={index} className="form-check">
+                      <input
+                        type="radio"
+                        id={country}
+                        value={country}
+                        checked={this.state.country.selectedCountry === country}
+                        onChange={this.handleCountryChange}
+                        className="form-check-input"
+                        size={8}
+                      />
+                      <label htmlFor={country} className="form-check-label">
+                        {country}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+                {validationErrors.country && (
+                  <div style={{ color: 'red', fontSize: 12 }}>
+                    {validationErrors.country}
+                  </div>
+                )} 
+
+              {/* Country First Question */}
+              <p></p>
+              <div className="form-check form-switch form-check-inline">
+              <input
+                className="form-check-input"
+                type="checkbox"
+                role="switch"
+                id="countryFirstQuestionCheck"
+                checked={country.countryFirstQuestion}
+                onChange={this.toggleCountryFirstQuestion}
+              />
+              <label className="form-check-label" htmlFor="firstQuestionCheck">
+                First Question
+              </label>
+              {validationErrors.countryFirstQuestion && (
+                  <div style={{ color: 'red', fontSize: 12 }}>
+                    {validationErrors.countryFirstQuestion}
+                  </div>
+                )}
+                {/* {countryFirstQuestionRender && (
+                  <div>
+                    {this.renderCountryFirstQuestionModal()}
+                  </div>
+                )}  */}
+              </div>
+
               </div>
             )}
 
