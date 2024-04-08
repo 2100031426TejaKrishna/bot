@@ -1,0 +1,33 @@
+version: '2.3'
+
+services:
+  rethinkpack:
+    build:
+      context: .
+      dockerfile: dockerfile
+    ports:
+      - "3000:3000"
+      - "5000:5000"
+    environment:
+      - PYTHON=python3
+    volumes:
+      - .:/rethinkpack
+    links:
+      - mongodb
+   
+
+
+
+
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017" 
+   
+    # environment:
+    #   - MONGO_INITDB_ROOT_USERNAME= admin
+    #   - MONGO_INITDB_ROOT_PASSWORD= password
+
+    
+    
+
