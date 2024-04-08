@@ -21,7 +21,7 @@ const corsOptions = {
 };
 
 const app = express();
-app.use(cors());
+// app.use(cors());
 app.use(cors(corsOptions));
 app.use(bodyParser.json());
 
@@ -38,17 +38,17 @@ connectToDatabase().then(async () => {
   app.use('/api', displayTitlesRoute);
   app.use('/api', displayCustomerQuestionRoute);
 
-  // const PORT = 5000;
+  const PORT = 5000;
 
-  // // Use '0.0.0.0' as the host to listen on all network interfaces
-  // app.listen(PORT, '0.0.0.0', () => {
-  //   console.log(`Server running on http://0.0.0.0:${PORT}`);
-  // });
-
-  const PORT = process.env.PORT || 5000;
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+  // Use '0.0.0.0' as the host to listen on all network interfaces
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on http://0.0.0.0:${PORT}`);
   });
+
+  // const PORT = process.env.PORT || 5000;
+  // app.listen(PORT, () => {
+  //   console.log(`Server running on port ${PORT}`);
+  // });
 
 }).catch(error => {
   console.error("Failed to connect to the database:", error);
