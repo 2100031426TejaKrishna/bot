@@ -7,7 +7,7 @@ services:
       dockerfile: dockerfile
     ports:
       - "3000:3000"
-      - "5000:5000"
+      - "5004:5000"
     environment:
       - PYTHON=python3
     volumes:

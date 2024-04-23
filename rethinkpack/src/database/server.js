@@ -21,7 +21,7 @@ const corsOptions = {
 };
 
 const app = express();
-// app.use(cors());
+app.use(cors());
 app.use(cors(corsOptions));
 app.use(bodyParser.json());
 
@@ -39,8 +39,8 @@ connectToDatabase().then(async () => {
   app.use('/api', displayCustomerQuestionRoute);
 
   const PORT = 5000;
-
-  // Use '0.0.0.0' as the host to listen on all network interfaces
+  
+    // Use '0.0.0.0' as the host to listen on all network interfaces
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://0.0.0.0:${PORT}`);
   });
