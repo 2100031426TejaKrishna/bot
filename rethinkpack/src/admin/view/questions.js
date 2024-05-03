@@ -3,6 +3,7 @@ import './questions.css';
 import EditQuestion from './editQuestion';
 import duplicateQuestion from './duplicateQuestion'; // Import the duplicate function
 
+
 // Switch URLs between Server and Local hosting here
 // const destination = "localhost:5000";
 const destination = "rtp.dusky.bond:5000";
@@ -30,6 +31,8 @@ const Questions = ({ triggerRefresh }) => {
 
     const saveDuplicateQuestion = async (question) => {
         try {
+            // console.log(JSON.stringify({question}));
+
             const response = await fetch(`http://${destination}/api/duplicateQuestion`, {
                 method: 'POST',
                 headers: {
@@ -37,6 +40,7 @@ const Questions = ({ triggerRefresh }) => {
                 },
                 body: JSON.stringify({ question }), // Send the question data to the backend
             });
+
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -59,7 +63,7 @@ const Questions = ({ triggerRefresh }) => {
             setQuestions([...questions, duplicatedQuestion]); // Add the duplicated question to the questions array
             setDuplicateMessage('Duplicate question created!'); // Display the message
             setTimeout(() => setDuplicateMessage(''), 3000); // Clear the message after 3 seconds
-    
+            
             // Save the duplicate question to the database
             saveDuplicateQuestion(duplicatedQuestion);
         };

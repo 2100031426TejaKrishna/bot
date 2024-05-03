@@ -12,6 +12,7 @@ const deleteTitleRouter = require('./deleteTitle');
 const insertTitlesRoute = require('./insertTitles');
 const displayTitlesRoute = require('./displayTitles');
 const displayCustomerQuestionRoute = require('./displayCustomerQuestion');
+const duplicateQuestionRoute = require('./duplicateQuestions');
 
 const corsOptions = {
   origin: ['http://rtp.dusky.bond'],
@@ -37,6 +38,7 @@ connectToDatabase().then(async () => {
   app.use('/api', insertTitlesRoute);
   app.use('/api', displayTitlesRoute);
   app.use('/api', displayCustomerQuestionRoute);
+  app.use('/api', duplicateQuestionRoute);
 
   const PORT = 5000;
   

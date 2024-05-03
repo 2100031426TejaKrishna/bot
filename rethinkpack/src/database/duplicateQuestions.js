@@ -10,6 +10,7 @@ router.post('/duplicateQuestion', async (req, res) => {
         // Create a duplicate of the question
         // const duplicatedQuestion = duplicateQuestion(question);
         // Save the duplicated question to the database
+        console.log("inside database duplicate question routes") 
         const newQuestion = await Questions.create(question);
         res.status(201).json(newQuestion);
     } catch (error) {
