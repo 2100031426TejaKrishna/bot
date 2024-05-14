@@ -731,16 +731,37 @@ class EditQuestion extends Component {
   //     }
   //   });
 
-  handleCountryChange = (e) => {
-    this.setState( (prevState) => ({
-      country: { 
-        ...prevState.country, 
-        selectedCountry: e.target.value, 
-        countryFirstQuestion: false 
+  handleCountryChange = (event, country) => {
+    const { value } = event.target;
+    this.setState((prevState) => {
+      if (prevState.country.selectedCountry.includes(value)) {
+        return {
+          country: {
+            ...prevState.country,
+            selectedCountry: prevState.country.selectedCountry.filter(
+              (selectedCountry) => selectedCountry !== value
+            ),
+          },
+        };
+      } else {
+        return {
+          country: {
+            ...prevState.country,
+            selectedCountry: [...prevState.country.selectedCountry, value],
+          },
+        };
       }
+    });
+  }
+
+  toggleCountryFirstQuestion = () => {
+    this.setState(prevState => ({
+      country: {
+        ...prevState.country,
+        countryFirstQuestion: !prevState.country.countryFirstQuestion,
+      },
     }));
-  };
-  
+  }
 
 //------------------ OPTIONS ----------------------------------  
   renderOptionsArea = () => {
@@ -1299,6 +1320,7 @@ class EditQuestion extends Component {
 
   validateTitleSelect = () => {
     const { selectedTitle } = this.state;
+    // console.log('selectedTitle: ', selectedTitle)
     if (
       selectedTitle.trim() === '' || 
       selectedTitle.trim() === 'Select Title'
@@ -1521,6 +1543,10 @@ class EditQuestion extends Component {
     const isGridValid = this.validateGrid();
     const isCountryValid = this.validateCountry();
 
+    if(!isTitleSelectValid){
+      console.log('Title not selected');
+      return;
+    }
 
     this.setState({
       validationErrors: {
@@ -1678,17 +1704,17 @@ class EditQuestion extends Component {
                       <option value="">Select Title</option>
                       {/* title loop */}
                       {allTitles.map((titleObject) => (
-                        <optgroup key={titleObject.title.titleLabel} label={titleObject.title.titleLabel}>
+                        <optgroup key={titleObject.title.titleLabel} label={"Title: " + titleObject.title.titleLabel}>
                           {/* Render subTitleLabel as options */}
                           {titleObject.title.subTitle.map((subTitleObject) => (
                             <React.Fragment key={subTitleObject._id}>
                               <option value={subTitleObject._id}>
-                                {subTitleObject.subTitleLabel}
+                                {"Sub Title: " + subTitleObject.subTitleLabel}
                               </option>
                               {/* Render nestedTitleLabel as options */}
                               {subTitleObject.nestedTitle.map((nestedTitleObject) => (
                                 <option key={nestedTitleObject._id} value={nestedTitleObject._id}>
-                                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{nestedTitleObject.nestedTitleLabel} {/* Add one more level of indentation for nestedTitleLabel */}
+                                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{"Nested Title: " + nestedTitleObject.nestedTitleLabel} {/* Add one more level of indentation for nestedTitleLabel */}
                                 </option>
                               ))}
                             </React.Fragment>
@@ -1826,11 +1852,11 @@ class EditQuestion extends Component {
                   {countries.map((country, index) => (
                     <div key={index} className="form-check">
                       <input
-                        type="radio"
+                        type="checkbox"
                         id={country}
                         value={country}
-                        checked={this.state.country.selectedCountry === country}
-                        onChange={this.handleCountryChange}
+                        checked={this.state.country.selectedCountry.includes(country)}
+                        onChange={(event) => this.handleCountryChange(event,country)}
                         className="form-check-input"
                         size={8}
                       />
@@ -1943,7 +1969,7 @@ class EditQuestion extends Component {
                 </label>
               </div>
             </div>
-            <button type="button" className="btn btn-dark" onClick={this.handleSubmit}>
+            <button type="button" className="btn btn-dark" onClick={(e) => this.handleSubmit(e)}>
             Submit
             </button>
           </div>
