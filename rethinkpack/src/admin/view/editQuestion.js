@@ -18,6 +18,7 @@ class EditQuestion extends Component {
       question: '',
       marks: '',
       explanation: '',
+      previousQuestion: '',
       nextQuestion: '',
       selectedOption: 'multipleChoice',
       options: [{ label: 'Option 1', value: 'Option 1', isCorrect: false }],
@@ -96,11 +97,12 @@ class EditQuestion extends Component {
       questionList: {
         question: null, 
         optionType: 'multipleChoice',
-        options: [{ label: 'Option 1', value: 'Option 1', isCorrect: false, optionsNextQuestion: null }],
+        options: [{ label: 'Option 1', value: 'Option 1', isCorrect: false, optionsNextQuestion: null,optionsPreviousQuestion: null }],
         linearScale: [],
         openEndedText: '',
         marks: '',
-        nextQuestion: null
+        nextQuestion: null,
+        previousQuestion: null
       },
       nestedTitle: {
         id: '',
@@ -492,6 +494,11 @@ class EditQuestion extends Component {
       questionList: { ...prevState.questionList, nextQuestion: e.target.value }
     }))
   }
+  handleQuestionPreviousQuestion = (e) => {
+    this.setState( (prevState) => ({
+      questionList: { ...prevState.questionList, previousQuestion: e.target.value}
+    }))
+  }
 
   addOption = (e) => {
     e.preventDefault();
@@ -574,7 +581,29 @@ class EditQuestion extends Component {
       ),
     }}) 
   };
-
+  // handleOptionRecommendationChange = (index, value) => {
+  //   const { questionList } = this.state;
+  //   this.setState({ questionList: {
+  //     ...questionList,
+  //     options: questionList.options.map((option, i) =>
+  //     i === index ? { ...option, text: value } : option
+  //     ),
+  //   }}) 
+  // };
+  handleOptionRecommendationChange = (index, value) => {
+    const { questionList } = this.state;
+    const updatedOptions = [...questionList.options];
+    updatedOptions[index].recommendation = value;
+    this.setState({
+      questionList: {
+        ...questionList,
+        options: updatedOptions,
+      },
+    });
+  };
+  
+  
+  
   handleRowChange = (index, e) => {
     const newValue = e.target.value;
     this.setState(prevState => {
@@ -618,6 +647,16 @@ class EditQuestion extends Component {
         ...questionList,
         options: questionList.options.map((option, i) =>
         i === index ? { ...option, optionsNextQuestion: nextQuestionId } : option
+        )
+    }})
+  };
+  handleOptionsPreviousQuestionChange = (index, previousQuestionId) => {
+    const { questionList } = this.state;
+    this.setState({ 
+      questionList: {
+        ...questionList,
+        options: questionList.options.map((option, i) =>
+        i === index ? { ...option, optionsPreviousQuestion: previousQuestionId } : option
         )
     }})
   };
@@ -692,6 +731,13 @@ class EditQuestion extends Component {
       }));
     }
   };
+ //try 
+//  handleOptionRecommendationChange = (index, value) => {
+//   const { questionList } = this.state;
+//   const updatedOptions = [...questionList.options];
+//   updatedOptions[index].recommendation = value; // Update recommendation for the specified option index
+//   this.setState({ questionList: { ...questionList, options: updatedOptions } });
+// };
 
   handleOpenEndedText = (e) => {
     this.setState({
@@ -713,6 +759,11 @@ class EditQuestion extends Component {
     const { options } = this.state.questionList;
   
     return options.some(option => option.optionsNextQuestion === question._id);
+  };
+  isOptionPreviousQuestionUsed = (question) => {
+    const { options } = this.state.questionList;
+  
+    return options.some(option => option.optionsPreviousQuestion === question._id);
   };
 
   // handleCountryChange = (event) => {
@@ -790,6 +841,20 @@ class EditQuestion extends Component {
           options: clearedOptions
       }})
     };
+    const clearOptionsPreviousQuestion = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const clearedOptions = questionList.options.map((option) => ({
+        ...option,
+        optionsPreviousQuestion: '',
+      }));
+      this.setState({ 
+        questionList: {
+          ...questionList,
+          options: clearedOptions
+      }})
+    };
+    
 
     // Check when changing from a populated checkboxGrid to multipleChoiceGrid
     if (questionList.optionType === 'multipleChoiceGrid') {
@@ -830,6 +895,23 @@ class EditQuestion extends Component {
                     placeholder={`Option ${index + 1}`}
                     style={{ flex: '1' }}
                   />
+                 <input type='text'
+                  id=''
+                  // className=''
+                  className="form-control mx-2"
+                  value={questionList.options[index].recommendation}
+                  onChange={(e) => this.handleOptionRecommendationChange(index, e.target.value)}
+                  placeholder='Recommendation' 
+                  style={{flex: '1'}}
+                  />
+                  {/* New input field for recommendation */}
+          {/* <input
+            type="text"
+            className="form-control mx-2"
+            placeholder="Recommendation"
+            value={option.recommendation}
+            onChange={(e) => this.handleOptionRecommendationChange(index, e.target.value)}
+          /> */}
                   {isLeadingQuestion && (
                       <select
                         className="form-select mx-2"
@@ -838,6 +920,21 @@ class EditQuestion extends Component {
                         onChange={(e) => this.handleOptionsNextQuestionChange(index, e.target.value)}
                       >
                         <option value="">Select Next Question</option>
+                        {allQuestions.map((question) => (
+                          <option key={question._id} value={question._id}>
+                            {question.question}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  {isLeadingQuestion && (
+                      <select
+                        className="form-select mx-2"
+                        style={{ flex: '1' }}
+                        value={questionList.options[index].optionsPreviousQuestion}
+                        onChange={(e) => this.handleOptionsPreviousQuestionChange(index, e.target.value)}
+                      >
+                        <option value="">Select Previous Question</option>
                         {allQuestions.map((question) => (
                           <option key={question._id} value={question._id}>
                             {question.question}
@@ -869,6 +966,11 @@ class EditQuestion extends Component {
               {isLeadingQuestion && (
                   <button className="btn btn-outline-danger ms-2" onClick={clearOptionsNextQuestion}>
                     Clear Next Question
+                  </button>
+                )}
+              {isLeadingQuestion && (
+                  <button className="btn btn-outline-danger ms-2" onClick={clearOptionsPreviousQuestion}>
+                    Clear Previous Question
                   </button>
                 )}
             </div>
@@ -898,6 +1000,14 @@ class EditQuestion extends Component {
                     placeholder={`Option ${index + 1}`}
                     style={{ flex: '1' }}
                   />
+                     {/* New input field for recommendation */}
+          {/* <input
+            type="text"
+            className="form-control mx-2"
+            placeholder="Recommendation"
+            value={option.recommendation}
+            onChange={(e) => this.handleOptionRecommendationChange(index, e.target.value)}
+          /> */}
                   {isLeadingQuestion && (
                       <select
                         className="form-select mx-2"
@@ -906,6 +1016,21 @@ class EditQuestion extends Component {
                         onChange={(e) => this.handleOptionsNextQuestionChange(index, e.target.value)}
                       >
                         <option value="">Select Next Question</option>
+                        {allQuestions.map((question) => (
+                          <option key={question._id} value={question._id}>
+                            {question.question}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  {isLeadingQuestion && (
+                      <select
+                        className="form-select mx-2"
+                        style={{ flex: '1' }}
+                        value={option.optionsPreviousQuestion}
+                        onChange={(e) => this.handleOptionsPreviousQuestionChange(index, e.target.value)}
+                      >
+                        <option value="">Select Previous Question</option>
                         {allQuestions.map((question) => (
                           <option key={question._id} value={question._id}>
                             {question.question}
@@ -937,6 +1062,11 @@ class EditQuestion extends Component {
               {isLeadingQuestion && (
                   <button className="btn btn-outline-danger ms-2" onClick={clearOptionsNextQuestion}>
                     Clear Next Question
+                  </button>
+                )}
+              {isLeadingQuestion && (
+                  <button className="btn btn-outline-danger ms-2" onClick={clearOptionsPreviousQuestion}>
+                    Clear Previous Question
                   </button>
                 )}
             </div>
@@ -1016,6 +1146,14 @@ class EditQuestion extends Component {
                     placeholder={`Option ${index + 1}`}
                     style={{ flex: '1' }}
                   />
+                     {/* New input field for recommendation */}
+          {/* <input
+            type="text"
+            className="form-control mx-2"
+            placeholder="Recommendation"
+            value={option.recommendation}
+            onChange={(e) => this.handleOptionRecommendationChange(index, e.target.value)}
+          /> */}
                   {isLeadingQuestion && (
                       <select
                         className="form-select mx-2"
@@ -1024,6 +1162,21 @@ class EditQuestion extends Component {
                         onChange={(e) => this.handleOptionsNextQuestionChange(index, e.target.value)}
                       >
                         <option value="">Select Next Question</option>
+                        {allQuestions.map((question) => (
+                          <option key={question._id} value={question._id}>
+                            {question.question}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  {isLeadingQuestion && (
+                      <select
+                        className="form-select mx-2"
+                        style={{ flex: '1' }}
+                        value={option.optionsPreviousQuestion}
+                        onChange={(e) => this.handleOptionsPreviousQuestionChange(index, e.target.value)}
+                      >
+                        <option value="">Select Previous Question</option>
                         {allQuestions.map((question) => (
                           <option key={question._id} value={question._id}>
                             {question.question}
@@ -1055,6 +1208,11 @@ class EditQuestion extends Component {
               {isLeadingQuestion && (
                   <button className="btn btn-outline-danger ms-2" onClick={clearOptionsNextQuestion}>
                     Clear Next Question
+                  </button>
+                )}
+              {isLeadingQuestion && (
+                  <button className="btn btn-outline-danger ms-2" onClick={clearOptionsPreviousQuestion}>
+                    Clear Previous Question
                   </button>
                 )}
             </div>
@@ -1576,6 +1734,8 @@ class EditQuestion extends Component {
     }
 
     const {
+      previousQuestion,
+      nextQuestion,
       gridOptions,
       isLeadingQuestion,
       showCountry,
@@ -1605,6 +1765,7 @@ class EditQuestion extends Component {
       showCountry,
       country: showCountry ? selectedCountry : undefined,
       requireResponse,
+      previousQuestion: isLeadingQuestion ? undefined : questionList.previousQuestion,
       nextQuestion: isLeadingQuestion ? undefined : questionList.nextQuestion,
       nestedTitle: nestedTitle
     };
@@ -1620,7 +1781,8 @@ class EditQuestion extends Component {
       dataToUpdate.options = questionList.options.map((option) => ({
         text: option.text,
         isCorrect: option.isCorrect || false,
-        optionsNextQuestion: (isLeadingQuestion) ? option.optionsNextQuestion : null 
+        optionsNextQuestion: (isLeadingQuestion) ? option.optionsNextQuestion : null, 
+        optionsPreviousQuestion: (isLeadingQuestion) ? option.optionsPreviousQuestion : null
       }));
     }
   
@@ -1653,7 +1815,7 @@ class EditQuestion extends Component {
 
   render() {
 
-    const { questionList, showCountry, countries, selectedCountry, isLeadingQuestion, showExplanation, validationErrors, questionId, questionIndex, allQuestions, allTitles, showModal, showFirstQuestionNestedTitleOption, nestedTitle, nestedTitleFirstQuestionRender, country } = this.state;
+    const { questionList,selectedTitle, selectedTitleQuestions, showCountry, countries, selectedCountry, isLeadingQuestion, showExplanation, validationErrors, questionId, questionIndex, allQuestions, allTitles, showModal, showFirstQuestionNestedTitleOption, nestedTitle,previousQuestion, showPreviousQuestion,nextQuestion,showNextQuestion,nestedTitleFirstQuestionRender, country } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
     const { filteredQuestions } = this.state;
 
@@ -1900,7 +2062,65 @@ class EditQuestion extends Component {
 
               </div>
             )}
-
+{/*testing */}
+             {/* Previous Question */}
+             {/* {showNextQuestion && selectedTitle && (
+                    <div className="mb-3">
+                      <label htmlFor="previousQuestion" className="col-form-label">Previous Question:</label>
+                      <select
+                        className="form-select"
+                        id="previousQuestion"
+                        value={previousQuestion}
+                        onChange={(e) => this.setState({ previousQuestion: e.target.value })}
+                      >
+                        <option value="">Select Previous Question</option>
+                        {selectedTitleQuestions.map((question) => (
+                          <option key={question._id} value={question._id}>
+                            {question.question}
+                          </option>
+                        ))}
+                      </select>
+                    
+                    {/* Next Question }
+                      <label htmlFor="nextQuestion" className="col-form-label">Next Question:</label>
+                      <select
+                        className="form-select"
+                        id="nextQuestion"
+                        value={nextQuestion}
+                        onChange={(e) => this.setState({ nextQuestion: e.target.value })}
+                      >
+                        <option value="">Select Next Question</option>
+                        {selectedTitleQuestions.map((question) => (
+                          <option key={question._id} value={question._id}>
+                            {question.question}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )} */}
+            {/*previous question*/}
+            {!isLeadingQuestion && filteredQuestions && (
+              <div className="mb-3">
+                <label htmlFor="previousQuestion" className="col-form-label">
+                  Previous Question:
+                </label>
+                <select
+                  className="form-select"
+                  id="previousQuestion"
+                  value={this.state.questionList.previousQuestion}
+                  onChange={this.handleQuestionPreviousQuestion}
+                >
+                  <option value="">Select previous Question</option>
+                  {filteredQuestions
+                    .filter(question => !question.firstQuestion && !this.isOptionPreviousQuestionUsed(question))
+                    .map((question) => (
+                      <option key={question._id} value={question._id}>
+                        {question.question}
+                      </option>
+                    ))}
+                </select>
+              </div>
+            )}
             {/* Next Question */}
             {!isLeadingQuestion && filteredQuestions && (
               <div className="mb-3">
