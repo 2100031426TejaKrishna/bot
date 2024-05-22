@@ -173,6 +173,8 @@ function App() {
                     onClick={() =>{
                       setActiveTab(subtitleTab)
                       // document.getElementById('btBackList').style.display = 'none';
+
+  
                       document.getElementById('btBackSub').style.display = 'inline';
                       document.getElementById('btBackNested').style.display = 'none';
                     }} 

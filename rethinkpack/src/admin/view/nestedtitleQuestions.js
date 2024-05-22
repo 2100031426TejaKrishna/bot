@@ -99,6 +99,7 @@ const Questions = ({ triggerRefresh, selectedNestedtitle }) => {
         // nextQuestion check
         let nextQuestionCheck = false;
         
+        //try
         // Ensures that state is reset on each operation
         if (clearNextQuestion.length > 0 || clearOptionsNextQuestion.length > 0) {
             setClearNextQuestion([]);
@@ -289,7 +290,7 @@ const Questions = ({ triggerRefresh, selectedNestedtitle }) => {
                                             className="form-check-input"
                                         />
                                         {option.text}
-                                        {option.nextQuestionTitle && <span className="next-question-title"> Next Question: {option.nextQuestionTitle}</span>}
+                                        {option.nextQuestionTitle && <span className="next-question-title"> Question After this... {option.nextQuestionTitle}</span>}
                                     </label>
                                 </div>
                             ))}
@@ -308,7 +309,7 @@ const Questions = ({ triggerRefresh, selectedNestedtitle }) => {
                                         className="form-check-input"
                                     />
                                     {option.text}
-                                    {option.nextQuestionTitle && <span className="next-question-title"> Next Question: {option.nextQuestionTitle}</span>}
+                                    {option.nextQuestionTitle && <span className="next-question-title">Question After this... {option.nextQuestionTitle}</span>}
                                 </label>
                             ))}
                         </div>
@@ -439,7 +440,7 @@ const Questions = ({ triggerRefresh, selectedNestedtitle }) => {
                     <p className="question-countries">Countries: {question.countries.join(', ')}</p>
                     )}
                     {question.explanation && <p className="question-explanation">Explanation: {question.explanation}</p>}
-                    {question.nextQuestionTitle && ( <p className="next-question">Next Question: {question.nextQuestionTitle}</p> )}
+                    {question.nextQuestionTitle && ( <p className="next-question">Question After this... {question.nextQuestionTitle}</p> )}
                     <p className="question-date">Date created: {formatDate(question.date)}</p>
                     <div className="question-actions">
                         <EditQuestion 
@@ -487,3 +488,4 @@ const Questions = ({ triggerRefresh, selectedNestedtitle }) => {
 };
 
 export default Questions;
+
