@@ -10,7 +10,8 @@ const questionSchema = new mongoose.Schema({
         text: String,
         isCorrect: Boolean,
         marks: Number,
-        optionsNextQuestion: String
+        optionsNextQuestion: String,
+        recommendation: String
     }],
     linearScale: [{
         scale: Number,
@@ -37,7 +38,7 @@ const questionSchema = new mongoose.Schema({
         countryFirstQuestion: Boolean
     },
     explanation: String,
-    recommendation: String,
+    // recommendation: String,
     previousQuestion: String,
     nextQuestion: String,
     nestedTitle: {
@@ -57,8 +58,10 @@ router.post('/insertQuestion', async (req, res) => {
     try {
         let questionData = req.body;
 
+          
         if (questionData.isLeadingQuestion) {
-            questionData.recommendation = questionData.explanation;
+            // questionData.recommendation = questionData.explanation;
+
             delete questionData.explanation;
             delete questionData.marks;
             if (questionData.optionType !== 'multipleChoiceGrid' && questionData.optionType !== 'checkboxGrid') {

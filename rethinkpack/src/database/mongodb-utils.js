@@ -74,6 +74,36 @@ const fetchNextQuestion = async (nextQuestionId) => {
       throw error;
     }
   };
+  
+  //function to fetch option recommendation
+  // Function to fetch option text by ID
+  // const fetchRecommendation = async (optionId) => {
+  //   try {
+  //     // console.log("Fetching option text for ID:", optionId);
+  
+  //     const question = await Questions.findOne({ "options._id": new mongoose.Types.ObjectId(optionId) });
+  
+  //     if (question && question.options) {
+  //       const selectedOption = question.options.find(option => option._id.equals(new mongoose.Types.ObjectId(optionId)));
+  
+  //       if (selectedOption) {
+  //         const optionRecommendation = selectedOption.recommendation;
+  //         // console.log("Found option text:", optionText);
+  //         return optionRecommendation;
+  //       } else {
+  //         console.error("Selected option not found for ID:", optionId);
+  //         throw new Error("Option not found");
+  //       }
+  //     } else {
+  //       console.error("Question not found or has no options for ID:", optionId);
+  //       throw new Error("Question not found or has no options");
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching recommendation text:", error);
+  //     throw error;
+  
+  //   }
+  // };
 // Endpoint to get the first question
 router.get('/firstQuestion', async (req, res) => {
   try {
@@ -115,6 +145,7 @@ router.get('/optionText/:id', async (req, res) => {
     res.status(500).json({ error: errorMessage });
   }
 });
+
 
 module.exports = { router};
 // -------------------------------------this is the base line-------------------------------------------- ----- -----

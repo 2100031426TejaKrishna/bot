@@ -5,8 +5,8 @@ const connectToDatabase = () => {
 
   return mongoose.connect(uri, {
     dbName: 'Questions',
-    useNewUrlParser: true,
-    useUnifiedTopology: true
+    // useNewUrlParser: true,
+    // useUnifiedTopology: true
   }).then(() => {
     console.log('Connected to Questions database');
   }).catch(err => {

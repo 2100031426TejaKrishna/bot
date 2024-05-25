@@ -2,13 +2,14 @@ import React, { useEffect, useState } from 'react';
 import './questions.css';
 import EditQuestion from './editQuestion';
 import duplicateQuestion from './duplicateQuestion'; // Import the duplicate function
-import RecommendationComponent from './recommendationComponent';
+// import QuestionContainer from './questionContainer';
+// import RecommendationComponent from './recommendationComponent';
 // import ParentComponent from './parentComponent';
 // Switch URLs between Server and Local hosting here
 // const destination = "localhost:5000";
 const destination = "rtp.dusky.bond:5000";
 
-const Questions = ({ triggerRefresh}) => {
+const Questions = (triggerRefresh ) => {       //
     const [questions, setQuestions] = useState([]);
     const [questionToDelete, setQuestionToDelete] = useState([]);
     const [showToast, setShowToast] = useState(false);
@@ -21,17 +22,10 @@ const Questions = ({ triggerRefresh}) => {
     const [clearOptionsPreviousQuestion, setClearOptionsPreviousQuestion] = useState([]);
     const [duplicateMessage, setDuplicateMessage] = useState('');
     const [detailsFromRecommendation, setDetailsFromRecommendation] = useState({ recommendation: '' });
-    const [details, setDetails] = useState({ recommendation: '' });
+    // const [recommendations, setRecommendations] = useState([]);
+   
+    
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setDetails((prev) => ({
-            ...prev,
-            [name]: value,
-        }));
-        // onRecommendationChange(details);
-        
-    };
     
     
 // try
@@ -165,7 +159,7 @@ const Questions = ({ triggerRefresh}) => {
             // Call the function to update the data in the database       
             updateClearNextQuestion(dataToClear).then(deleteAction());
         };
-    }, [clearNextQuestion, clearOptionsNextQuestion, triggerRefresh]);
+    }, [clearNextQuestion, clearOptionsNextQuestion,triggerRefresh]); //trigger
       //testing below
     //   useEffect(() => {
     //     // declare object to contain previousQuestion and optionsPreviousQuestion cases
@@ -373,7 +367,7 @@ const Questions = ({ triggerRefresh}) => {
 
         fetchQuestions();
 
-    }, [triggerRefresh, editUpdateToggle]);
+    }, [editUpdateToggle,triggerRefresh]); //trigger
 
     // useEffect(() => {
     //     if (questions.length === 0 || questionsUpdated) return;
@@ -550,10 +544,16 @@ const Questions = ({ triggerRefresh}) => {
                                             className="form-check-input"
                                            
                                         />
+            
                                         {option.text} 
-                                        <RecommendationComponent details={details} handleChange={handleChange}/>
+                                       <p>{option.recommendation}</p> 
+                                        {/* <p>hint: <RecommendationComponent /></p> */}
+        {/* {JSON.stringify(recommendations)} */}
+                                                                        
+                                      
                                         {/* {details.recommendation && <span className="recommendation">{details.recommendation}</span>} */}
                                         {console.log("======================================================")}
+                                        {console.log(option)}
                                         {/* <p>{JSON.stringify( details.recommendation)}</p> */}
 
                                        {/* <div>
@@ -579,7 +579,7 @@ const Questions = ({ triggerRefresh}) => {
                             ))}
                         </div>
                     }
-                    {/* Additional code for other option types */}
+                    {/* Additional code for other option types */}                                             
                     {question.optionType === 'checkbox' && 
                         <div className="option-container">
                             {question.options.map((option) => (

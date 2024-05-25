@@ -57,6 +57,9 @@ router.get('/filtered-questions', async (req, res) => {
                     if (option.optionsNextQuestion) {
                         acc.push(option.optionsNextQuestion.toString()); // Convert ObjectId to string
                     }
+                    if (option.recommendation) {
+                        acc.push(option.recommendation.toString());   //for admin
+                    }
                 });
             }
             return acc;

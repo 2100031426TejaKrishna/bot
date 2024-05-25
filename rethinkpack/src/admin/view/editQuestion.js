@@ -5,8 +5,9 @@ import Modal from 'react-bootstrap/Modal';
 import Form from 'react-bootstrap/Form';
 import InputGroup from 'react-bootstrap/InputGroup';
 import FirstQuestionModal from './firstQuestionModal';
-import RecommendationComponent from './recommendationComponent';
-import Questions from './questions';
+// import RecommendationComponent from './recommendationComponent';
+
+// import Questions from './questions';
 // const destination = "localhost:5000";
 const destination = "rtp.dusky.bond:5000";
 
@@ -20,7 +21,7 @@ class EditQuestion extends Component {
       question: '',
       marks: '',
       explanation: '',
-      // recommendation: '',
+      recommendation: '',
       // recommendationValue: "",
      // previousQuestion: '',
       nextQuestion: '',
@@ -110,15 +111,24 @@ class EditQuestion extends Component {
         marks: '',
         nextQuestion: null
       },
+      subTitle: {
+        id: '',
+        firstQuestion: false
+      },
       nestedTitle: {
         id: '',
         firstQuestion: false
       },
+      subTitleLabel: '',
       nestedTitleLabel: '',
       showFirstQuestionNestedTitleOption: false,
+      showFirstQuestionSubTitleOption: false,
       nestedTitleFirstQuestionRender: false,
       nestedTitleFirstQuestionId: '',
       nestedTitleFirstQuestionValue: '',
+      subTitleFirstQuestionRender: false,
+      subTitleFirstQuestionId: '',
+      subTitleFirstQuestionValue: '',
       openEndedWordLimit: 500,
       openEndedWordCount: 0,
       stateQuestionId: '',
@@ -147,8 +157,41 @@ class EditQuestion extends Component {
   firstQuestionModalOnHide = () => {
     this.setState( {
       // countryFirstQuestionRender: false,
-      nestedTitleFirstQuestionRender: false
+      nestedTitleFirstQuestionRender: false,
+      subTitleFirstQuestionRender: false
     })
+  };
+  updateSubTitleFirstQuestion = () => {
+    // console.log(`prop updateSubTitleFirstQuestion executed.`)
+    
+    const { allQuestions, subTitleFirstQuestionId } = this.state;
+    const updatedQuestions = allQuestions.map(question => {
+      if (question._id === subTitleFirstQuestionId) {
+        // console.log(`question._id === subTitleFirstQuestionId`)
+        return { 
+          ...question,
+          subTitle: {
+            ...question.subTitle,
+            id: subTitleFirstQuestionId,
+            firstQuestion: false,
+          },
+        };
+      } else {
+        return question;
+      }
+    });
+    this.setState({ allQuestions: updatedQuestions });
+
+    // Reset state value to false and update toggle to TRUE
+    this.setState(prevState => ({ 
+      subTitleFirstQuestionRender: false,
+      subTitle: {
+        ...prevState.subTitle,
+        firstQuestion: true
+      },
+     }));
+
+    this.fetchQuestions();
   };
 
   updateNestedTitleFirstQuestion = () => {
@@ -206,11 +249,13 @@ class EditQuestion extends Component {
 
         // If nested title, show the first question option
         this.handleFirstQuestionNestedTitleOption(data.titleId);
-
+        //If subtitle,show
+        this.handleFirstQuestionSubTitleOption(data.titleId);
         this.setState({
           initialData: data,
           showModal: true, 
           nestedTitle: data.nestedTitle,
+          subTitle: data.subTitle,
           questionList: data,
           selectedTitle: data.titleId,
           selectedOption: data.optionType,
@@ -287,6 +332,33 @@ class EditQuestion extends Component {
       console.error('Error fetching questions:', error);
     }
   };
+// Function to fetch recommendation by Option ID
+//  fetchOptionRecommendation = async (optionId) => {
+//   try {
+//       const response = await fetch(`http://${destination}/api/recommendation/option/${optionId}`);
+//       if (!response.ok) {
+//           throw new Error('Failed to fetch recommendation');
+//       }
+//       const { recommendation } = await response.json();
+//       return recommendation;
+//   } catch (error) {
+//       console.error('Error fetching recommendation:', error);
+//       throw error;
+//   }
+// };
+
+fetchRecommendationText = async (optionId) => {
+  try {
+    const response = await fetch(`http://${destination}/api/recommendationText/${optionId}`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const recommendationTextData = await response.json();
+    return recommendationTextData.recommendations;
+  } catch (error) {
+    console.error("Error fetching option text:", error);
+  }
+};
 
 /*-------------MODAL-----------------*/
 
@@ -350,10 +422,62 @@ class EditQuestion extends Component {
     };
     return nestedTitlesArray;
   };
-  
+
+  fetchSubTitles = () => {
+    const { allTitles } = this.state;
+
+    // Determine sub titles
+    let subTitlesArray = [];
+    // loops through main titles
+    for (let i=0; i<allTitles.length; i++) {      
+      // loops through subtitles
+      for (let j=0; j<allTitles[i].title.subTitle.length; j++) {
+        // loops through nested titles
+        // for (let k=0; k<allTitles[i].title.subTitle[j].nestedTitle.length; k++) 
+          // console.log(`nestedTitles label: ${allTitles[i].title.subTitle[j].nestedTitle[k].nestedTitleLabel}`)
+          subTitlesArray.push({subTitleLabel: allTitles[i].title.subTitle[j].subTitleLabel, id: allTitles[i].title.subTitle[j]._id});
+        
+      };
+    };
+    return subTitlesArray;
+  };
+  handleFirstQuestionSubTitleOption = (e) => {
+    
+    let subTitlesArray = this.fetchSubTitles();
+        console.log("subtitlesArray: ",subTitlesArray);
+        // console.log("Selecred title :" this.state.selectedTitle);
+    // Determine a match for sub title with the selected title
+    for (let i=0; i<subTitlesArray.length; i++) {
+      if (e === subTitlesArray[i].id) {
+        console.log(`match: ${subTitlesArray[i].subTitleLabel}`)
+        this.setState({ 
+          showFirstQuestionSubTitleOption: true,
+          subTitle: {
+            ...this.subTitle,
+            id: e,
+            firstQuestion: false
+          },
+          subTitleLabel: subTitlesArray[i].subTitleLabel
+         });
+        return;
+      } 
+      // Case: when a title is selected
+      else {
+        this.setState({
+          showFirstQuestionsubTitleOption: false,
+          subTitle: {
+            ...this.subTitle,
+            id: '',
+            firstQuestion: false
+          }
+        });
+      }
+    };
+  };
   handleFirstQuestionNestedTitleOption = (e) => {
     
     let nestedTitlesArray = this.fetchNestedTitles();
+    console.log("nestedtitlesArray: ",nestedTitlesArray);
 
     // Determine a match for nested title with the selected title
     for (let i=0; i<nestedTitlesArray.length; i++) {
@@ -383,7 +507,63 @@ class EditQuestion extends Component {
       }
     };
   };
+  
+  toggleFirstQuestionSubTitle = () => {
+    const { initialData, subTitle } = this.state;
 
+    // Case: when changing a sub title to another sub title
+    if (initialData.subTitle) {
+      // Case: No need to validate if initial subTitle.id already is the existing first question
+      // OR Case: when switch is initially ON, no need to validate
+      if(
+        initialData.subTitle.id !== subTitle.id ||
+        initialData.subTitle.firstQuestion === false
+      ) {
+        // Validate whether sub title first question is vacant or not
+        const { 
+          issubTitleFirstQuestionVacant,
+        } = this.validateFirstQuestionSubTitle();
+        
+        if (issubTitleFirstQuestionVacant === true) {
+          this.setState(prevState => ({
+            subTitle: {
+              ...prevState.subTitle,
+              firstQuestion: !prevState.subTitle.firstQuestion
+            }
+          }));
+        } else {
+          // render the firstQuestionModal here
+          this.setState({ subTitleFirstQuestionRender: true });
+        }
+      } else {
+        this.setState(prevState => ({
+          subTitle: {
+            ...prevState.subTitle,
+            firstQuestion: !prevState.subTitle.firstQuestion
+          }
+        }));
+      }
+    } 
+    // Case: when changing a subtitle to a nested title
+    else {
+      // Validate whether nested title first question is vacant or not
+      const { 
+        isSubTitleFirstQuestionVacant,
+      } = this.validateFirstQuestionSubTitle();
+      
+      if (isSubTitleFirstQuestionVacant === true) {
+        this.setState(prevState => ({
+          subTitle: {
+            ...prevState.subTitle,
+            firstQuestion: !prevState.subTitle.firstQuestion
+          }
+        }));
+      } else {
+        // render the firstQuestionModal here
+        this.setState({ subTitleFirstQuestionRender: true });
+      }
+    }
+  };
   toggleFirstQuestionNestedTitle = () => {
     const { initialData, nestedTitle } = this.state;
 
@@ -463,6 +643,28 @@ class EditQuestion extends Component {
       </>
     );
   };
+  renderSubTitleFirstQuestionModal = () => {
+    const { 
+      subTitle, 
+      subTitleLabel, 
+      subTitleFirstQuestionId, 
+      subTitleFirstQuestionValue
+    } = this.state;
+    return (
+      <>
+        <FirstQuestionModal
+          openFirstQuestionModal = {true}
+          type = {"subTitle"}
+          firstQuestionId = {subTitleFirstQuestionId}
+          firstQuestionValue = {subTitleFirstQuestionValue}
+          subTitleId = {subTitle.id}
+          subTitleLabel = {subTitleLabel}
+          updateFirstQuestion = {this.updateSubTitleFirstQuestion}
+          firstQuestionModalOnHide = {this.firstQuestionModalOnHide}
+        />
+      </>
+    );
+  };
 
   handleQuestionText = (e) => {
     this.setState( (prevState) => ({
@@ -484,8 +686,8 @@ class EditQuestion extends Component {
             : prevState.questionList.linearScale,
         // Condition check for openEnded field
         options: prevState.questionList.options.map((option) => ({
-          ...option,
-          recommendation: '',
+          ...option
+          // recommendation: '',
         })),
         openEndedText:
           prevState.questionList.openEndedText === undefined
@@ -525,7 +727,7 @@ class EditQuestion extends Component {
         ...prevState.questionList,
         options: [
           ...prevState.questionList.options,
-          { text: "" , isCorrect: false }
+          { text: "" , isCorrect: false,recommendation: "" }
         ]
       }
     }));
@@ -596,10 +798,57 @@ class EditQuestion extends Component {
     this.setState({ questionList: {
       ...questionList,
       options: questionList.options.map((option, i) =>
-      i === index ? { ...option, text: value } : option
+      i === index ? { ...option, text: value} : option
       ),
     }}) 
   };
+
+  handleOptionRecommendationChange = (index, value) => {
+    const { questionList } = this.state;
+  
+   
+    this.setState({ questionList: {
+      ...questionList,
+      options: questionList.options.map((option, i) =>
+      i === index ? { ...option, recommendation: value} : option
+      ),
+    }}) 
+  };
+
+  // 
+  // handleOptionRecommendationChange = async (index, recommendation) => {
+  //   try {
+  //     // Update recommendation in state
+  //     const updatedOptions = [...this.state.questionList.options];
+  //     updatedOptions[index].recommendation = recommendation;
+  //     this.setState({ questionList: { ...this.state.questionList, options: updatedOptions } });
+  
+  //     // Send recommendation to backend to store in the database
+  //     await this.storeRecommendationInDatabase(recommendation, updatedOptions[index].optionId);
+  //   } catch (error) {
+  //     console.error('Error handling recommendation change:', error);
+  //   }
+  // };
+  // storeRecommendationInDatabase = async (recommendation, optionId) => {
+  //   try {
+  //     const response = await fetch(`http://${destination}/api/recommendation/option/${optionId}`, {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: JSON.stringify({ recommendation }),
+  //     });
+      
+  //     if (!response.ok) {
+  //       throw new Error('Failed to store recommendation in the database');
+  //     }
+  //   } catch (error) {
+  //     console.error('Error storing recommendation in the database:', error);
+  //     throw error;
+  //   }
+  // };
+  
+  
   
 //   handleOptionRecommendationChange = (index, value) => {
 //     const { questionList } = this.state;
@@ -613,17 +862,7 @@ class EditQuestion extends Component {
 //     });
 // };
 
-  // handleOptionRecommendationChange = (index, recommendation) => {
-  //   const { questionList } = this.state;
-  //   this.setState({
-  //     questionList: {
-  //       ...questionList,
-  //       options: questionList.options.map((option, i) =>
-  //         i === index ? { ...option, recommendation: recommendation } : option
-  //       ),
-  //     }
-  //   });
-  // };
+ 
     
      
   // handleOptionRecommendationChange = (index, recommendation) => {
@@ -847,7 +1086,7 @@ class EditQuestion extends Component {
 
 //------------------ OPTIONS ----------------------------------  
   renderOptionsArea = () => {
-    const { options, recommendationValue, gridOptions, requireResponse, isLeadingQuestion, questionList, allQuestions, validationErrors, openEndedWordLimit, openEndedWordCount } = this.state;
+    const { options,  gridOptions, requireResponse, isLeadingQuestion, questionList, allQuestions, validationErrors, openEndedWordLimit, openEndedWordCount } = this.state;
     const clearSelections = (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -924,10 +1163,21 @@ class EditQuestion extends Component {
                     className="form-control mx-2"
                     value={questionList.options[index].text}
                     onChange={(e) => this.handleOptionChangeText(index, e.target.value)}
+                    // onChange={(e) => this.handleOptionChangeText(index, questionList.options[index].text, e.target.value)}
                     placeholder={`Option ${index + 1}`}
                     style={{ flex: '1' }}
                   />
-                  <RecommendationComponent />
+                  <input
+              type="text"
+              className="form-control mx-2"
+              // value={questionList.options[index].recommendation}
+              // value={this.state.recommendation}
+
+              onChange={(e) => this.handleOptionRecommendationChange(index, e.target.value)}
+              placeholder="Recommendation"
+              style={{ flex: '1' }}
+            />
+                  {/* <RecommendationComponent  /> */}
                   
                   {console.log(this.props.name)}
                   {/* New input field for recommendation */}
@@ -1029,7 +1279,7 @@ class EditQuestion extends Component {
                     placeholder={`Option ${index + 1}`}
                     style={{ flex: '1' }}
                   />
-                   <RecommendationComponent/>
+                   {/* <RecommendationComponent/> */}
                   {isLeadingQuestion && (
                       <select
                         className="form-select mx-2"
@@ -1540,7 +1790,46 @@ class EditQuestion extends Component {
       return true
     };
   };
+  validateFirstQuestionSubTitle = () => {
+    const { allQuestions, subTitle } = this.state;
 
+    // Case: when sub title IS NOT selected, 
+    // is not possible as only way to execute this function is when a 
+    // sub title is currently selected
+
+    for (let i=0; i<allQuestions.length; i++) {
+      
+      // Case: same sub title AND first question is false
+      if (
+        subTitle.id === allQuestions[i].subTitle.id && 
+        allQuestions[i].subTitle.firstQuestion === false
+      ) {
+        // do nothing, as want to ensure loop through entire array, 
+        // if nothing found, after loop is done will return isSubTitleFirstQuestionVacant: true
+      }
+
+      // Case: same sub title AND first question is true
+      else if (
+        subTitle.id === allQuestions[i].subTitle.id && 
+        allQuestions[i].subTitle.firstQuestion === true
+      ) {
+        // record the matched question
+        this.setState({
+          subTitleFirstQuestionId: allQuestions[i]._id,
+          subTitleFirstQuestionValue: allQuestions[i].question
+        })
+        return {
+          isSubTitleFirstQuestionVacant: false
+        };
+      }
+    }
+
+    // Case: subTitle.id doesn't match with any in the subTitle object array
+    // return vacant status
+    return {
+      isSubTitleFirstQuestionVacant: true
+    };
+  };
   validateFirstQuestionNestedTitle = () => {
     const { allQuestions, nestedTitle } = this.state;
 
@@ -1801,7 +2090,9 @@ class EditQuestion extends Component {
       questionId,
       selectedTitle,
       showFirstQuestionNestedTitleOption,
-      nestedTitle
+      showFirstQuestionSubTitleOption,
+      nestedTitle,
+      subTitle
     } = this.state;
 
     const dataToUpdate = {
@@ -1821,7 +2112,8 @@ class EditQuestion extends Component {
       requireResponse,
       //previousQuestion: isLeadingQuestion ? undefined : questionList.previousQuestion,
       nextQuestion: isLeadingQuestion ? undefined : questionList.nextQuestion,
-      nestedTitle: nestedTitle
+      nestedTitle: nestedTitle,
+      subTitle: subTitle
     };
 
     // Leading Question Marks check
@@ -1871,7 +2163,7 @@ class EditQuestion extends Component {
 
   render() {
 
-    const { questionList,selectedTitle, selectedTitleQuestions, showCountry, countries, selectedCountry, isLeadingQuestion, showExplanation, validationErrors, questionId, questionIndex, allQuestions, allTitles, showModal, showFirstQuestionNestedTitleOption, nestedTitle,nextQuestion,showNextQuestion,nestedTitleFirstQuestionRender, country } = this.state;
+    const { questionList,selectedTitle, selectedTitleQuestions, showCountry, countries, selectedCountry, isLeadingQuestion, showExplanation, validationErrors, questionId, questionIndex, allQuestions, allTitles, showModal, showFirstQuestionNestedTitleOption,showFirstQuestionSubTitleOption,subTitle, nestedTitle,nextQuestion,showNextQuestion,nestedTitleFirstQuestionRender,subTitleFirstQuestionRender, country } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
     const { filteredQuestions } = this.state;
     // const { recommendation } = this.state;
@@ -1927,10 +2219,11 @@ class EditQuestion extends Component {
                           {/* Render subTitleLabel as options */}
                           {titleObject.title.subTitle.map((subTitleObject) => (
                             <React.Fragment key={subTitleObject._id}>
-                              <option value={subTitleObject._id}>
+                              <option value={subTitleObject._id}>   {/*not necessary adding key*/}
                                 {"Sub Title: " + subTitleObject.subTitleLabel}
                               </option>
                               {/* Render nestedTitleLabel as options */}
+                        
                               {subTitleObject.nestedTitle.map((nestedTitleObject) => (
                                 <option key={nestedTitleObject._id} value={nestedTitleObject._id}>
                                   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{"Nested Title: " + nestedTitleObject.nestedTitleLabel} {/* Add one more level of indentation for nestedTitleLabel */}
@@ -1949,7 +2242,27 @@ class EditQuestion extends Component {
                 </div>
               )}
             </div>
-
+             {/* First Question Sub Title */}
+             {/* {showFirstQuestionSubTitleOption && (
+              <div className="form-check form-switch form-check-inline">
+              <input
+                className="form-check-input"
+                type="checkbox"
+                role="switch"
+                id="subTitleFirstQuestionCheck"
+                checked={subTitle.firstQuestion}
+                onChange={this.toggleFirstQuestionSubTitle}
+              />
+              <label className="form-check-label" htmlFor="firstQuestionCheck">
+                Sub Title's First Question
+              </label>
+                {subTitleFirstQuestionRender && (
+                  <div>
+                    {this.renderSubTitleFirstQuestionModal()}
+                  </div>
+                )}
+              </div>
+            )}   */}
             {/* First Question Nested Title */}
             {showFirstQuestionNestedTitleOption && (
               <div className="form-check form-switch form-check-inline">
