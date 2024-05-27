@@ -34,16 +34,7 @@ const fetchRecommendationText = async (optionId) => {
     }
 };
 
-// Route to fetch recommendation by Option ID
-// router.get('/recommendation/option/:id', async (req, res) => {
-//     try {
-//         const recommendation = await fetchOptionRecommendation(req.params.id);
-//         res.json({ recommendation });
-//     } catch (error) {
-//         console.error('Error fetching recommendation:', error);
-//         res.status(500).json({ message: 'Internal Server Error' });
-//     }
-// });
+
 router.get('/recommendationText/:id', async (req, res) => {
     try {
       const optionId = req.params.id;
@@ -58,25 +49,5 @@ router.get('/recommendationText/:id', async (req, res) => {
     }
   });
   
-// router.post('/recommendation/option/:id', async (req, res) => {
-//     const optionId = req.params.id;
-//     const newRecommendation = req.body.recommendation;
 
-//     try {
-//         const question = await Questions.findOneAndUpdate(
-//             { "options._id": new mongoose.Types.ObjectId(optionId) },
-//             { $set: { "options.$.recommendation": newRecommendation } },
-//             { new: true }
-//         );
-
-//         if (question) {
-//             res.status(200).json({ message: 'Recommendation updated successfully' });
-//         } else {
-//             res.status(404).json({ message: 'Option not found' });
-//         }
-//     } catch (error) {
-//         console.error('Error storing recommendation:', error);
-//         res.status(500).json({ message: 'Internal Server Error' });
-//     }
-// });
 module.exports = router;

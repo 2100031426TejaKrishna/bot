@@ -15,7 +15,8 @@ const questionSchema = new mongoose.Schema({
     }],
     linearScale: [{
         scale: Number,
-        label: String
+        label: String,
+        recommendation: String
     }],
     grid: {
         rows: [{

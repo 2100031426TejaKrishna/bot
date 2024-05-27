@@ -2,9 +2,8 @@ import React, { useEffect, useState } from 'react';
 import './questions.css';
 import EditQuestion from './editQuestion';
 import duplicateQuestion from './duplicateQuestion'; // Import the duplicate function
-// import QuestionContainer from './questionContainer';
-// import RecommendationComponent from './recommendationComponent';
-// import ParentComponent from './parentComponent';
+
+
 // Switch URLs between Server and Local hosting here
 // const destination = "localhost:5000";
 const destination = "rtp.dusky.bond:5000";
@@ -24,22 +23,6 @@ const Questions = (triggerRefresh ) => {       //
     const [detailsFromRecommendation, setDetailsFromRecommendation] = useState({ recommendation: '' });
     // const [recommendations, setRecommendations] = useState([]);
    
-    
-
-    
-    
-// try
-// const RecommendationChange = (details) => {
-//     setDetailsFromRecommendation(details); // Set recommendation details in state
-// };
-// const [details, setDetails] = useState({ recommendation: '' });
-
-//const [previousQuestionTitle, setPreviousQuestionTitle] = useState('');
-    //recommendation
-    // const handleDetailsChange = (details) => {
-    //     setDetailsFromRecommendation(details);
-    //   };
-
     // editQuestion.js refresh functionality
     const refreshQuestions = () => {
         // changing state of editUpdateToggle will trigger fetchQuestions
@@ -160,53 +143,7 @@ const Questions = (triggerRefresh ) => {       //
             updateClearNextQuestion(dataToClear).then(deleteAction());
         };
     }, [clearNextQuestion, clearOptionsNextQuestion,triggerRefresh]); //trigger
-      //testing below
-    //   useEffect(() => {
-    //     // declare object to contain previousQuestion and optionsPreviousQuestion cases
-    //     const dataToClear = {
-    //         questionId: questionToDelete,
-    //         clearPreviousQuestionArray: clearPreviousQuestion,
-    //         clearOptionsPreviousQuestionArray: clearOptionsPreviousQuestion
-    //     }
-
-    //     if (dataToClear.clearPreviousQuestionArray.length > 0 || dataToClear.clearOptionsPreviousQuestionArray.length > 0) {
-      
-    //         // debug
-    //         console.log(`useEffect dataToClear.clearPreviousQuestionArray: ${JSON.stringify(dataToClear.clearPreviousQuestionArray)}`)
-    //         console.log(`useEffect dataToClear.clearOptionsPreviousQuestionArray: ${JSON.stringify(dataToClear.clearOptionsPreviousQuestionArray)}`)
-        
-    //         // UPDATE request
-    //         const updateClearPreviousQuestion = async (dataToClear) => {
-    //         try {
-    //             const response = await fetch(`http://${destination}/api/clearPreviousQuestion`, {
-    //             method: 'PATCH',
-    //             headers: {
-    //                 'Content-Type': 'application/json',
-    //             },
-    //             body: JSON.stringify(dataToClear),
-    //             })
-    //             if (response.ok) {
-    //                 console.log('Data submitted successfully');
-    //                 setShowToast(true);
-    //                 setTimeout(() => setShowToast(false), 10000);
-        
-    //                 // Trigger re-fetch in parent component questions.js
-    //                 refreshQuestions();
-    //             } else {
-    //                 const errorData = await response.json();
-    //                 console.error('Server responded with an error:', response.status, response.statusText);
-    //                 console.error('Server error data:', errorData);
-    //             }
-    //         } catch (error) {
-    //             console.error('Network error:', error);
-    //         }
-        
-    //         };
-        
-    //         // Call the function to update the data in the database       
-    //         updateClearPreviousQuestion(dataToClear).then(deleteAction());
-    //     };
-    // }, [clearPreviousQuestion, clearOptionsPreviousQuestion, triggerRefresh]);
+     
       
     const handleDelete = () => {
         // nextQuestion check
@@ -269,53 +206,6 @@ const Questions = (triggerRefresh ) => {       //
             }
             
         });
-        //testing below
-        // questions.forEach((question) => {
-        //     // This works
-        //     if (question._id === questionToDelete) {
-        //         // console.log(`question: ${question.question}`);
-        //     }
-        //     // Search for all cases for previousQuestion match
-            
-        //     if (question.previousQuestion === questionToDelete) {
-        //         // debug
-        //         console.log(`previousQuestion match: ${question.question}`)
-                
-        //         // clear logic
-        //         setClearPreviousQuestion( prevClearPreviousQuestion =>
-        //             [
-        //                 ...prevClearPreviousQuestion,
-        //                 { 
-        //                     questionId: question._id
-        //                 }   
-        //             ]
-        //         );
-        //         previousQuestionCheck = true;
-        //     }
-
-        //     // Search for all cases for optionsNextQuestion match
-           
-        //     if (question.options.length > 0) {
-        //         for(let i=0; i<question.options.length; i++) {
-        //             if (question.options[i].optionsPreviousQuestion === questionToDelete) {
-        //                 // debug
-        //                 console.log(`optionsPreviousQuestion match: ${question.question}`);
-
-        //                 // clear logic
-        //                 setClearOptionsPreviousQuestion( prevClearOptionsPreviousQuestion =>
-        //                     [
-        //                         ...prevClearOptionsPreviousQuestion,
-        //                         { 
-        //                             questionId: question._id,
-        //                             optionsIndex: i
-        //                         }   
-        //                     ]
-        //                 );
-        //                 previousQuestionCheck = true;
-        //             }                        
-        //         }
-        //     }
-        // });
         
         
         // If passes nextQuestionCheck (when = false), then can delete straight away
@@ -387,51 +277,8 @@ const Questions = (triggerRefresh ) => {       //
     //     updateQuestionsWithNextTitles();
     //     setQuestionsUpdated(true);
     // }, [questions, questionsUpdated]);
-    //testing below
+   
     
-    // useEffect(() => {
-    //     if (questions.length === 0 || questionsUpdated) return;
-
-    //     const updateQuestionsWithPreviousTitles = async () => {
-    //         const updatedQuestions = await Promise.all(questions.map(async (question) => {
-    //             if (question.previousQuestion) {
-    //                 const previousQuestionTitle = await fetchQuestionById(question.previousQuestion);
-    //                 return { ...question, previousQuestionTitle };
-    //             }
-    //             return question;
-    //         }));
-
-    //         setQuestions(updatedQuestions);
-    //     };
-
-    //     updateQuestionsWithPreviousTitles();
-    //     setQuestionsUpdated(true);
-    // }, [questions, questionsUpdated]);
-
-    // useEffect(() => {
-    //     if (questions.length === 0 || questionsUpdated) return;
-    
-    //     const updateQuestionsWithOptionNextTitles = async () => {
-    //         const updatedQuestions = await Promise.all(questions.map(async (question) => {
-    //             if (question.options) {
-    //                 const optionsWithNextTitles = await Promise.all(question.options.map(async (option) => {
-    //                     if (option.optionsNextQuestion) {
-    //                         const nextQuestionTitle = await fetchQuestionById(option.optionsNextQuestion);
-    //                         return { ...option, nextQuestionTitle };
-    //                     }
-    //                     return option;
-    //                 }));
-    //                 return { ...question, options: optionsWithNextTitles };
-    //             }
-    //             return question;
-    //         }));
-    
-    //         setQuestions(updatedQuestions);
-    //     };
-    
-    //     updateQuestionsWithOptionNextTitles();
-    //     setQuestionsUpdated(true);
-    // }, [questions, questionsUpdated]);
     // using a single useeffect for both next and previous question helps 
     useEffect(() => {
         if (questions.length === 0 || questionsUpdated) return;
@@ -459,32 +306,7 @@ const Questions = (triggerRefresh ) => {       //
     
         updateQuestionsWithTitles();
     }, [questions, questionsUpdated]);
-    
-    //testing below
-    // useEffect(() => {
-    //     if (questions.length === 0 || questionsUpdated) return;
-    
-    //     const updateQuestionsWithOptionPreviousTitles = async () => {
-    //         const updatedQuestions = await Promise.all(questions.map(async (question) => {
-    //             if (question.options) {
-    //                 const optionsWithPreviousTitles = await Promise.all(question.options.map(async (option) => {
-    //                     if (option.optionsPreviousQuestion) {
-    //                         const previousQuestionTitle = await fetchQuestionById(option.optionsPreviousQuestion);
-    //                         return { ...option, previousQuestionTitle };
-    //                     }
-    //                     return option;
-    //                 }));
-    //                 return { ...question, options: optionsWithPreviousTitles };
-    //             }
-    //             return question;
-    //         }));
-    
-    //         setQuestions(updatedQuestions);
-    //     };
-    
-    //     updateQuestionsWithOptionPreviousTitles();
-    //     setQuestionsUpdated(true);
-    // }, [questions, questionsUpdated]);
+   
 
     if (error) {
         return <div>Error: {error.message}</div>;
@@ -548,29 +370,8 @@ const Questions = (triggerRefresh ) => {       //
                                         {option.text} 
                                        <p>{option.recommendation}</p> 
                                         {/* <p>hint: <RecommendationComponent /></p> */}
-        {/* {JSON.stringify(recommendations)} */}
                                                                         
                                       
-                                        {/* {details.recommendation && <span className="recommendation">{details.recommendation}</span>} */}
-                                        {console.log("======================================================")}
-                                        {console.log(option)}
-                                        {/* <p>{JSON.stringify( details.recommendation)}</p> */}
-
-                                       {/* <div>
-      {/* Render RecommendationComponent and pass handleDetailsChange as a prop */}
-      {/* <RecommendationComponent onDetailsChange={handleDetailsChange} /> */}
-
-      {/* Render details received from RecommendationComponent */}
-      {/* <div> */}
-        {/* Recommendation Details: {detailsFromRecommendation.recommendation} */}
-      {/* </div> */}
-    {/* </div> */} 
-    {/* { console.log(details)} */}
-                                        {/* {option.value && (
-                                            <span style={{ fontWeight: 'bold' }}>
-                                                {' '}Recommendation: {option.recommendation}
-                                            </span>
-                                        )} */}
                                     
                                         {option.nextQuestionTitle && <span className="next-question-title"> Question After this... {option.nextQuestionTitle}</span>}
                                         {/* {option.previousQuestionTitle && <span className='previous-question-title'>Previous Question: {option.previousQuestionTitle}</span>} */}
@@ -593,7 +394,8 @@ const Questions = (triggerRefresh ) => {       //
                                         className="form-check-input"
                                     />
                                     {option.text}
-                                    {option.nextQuestionTitle && <span className="next-question-title">Question After thsi... {option.nextQuestionTitle}</span>}
+                                    <p>  hint: {option.recommendation}</p>
+                                    {option.nextQuestionTitle && <span className="next-question-title">Question After this... {option.nextQuestionTitle}</span>}
                                     {/* {option.previousQuestionTitle && <span className="previous-question-title"> Previous Question: {option.previousQuestionTitle}</span>} */}
                                 </label>
                             ))}
@@ -610,7 +412,9 @@ const Questions = (triggerRefresh ) => {       //
                                 <option 
                                     key={option._id} 
                                     value={option.text}>
-                                    {option.text}
+                                    {option.text }
+                                    <p>  hint:  { option.recommendation}</p> 
+
                                 </option>
                             ))}
                         </select>
