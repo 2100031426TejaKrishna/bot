@@ -1,12 +1,18 @@
+/* Survey Questions Container */
 .survey-questions-container {
+    position: relative; 
+    width: 100%; 
+    height: 100%; 
+    overflow-y: auto; 
+    padding: 20px; 
+    box-sizing: border-box; 
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    height: 100vh;
-    padding: 20px;
+    justify-content: flex-start; 
 }
 
+/* Survey Questions Card */
 .survey-questions-card {
     width: 100%;
     max-width: 600px;
@@ -16,12 +22,14 @@
     padding: 20px;
     margin-bottom: 20px;
     text-align: left; 
+    border: 1px solid #ccc;
 }
 
 .survey-questions-card div {
     margin-bottom: 10px;
 }
 
+/* Survey Questions Progress Bar */
 .survey-questions-progress-bar-container {
     width: 100%;
     max-width: 600px;
@@ -41,12 +49,14 @@
     transition: width 0.3s ease-in-out;
 }
 
+/* Survey Questions Footer */
 .survey-questions-footer {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
     width: 100%;
     max-width: 600px;
+    margin-top: 20px;
 }
 
 .survey-questions-navigation-buttons {
@@ -54,17 +64,20 @@
     gap: 25px;
 }
 
+/* Survey Questions Button */
 .survey-questions-button {
     padding: 10px 20px;
     border: none;
     border-radius: 5px;
-    background-color: #76b5c5;
+    background-color: #1894b4;
     color: white;
     cursor: pointer;
+    transition: background-color 0.3s ease;
 }
 
 .survey-questions-button:disabled {
     background-color: #cccccc;
+    cursor: not-allowed;
 }
 
 .survey-questions-button.text-button {
@@ -79,9 +92,10 @@
 .survey-questions-button.text-button:hover,
 .survey-questions-button.text-button:focus {
     padding: 10px 20px;
-    background-color: #e5eef1;
+    background-color: transparent;
 }
 
+/* Other Styles */
 .table-header-non-bold {
     font-weight: normal;
 }
