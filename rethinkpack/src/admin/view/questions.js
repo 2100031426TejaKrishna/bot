@@ -10,6 +10,9 @@ const destination = "rtp.dusky.bond:5000";
 
 const Questions = (triggerRefresh ) => {       //
     const [questions, setQuestions] = useState([]);
+    const [scores,setScores] = useState([]);
+    const [checkboxSelections, setCheckboxSelections] = useState({});
+    const [selectedOption, setSelectedOption] = useState(null);
     const [questionToDelete, setQuestionToDelete] = useState([]);
     const [showToast, setShowToast] = useState(false);
     const [error, setError] = useState(null);
@@ -21,8 +24,53 @@ const Questions = (triggerRefresh ) => {       //
     const [clearOptionsPreviousQuestion, setClearOptionsPreviousQuestion] = useState([]);
     const [duplicateMessage, setDuplicateMessage] = useState('');
     const [detailsFromRecommendation, setDetailsFromRecommendation] = useState({ recommendation: '' });
-    // const [recommendations, setRecommendations] = useState([]);
+    const [checkScores, setCheckScores] = useState({});
+    const newscore =0;
+    const handleCheck = (isChecked, optionId) => {
+        setCheckScores(prevState => ({
+            ...prevState,
+            [optionId]: isChecked ? 1 : 0
+        }));
+    };
+    
+    
+    
+    const optionClicked = (questionIndex, isCorrect) => {
+        const newScores = [...scores];
+        newScores[questionIndex] = isCorrect ? 1 : 0;
+        setScores(newScores);
+    };
+    // const optionClicked = (questionIndex, isCorrect, optionType) => {
+    //     if (optionType === 'checkbox') {
+    //       const newScores = [...scores];
+    //       newScores[questionIndex] = calculateCheckboxScore(questionIndex);
+    //       setScores(newScores);
+    //     } else {
+    //       const newScores = [...scores];
+    //       newScores[questionIndex] = isCorrect ? 1 : 0;
+    //       setScores(newScores);
+    //     }
+    //   };
+      
+    //   const calculateCheckboxScore = (questionIndex) => {
+    //     const question = questions[questionIndex];
+    //     const selectedOptions = question.options.filter(option => option.checked);
+    //     const correctOptions = question.options.filter(option => option.isCorrect);
+    //     const incorrectOptions = question.options.filter(option => !option.isCorrect);
+      
+    //     if (selectedOptions.length === 0) {
+    //       return 0;
+    //     }
+      
+    //     const allCorrectSelected = correctOptions.every(option => selectedOptions.includes(option));
+    //     const noIncorrectSelected = incorrectOptions.every(option => !selectedOptions.includes(option));
+      
+    //     return allCorrectSelected && noIncorrectSelected ? 1 : 0;
+    //   };
    
+
+      
+
     // editQuestion.js refresh functionality
     const refreshQuestions = () => {
         // changing state of editUpdateToggle will trigger fetchQuestions
@@ -147,11 +195,12 @@ const Questions = (triggerRefresh ) => {       //
       
     const handleDelete = () => {
         // nextQuestion check
+        
         let nextQuestionCheck = false;
         //let previousQuestionCheck = false;
         
         // Ensures that state is reset on each operation
-        if (clearNextQuestion.length > 0 || clearOptionsNextQuestion.length > 0) {
+        if (clearNextQuestion.length >= 0 || clearOptionsNextQuestion.length >= 0) {
             setClearNextQuestion([]);
             setClearOptionsNextQuestion([]);
         };
@@ -250,6 +299,7 @@ const Questions = (triggerRefresh ) => {       //
                 }
                 const data = await response.json();
                 setQuestions(data);
+                setScores(Array(data.length).fill(0));
             } catch (error) {
                 console.error("Error fetching questions:", error);
             }
@@ -353,52 +403,62 @@ const Questions = (triggerRefresh ) => {       //
                     {/* Render question details based on optionType */}
                     {question.optionType === 'multipleChoice' && 
                         <div className="option-container">
-                            {question.options.map((option, optionIndex) => (
+                            {question.options && question.options.map((option, optionIndex) => (
                                 //  console.log(option)
                                 <div key={option._id} className="option">
                                     <label>
-                                        <input 
+                                         <input 
                                             type="radio" 
                                             name={question.question} 
                                             value={option.text} 
-                                            defaultChecked={option.isCorrect}
-                                            disabled={true} 
+                                            // defaultChecked={option.isCorrect}
+                                            // disabled={true} 
+                                            onChange={() => optionClicked(index,option.isCorrect)} 
+                                
                                             className="form-check-input"
-                                           
-                                        />
-            
+                                        /> 
+                                        
                                         {option.text} 
                                        <p>{option.recommendation}</p> 
                                         {/* <p>hint: <RecommendationComponent /></p> */}
                                                                         
-                                      
-                                    
                                         {option.nextQuestionTitle && <span className="next-question-title"> Question After this... {option.nextQuestionTitle}</span>}
                                         {/* {option.previousQuestionTitle && <span className='previous-question-title'>Previous Question: {option.previousQuestionTitle}</span>} */}
                                     </label>
+                                    
                                 </div>
                             ))}
+                            <p>Score: {scores[index]}</p>
+
                         </div>
                     }
                     {/* Additional code for other option types */}                                             
                     {question.optionType === 'checkbox' && 
                         <div className="option-container">
-                            {question.options.map((option) => (
+                            {question.options && question.options.map((option,optionIndex) => (
                                 <label key={option._id}>
-                                    <input 
+                                     <input 
                                         type="checkbox" 
                                         name={question.question} 
                                         value={option.text} 
-                                        defaultChecked={option.isCorrect}
-                                        disabled={true}  
+                                        // defaultChecked={option.isCorrect}
+                                        // disabled={true}  
+                                        // onChange={() =>handleCheck(option.isCorrect)}      
+                                        onChange={(e) =>{ handleCheck(e.target.checked, option._id);
+
+                                        } }
+
                                         className="form-check-input"
-                                    />
+                                    /> 
+                                    
                                     {option.text}
                                     <p>  hint: {option.recommendation}</p>
                                     {option.nextQuestionTitle && <span className="next-question-title">Question After this... {option.nextQuestionTitle}</span>}
                                     {/* {option.previousQuestionTitle && <span className="previous-question-title"> Previous Question: {option.previousQuestionTitle}</span>} */}
                                 </label>
                             ))}
+                                <p>Score: {}</p>
+
                         </div>
                     }
                     {/* Repeat similar code for other option types like dropdown, linear, grid, etc. */}
@@ -476,6 +536,9 @@ const Questions = (triggerRefresh ) => {       //
                         </table>
                     )}
                     {/* Include marks, country, explanation, and other details */}
+                    {/* <p>Score: {score}</p> */}
+                    {/* <button onClick={calculateScore}>Marks</button> */}
+ 
                     {question.marks && <p className="question-marks">Marks: {question.marks}</p>}
                     {question.country && question.country.selectedCountry && (
                         <p className="question-country">Country: {question.country.selectedCountry}</p>

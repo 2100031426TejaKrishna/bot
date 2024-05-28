@@ -61,7 +61,7 @@ router.post('/insertQuestion', async (req, res) => {
 
           
         if (questionData.isLeadingQuestion) {
-            // questionData.recommendation = questionData.explanation;
+            questionData.recommendation = questionData.explanation;
 
             delete questionData.explanation;
             delete questionData.marks;

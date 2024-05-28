@@ -1164,10 +1164,10 @@ fetchRecommendationText = async (optionId) => {
                   checked={option.isCorrect}
                   disabled={isLeadingQuestion}
                   onChange={() => {
-                    // this.selectOptionsRadio(index, !option.isCorrect)
+                    this.selectOptionsRadio(index, !option.isCorrect)
                     // e.preventDefault(); // Prevent the default behavior
                     // e.stopPropagation(); // Stop the event from bubbling up
-                    this.toggleOptionColor(index);
+                    // this.toggleOptionColor(index);
                   }}
                 />
                 <div className="d-flex flex-grow-1 mx-2">
@@ -1271,8 +1271,8 @@ fetchRecommendationText = async (optionId) => {
         return (
           <>
             {/* Options label */}
-            console.log(----------------------------------------------);
-            console.log(questionList);
+            {/* console.log(----------------------------------------------); */}
+            {/* console.log(questionList); */}
 
             {questionList.options.map((option, index) => (
               <div key={index} className="d-flex align-items-center mb-2">
@@ -1704,18 +1704,18 @@ fetchRecommendationText = async (optionId) => {
     }));
   };
 
-  // selectOptionsRadio = (index, value) => {
-  //   this.setState((prevState) => ({
-  //     questionList: {
-  //       ...prevState.questionList,
-  //       options: prevState.questionList.options.map((option, i) =>
-  //         i === index ? {
-  //            ...option, isCorrect: value } : {...option, isCorrect: false}
+  selectOptionsRadio = (index, value) => {
+    this.setState((prevState) => ({
+      questionList: {
+        ...prevState.questionList,
+        options: prevState.questionList.options.map((option, i) =>
+          i === index ? {
+             ...option, isCorrect: value } : {...option, isCorrect: false}
          
-  //       ),
-  //     },
-  //   }));
-  // }
+        ),
+      },
+    }));
+  }
   // selectOptionsRadio = (index, value) => {
   //   this.setState((prevState) => {
   //     const updatedOptions = prevState.questionList.options.map((option, i) => {
@@ -1743,57 +1743,7 @@ fetchRecommendationText = async (optionId) => {
   //     };
   //   });
   // };
-  // selectOptionsRadio = (index, value) => {
-  //   this.setState((prevState) => {
-  //     const updatedOptions = prevState.questionList.options.map((option, i) => {
-  //       if (i === index) {
-  //         // If the option is being selected and it's already correct in the database,
-  //         // set the marks to 1, otherwise, keep it unchanged
-  //         return { ...option };
-  //       } else {
-  //         // Otherwise, keep the option unchanged
-  //         return option;
-  //       }
-  //     });
   
-  //     // Calculate marks based on the selected option
-  //     const newMarks = value && prevState.questionList.options[index].isCorrect ? 1 : 0;
-  
-  //     return {
-  //       questionList: {
-  //         ...prevState.questionList,
-  //         options: updatedOptions,
-  //         marks: newMarks,
-  //       },
-  //     };
-  //   });
-  // };
-  toggleOptionColor = (index) => {
-    this.setState((prevState) => {
-      const updatedOptions = prevState.questionList.options.map((option, i) => {
-        if (i === index) {
-          return { ...option, isSelected: !option.isSelected };
-        } else {
-          return option;
-        }
-      });
-  
-      let newMarks = prevState.questionList.marks;
-  
-      // If the selected option is already correct and it's being toggled, update marks
-      if (prevState.questionList.options[index].isCorrect && updatedOptions[index].isSelected) {
-        newMarks = 1;
-      }
-  
-      return { 
-        questionList: { 
-          ...prevState.questionList, 
-          options: updatedOptions,
-          marks: newMarks
-        } 
-      };
-    });
-  };
   
   
   
@@ -2460,8 +2410,8 @@ fetchRecommendationText = async (optionId) => {
                   className="form-control" 
                   id="formMarks" 
                   value={this.state.questionList.marks}
-                  // onChange={this.handleQuestionMarks} 
-                  disabled = {true}
+                  onChange={this.handleQuestionMarks} 
+                  // disabled = {true}
 
                 />
                 {validationErrors.marks && (
@@ -2488,6 +2438,7 @@ fetchRecommendationText = async (optionId) => {
                         className="form-check-input"
                         size={8}
                       />
+                      
                       <label htmlFor={country} className="form-check-label">
                         {country}
                       </label>
