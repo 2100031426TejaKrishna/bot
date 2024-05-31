@@ -10,9 +10,11 @@ const destination = "rtp.dusky.bond:5000";
 
 const Questions = (triggerRefresh ) => {       //
     const [questions, setQuestions] = useState([]);
+    const [showResults, setShowResults] = useState(false);
+
     const [scores,setScores] = useState([]);
     const [checkboxSelections, setCheckboxSelections] = useState({});
-    const [selectedOption, setSelectedOption] = useState(null);
+    const [selectedOption, setSelectedOption] = useState({});
     const [questionToDelete, setQuestionToDelete] = useState([]);
     const [showToast, setShowToast] = useState(false);
     const [error, setError] = useState(null);
@@ -32,7 +34,25 @@ const Questions = (triggerRefresh ) => {       //
             [optionId]: isChecked ? 1 : 0
         }));
     };
-    
+    // const handleCheck = (isChecked, optionId) => {
+    //     if (!questions.options) return; // Ensure options are defined
+    //     setCheckboxSelections(prevSelections => {
+    //         const newSelections = { ...prevSelections, [optionId]: isChecked };
+            
+    //         // Compute score based on updated selections
+    //         const correctOptions = questions.options.filter(option => option.isCorrect);
+    //         const correctOptionIds = correctOptions.map(option => option._id);
+    //         const selectedOptionIds = Object.keys(newSelections).filter(key => newSelections[key]);
+
+    //         const allCorrectSelected = correctOptionIds.every(id => selectedOptionIds.includes(id));
+    //         const noIncorrectSelected = selectedOptionIds.every(id => correctOptionIds.includes(id));
+
+    //         const newScore = allCorrectSelected && noIncorrectSelected ? 1 : 0;
+    //         setScores(newScore);
+
+    //         return newSelections;
+    //     });
+    // };
     
     
     const optionClicked = (questionIndex, isCorrect) => {
@@ -40,36 +60,8 @@ const Questions = (triggerRefresh ) => {       //
         newScores[questionIndex] = isCorrect ? 1 : 0;
         setScores(newScores);
     };
-    // const optionClicked = (questionIndex, isCorrect, optionType) => {
-    //     if (optionType === 'checkbox') {
-    //       const newScores = [...scores];
-    //       newScores[questionIndex] = calculateCheckboxScore(questionIndex);
-    //       setScores(newScores);
-    //     } else {
-    //       const newScores = [...scores];
-    //       newScores[questionIndex] = isCorrect ? 1 : 0;
-    //       setScores(newScores);
-    //     }
-    //   };
-      
-    //   const calculateCheckboxScore = (questionIndex) => {
-    //     const question = questions[questionIndex];
-    //     const selectedOptions = question.options.filter(option => option.checked);
-    //     const correctOptions = question.options.filter(option => option.isCorrect);
-    //     const incorrectOptions = question.options.filter(option => !option.isCorrect);
-      
-    //     if (selectedOptions.length === 0) {
-    //       return 0;
-    //     }
-      
-    //     const allCorrectSelected = correctOptions.every(option => selectedOptions.includes(option));
-    //     const noIncorrectSelected = incorrectOptions.every(option => !selectedOptions.includes(option));
-      
-    //     return allCorrectSelected && noIncorrectSelected ? 1 : 0;
-    //   };
    
-
-      
+   
 
     // editQuestion.js refresh functionality
     const refreshQuestions = () => {
@@ -192,15 +184,15 @@ const Questions = (triggerRefresh ) => {       //
         };
     }, [clearNextQuestion, clearOptionsNextQuestion,triggerRefresh]); //trigger
      
-      
+   
+    
     const handleDelete = () => {
         // nextQuestion check
-        
         let nextQuestionCheck = false;
-        //let previousQuestionCheck = false;
-        
+        // let previousQuestionCheck = false;
+
         // Ensures that state is reset on each operation
-        if (clearNextQuestion.length >= 0 || clearOptionsNextQuestion.length >= 0) {
+        if (clearNextQuestion.length > 0 || clearOptionsNextQuestion.length > 0) {
             setClearNextQuestion([]);
             setClearOptionsNextQuestion([]);
         };
@@ -208,7 +200,7 @@ const Questions = (triggerRefresh ) => {       //
         //     setClearPreviousQuestion([]);
         //     setClearOptionsPreviousQuestion([]);
         // };
-        
+
         // Loop through questions array
         questions.forEach((question) => {
             // This works
@@ -218,46 +210,38 @@ const Questions = (triggerRefresh ) => {       //
             // Search for all cases for nextQuestion match
             if (question.nextQuestion === questionToDelete) {
                 // debug
-                console.log(`nextQuestion match: ${question.question}`)
-                
+                console.log(`nextQuestion match: ${question.question}`);
+
                 // clear logic
-                setClearNextQuestion( prevClearNextQuestion =>
-                    [
-                        ...prevClearNextQuestion,
-                        { 
-                            questionId: question._id
-                        }   
-                    ]
-                );
+                setClearNextQuestion(prevClearNextQuestion => [
+                    ...prevClearNextQuestion,
+                    {
+                        questionId: question._id
+                    }
+                ]);
                 nextQuestionCheck = true;
             }
 
             // Search for all cases for optionsNextQuestion match
-            if (question.options.length > 0) {
-                for(let i=0; i<question.options.length; i++) {
+            if (question.options?.length > 0) { // Ensure question.options is not null or undefined
+                for (let i = 0; i < question.options.length; i++) {
                     if (question.options[i].optionsNextQuestion === questionToDelete) {
                         // debug
                         console.log(`optionsNextQuestion match: ${question.question}`);
 
                         // clear logic
-                        setClearOptionsNextQuestion( prevClearOptionsNextQuestion =>
-                            [
-                                ...prevClearOptionsNextQuestion,
-                                { 
-                                    questionId: question._id,
-                                    optionsIndex: i
-                                }   
-                            ]
-                        );
+                        setClearOptionsNextQuestion(prevClearOptionsNextQuestion => [
+                            ...prevClearOptionsNextQuestion,
+                            {
+                                questionId: question._id,
+                                optionsIndex: i
+                            }
+                        ]);
                         nextQuestionCheck = true;
-                    }                        
+                    }
                 }
             }
-            
         });
-        
-        
-        // If passes nextQuestionCheck (when = false), then can delete straight away
         if (nextQuestionCheck === false) {
             deleteAction();
         }
@@ -433,7 +417,7 @@ const Questions = (triggerRefresh ) => {       //
                         </div>
                     }
                     {/* Additional code for other option types */}                                             
-                    {question.optionType === 'checkbox' && 
+                     {question.optionType === 'checkbox' && 
                         <div className="option-container">
                             {question.options && question.options.map((option,optionIndex) => (
                                 <label key={option._id}>
@@ -443,7 +427,6 @@ const Questions = (triggerRefresh ) => {       //
                                         value={option.text} 
                                         // defaultChecked={option.isCorrect}
                                         // disabled={true}  
-                                        // onChange={() =>handleCheck(option.isCorrect)}      
                                         onChange={(e) =>{ handleCheck(e.target.checked, option._id);
 
                                         } }
@@ -451,34 +434,81 @@ const Questions = (triggerRefresh ) => {       //
                                         className="form-check-input"
                                     /> 
                                     
+                                    
                                     {option.text}
                                     <p>  hint: {option.recommendation}</p>
                                     {option.nextQuestionTitle && <span className="next-question-title">Question After this... {option.nextQuestionTitle}</span>}
-                                    {/* {option.previousQuestionTitle && <span className="previous-question-title"> Previous Question: {option.previousQuestionTitle}</span>} */}
                                 </label>
                             ))}
-                                <p>Score: {}</p>
+                                <p>Score: </p>
 
                         </div>
-                    }
+                    } 
+                   
+                     
+    
                     {/* Repeat similar code for other option types like dropdown, linear, grid, etc. */}
-                    {question.optionType === 'dropdown' && (
+                    {/* {question.optionType === 'dropdown' && (
+                        <>
                         <select 
                             className="form-select" 
                             aria-label="Small select example" 
                             value={question.options.find(option => option.isCorrect)?.text || ''}
+                            onChange={(e) => {
+                                const selectedOptionIndex = parseInt(e.target.value, 10); // Ensure the value is an integer
+                                setSelectedOption(prev => ({ ...prev, [question._id]: selectedOptionIndex }));
+                                const isCorrect = question.options[selectedOptionIndex]?.isCorrect;
+                                optionClicked(index, isCorrect);
+                            }}
+
                         >
                             {question.options.map((option, index) => (
                                 <option 
                                     key={option._id} 
                                     value={option.text}>
+
                                     {option.text }
                                     <p>  hint:  { option.recommendation}</p> 
 
                                 </option>
                             ))}
+
                         </select>
-                    )}
+                        <p>Score: {scores[index]}</p>
+
+                        </>
+
+
+                    )} */}
+                    {question.optionType === 'dropdown' && (
+                            <>
+                                 <select 
+                                    className="form-select" 
+                                    aria-label="Small select example" 
+                                    value={selectedOption[question._id] || ''}
+                                    onChange={(e) => {
+                                             const selectedOptionText = e.target.value;
+                                             const selectedOptionIndex = question.options.findIndex(option => option.text === selectedOptionText);
+
+                                            setSelectedOption(prev => ({ ...prev, [question._id]: selectedOptionText }));
+                                            const newScores = [...scores];
+                                            const isCorrect = question.options[selectedOptionIndex]?.isCorrect;
+                                            setScores(newScores);
+                                            newScores[index] = isCorrect ? 1 : 0;
+                                                }}
+                                  >
+                                 <option value="" disabled>Select an option</option>
+                                        {question.options.map((option, index) => (
+                                            <option key={option._id} value={option.text}>
+                                                    {option.text}
+                                 </option>
+                                    ))}
+                                </select>
+                                                             <p>Score: {scores[index]}</p>
+                             </>
+)                   }
+
+
                     {question.optionType === 'linear' && (
                         <div className="linear-scale">
                             <div className="scale-label-left">{question.linearScale[0].label}</div>
@@ -535,6 +565,9 @@ const Questions = (triggerRefresh ) => {       //
                             </tbody>
                         </table>
                     )}
+                    
+                   
+
                     {/* Include marks, country, explanation, and other details */}
                     {/* <p>Score: {score}</p> */}
                     {/* <button onClick={calculateScore}>Marks</button> */}
@@ -542,7 +575,20 @@ const Questions = (triggerRefresh ) => {       //
                     {question.marks && <p className="question-marks">Marks: {question.marks}</p>}
                     {question.country && question.country.selectedCountry && (
                         <p className="question-country">Country: {question.country.selectedCountry}</p>
+                        
                     )}
+                    {/* { question.countries  && (
+                        <p className="question-country">Countries: {question.countries.join(', ')}</p>
+                        
+                        
+                    )} */}
+                    {question.countries && question.countries.length > 0 ? (
+                                   <p className="question-country">Countries: {question.countries.join(', ')}</p>
+                                                                        ) : (
+                                    <p className="question-country"> </p>
+                            )}
+
+                    
                     {question.explanation && <p className="question-explanation">Explanation: {question.explanation}</p>}
                     {/* Render "Next Question" details if applicable */}
                     {question.nextQuestionTitle && <p className="next-question">Question After this... {question.nextQuestionTitle}</p>}

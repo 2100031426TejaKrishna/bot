@@ -50,6 +50,10 @@ const questionSchema = new mongoose.Schema({
         type: Date,
         default: Date.now,
     },
+    countries: {
+        type: [String],
+        default: []
+    }
 });
 
 const Questions = mongoose.model('questions', questionSchema);

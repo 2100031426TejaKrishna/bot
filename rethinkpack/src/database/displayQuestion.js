@@ -95,6 +95,17 @@ router.get('/displayQuestions', async (req, res) => {
         res.status(500).send("Unable to fetch questions");
     }
 });
+router.get('/displayCountries', async(req, res) => {
+    try {
+        const questions = await fetchQuestions();
+        res.json(questions.map(que =>( {
+            countries: que.countries
+        })));
+    } catch(error){
+        res.status(500).send("Unable to fetch countries array");
+
+    }
+});
 
 router.get('/displayAllQuestions', async (req, res) => {
     try {
@@ -106,12 +117,16 @@ router.get('/displayAllQuestions', async (req, res) => {
             titleId: q.titleId,
             country: q.country,
             nestedTitle: q.nestedTitle,
-            subTitle: q.subTitle      //added
+            countries: q.countries
+            // subTitle: q.subTitle  ,    //added
+            // countries: q.countries
         })));
     } catch (error) {
         res.status(500).send("Unable to fetch questions");
     }
 });
+
+  
 
 router.get('/question/:id', async (req, res) => {
     try {
@@ -125,5 +140,6 @@ router.get('/question/:id', async (req, res) => {
         res.status(500).send("Internal Server Error");
     }
 });
+
 
 module.exports = router;

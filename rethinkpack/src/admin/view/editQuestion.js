@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component ,useState} from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
 import Modal from 'react-bootstrap/Modal';
@@ -14,6 +14,8 @@ const destination = "rtp.dusky.bond:5000";
 class EditQuestion extends Component {
   constructor(props) {
     super(props);
+    // const [selectedCountries, setSelectedCountries] = useState([]);
+
 
     // Declare all state variables to observe below
     this.state = {
@@ -73,7 +75,7 @@ class EditQuestion extends Component {
         "Vanuatu", "Vatican City", "Venezuela", "Vietnam", "Yemen",
         "Zambia", "Zimbabwe"
       ],
-      selectedCountry: [], // omit this line when `selectedCountry` is redundant
+      selectedCountries: [], // omit this line when `selectedCountry` is redundant
       country: {
         selectedCountry: '',
         countryFirstQuestion: false
@@ -271,14 +273,17 @@ class EditQuestion extends Component {
 
   fetchQuestions = async () => {
     try {
+      // const selectedCountries = this.state.selectedCountries; // Assuming this.state.selectedCountries contains the selected countries
+
       const response = await fetch(`http://${destination}/api/displayAllQuestions`);
+     
       const questions = await response.json();
       this.setState({ allQuestions: questions });
     } catch (error) {
       console.error('Error fetching questions:', error);
     }
   };
-
+ 
   updateQuestion = async(questionId, dataToUpdate) => {
     try {
       const response = await fetch(`http://${destination}/api/update/${questionId}`, {
@@ -332,6 +337,7 @@ class EditQuestion extends Component {
       console.error('Error fetching questions:', error);
     }
   };
+
 // Function to fetch recommendation by Option ID
 //  fetchOptionRecommendation = async (optionId) => {
 //   try {
@@ -359,6 +365,22 @@ fetchRecommendationText = async (optionId) => {
     console.error("Error fetching option text:", error);
   }
 };
+fetchCountries = async () => {
+  try {
+    const response = await fetch(`http://${destination}/api/displayCountries`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const countriesData = await response.json();
+    return countriesData;
+  } catch (error) {
+    console.error("Error fetching countries:", error);
+  }
+  // console.log(countriesData);
+
+  
+};
+
 
 /*-------------MODAL-----------------*/
 
@@ -368,6 +390,8 @@ fetchRecommendationText = async (optionId) => {
     editQuestionModal.addEventListener('hidden.bs.modal', this.resetState);
     this.fetchFilteredQuestions();
     this.fetchTitles();
+    // this.fetchQuestions();
+    
   }
 
   componentDidUpdate(prevProps) {
@@ -814,7 +838,7 @@ fetchRecommendationText = async (optionId) => {
       ),
     }}) 
   };
-
+ 
   // 
   // handleOptionRecommendationChange = async (index, recommendation) => {
   //   try {
@@ -1045,44 +1069,87 @@ fetchRecommendationText = async (optionId) => {
   //   return options.some(option => option.optionsPreviousQuestion === question._id);
   // };
 
-  // handleCountryChange = (event) => {
+  
+  // handleCountryChange = (event, country) => {
   //   const { value } = event.target;
   //   this.setState((prevState) => {
-  //     if (prevState.selectedCountries.includes(value)) {
+  //     if (prevState.country.selectedCountry.includes(value)) {
   //       return {
-  //         selectedCountries: prevState.selectedCountries.filter(
-  //           (country) => country !== value
-  //         ),
+  //         country: {
+  //           ...prevState.country,
+  //           selectedCountry: prevState.country.selectedCountry.filter(
+  //             (selectedCountry) => selectedCountry !== value
+  //           ),
+  //         },
   //       };
   //     } else {
   //       return {
-  //         selectedCountries: [...prevState.selectedCountries, value],
+  //         country: {
+  //           ...prevState.country,
+  //           selectedCountry: [...prevState.country.selectedCountry, value],
+  //         },
   //       };
   //     }
   //   });
+  // }
+ //This makes u check all the selected countries in an array.
+  handleCountryChange(event, country) {
+    const isChecked = event.target.checked;
+    const {allQuestions} = this.state;
+    if (isChecked) {
+      this.setState(prevState => ({
+        selectedCountries: [...prevState.selectedCountries, country]
+      }), () => {
+        console.log('Selected countries:', this.state.selectedCountries);
+        // this.updateCountriesInQuestions();
+        
+        
 
-  handleCountryChange = (event, country) => {
-    const { value } = event.target;
-    this.setState((prevState) => {
-      if (prevState.country.selectedCountry.includes(value)) {
-        return {
-          country: {
-            ...prevState.country,
-            selectedCountry: prevState.country.selectedCountry.filter(
-              (selectedCountry) => selectedCountry !== value
-            ),
-          },
-        };
-      } else {
-        return {
-          country: {
-            ...prevState.country,
-            selectedCountry: [...prevState.country.selectedCountry, value],
-          },
-        };
-      }
-    });
+      });
+    } else {
+      this.setState(prevState => ({
+        selectedCountries: prevState.selectedCountries.filter(c => c !== country)
+      }), () => {
+        console.log('Selected countries:', this.state.selectedCountries);
+        // this.updateCountriesInQuestions();
+        
+
+      });
+    }
   }
+  
+// to update api countries
+// updateCountriesInQuestions = async () => {
+//   const { allQuestions } = this.state;
+  
+//   try {
+    
+//     const questions = await response.json();
+
+//     // Update countries array in each question
+//     const updatedQuestions = questions.map(question => ({
+//       ...question,
+//       countries: selectedCountries
+//     }));
+
+//     // Send a PUT request to update questions with new countries array
+//     const updateResponse = await fetch(url, {
+//       method: 'PUT', // or 'PATCH' depending on your API
+//       headers: {
+//         'Content-Type': 'application/json'
+//       },
+//       body: JSON.stringify(updatedQuestions)
+//     });
+
+//     if (!updateResponse.ok) {
+//       throw new Error('Failed to update countries in questions');
+//     }
+
+//     console.log('Countries updated successfully in questions');
+//   } catch (error) {
+//     console.error('Error updating countries in questions:', error);
+//   }
+// };
 
   toggleCountryFirstQuestion = () => {
     this.setState(prevState => ({
@@ -1091,8 +1158,9 @@ fetchRecommendationText = async (optionId) => {
         countryFirstQuestion: !prevState.country.countryFirstQuestion,
       },
     }));
-  }
-
+  };
+  //try
+ 
 //------------------ OPTIONS ----------------------------------  
   renderOptionsArea = () => {
     const { options,  gridOptions, requireResponse, isLeadingQuestion, questionList, allQuestions, validationErrors, openEndedWordLimit, openEndedWordCount } = this.state;
@@ -1646,8 +1714,96 @@ fetchRecommendationText = async (optionId) => {
 
         return (
           <>
+               {questionList.options.map((option, index) => (
+              <div key={index} className="d-flex align-items-center mb-2">
+                
+                <div className="d-flex flex-grow-1 mx-2">
+                <InputGroup>
+                <Form.Control 
+                  id="formOpenEnded"
+                  className="form-control mx-2"
+                  as="textarea" 
+                  aria-label="With textarea"
+                  value={questionList.options[index].text}
+                  onChange={(e) => this.handleOptionChangeText(index, e.target.value)}
+                  />
+              </InputGroup>
+                  {/* <input
+                    type="textarea"
+                    id={`formOptions-${index}`}
+                    className="form-control mx-2"
+                    value={questionList.options[index].text}
+                    onChange={(e) => this.handleOptionChangeText(index, e.target.value)}
+                    // onChange={(e) => this.handleOptionChangeText(index, questionList.options[index].text, e.target.value)}
+                    placeholder={`Enter the text:`}
+                    style={{ flex: '1' }}
+                  /> */}
+                  <InputGroup>
+                  <Form.Control
+              type="text"
+              className="form-control mx-2"
+              as = "textarea"
+              // value={questionList.options[index].recommendation}
+              // value={this.state.recommendation}
 
-            <label htmlFor="question" className="col-form-label">
+              onChange={(e) => this.handleOptionRecommendationChange(index, e.target.value)}
+              placeholder="Recommendation"
+            />
+            </InputGroup>
+                  {/* <RecommendationComponent  /> */}
+                  
+                  {console.log(this.props.name)}
+                  {/* New input field for recommendation */}
+          {/* <input
+            type="text"
+            className="form-control mx-2"
+            placeholder="Recommendation"
+            value={option.recommendation}
+            onChange={(e) => this.handleOptionRecommendationChange(index, e.target.value)}
+          /> */}
+                  {isLeadingQuestion && (
+                      <select
+                        className="form-select mx-2"
+                        style={{ flex: '1' }}
+                        value={questionList.options[index].optionsNextQuestion}
+                        onChange={(e) => this.handleOptionsNextQuestionChange(index, e.target.value)}
+                      >
+                        <option value="">Select Question After this...</option>
+                        {allQuestions.map((question) => (
+                          <option key={question._id} value={question._id}>
+                            {question.question}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  {/* {isLeadingQuestion && (
+                      <select
+                        className="form-select mx-2"
+                        style={{ flex: '1' }}
+                        value={questionList.options[index].optionsPreviousQuestion}
+                        onChange={(e) => this.handleOptionsPreviousQuestionChange(index, e.target.value)}
+                      >
+                        <option value="">Select Previous Question</option>
+                        {allQuestions.map((question) => (
+                          <option key={question._id} value={question._id}>
+                            {question.question}
+                          </option>
+                        ))}
+                      </select>
+                    )} */}
+                </div>
+                {questionList.options.length > 1 && (
+                  <button
+                    className="btn btn-outline-secondary"
+                    type="button"
+                    onClick={() => this.deleteOption(index)}
+                  >
+                    &times;
+                  </button>
+                )}
+              </div>
+            ))}
+             {/* <label htmlFor="question" className="col-form-label">
               Content:
             </label>
             <div>
@@ -1671,7 +1827,7 @@ fetchRecommendationText = async (optionId) => {
                     {validationErrors.openEnded}
                   </div>
                 )}
-            </div>
+            </div> */}
           </>
         );
 
@@ -1925,7 +2081,7 @@ fetchRecommendationText = async (optionId) => {
   
   validateOptions = () => {
     const { questionList, isLeadingQuestion } = this.state;
-    if (questionList.optionType === 'linear' || questionList.optionType === 'multipleChoiceGrid' || questionList.optionType === 'checkboxGrid') {
+    if (questionList.optionType === 'linear' || questionList.optionType === 'multipleChoiceGrid' || questionList.optionType === 'checkboxGrid'|| questionList.optionType === 'openEnded') {
       return true;
     }
 
@@ -2008,18 +2164,20 @@ fetchRecommendationText = async (optionId) => {
   };
 
   validateCountry = () => {
-    const { country, showCountry } = this.state;
+    const { countries, showCountry } = this.state;
     // Case: when "Specific Country" is switched on
     if (showCountry) {
-      // Case: when a selectedCountry has been set
-      if (country.selectedCountry) {
-        return true;
-      }
-      else {
-        return false;
-      }
-    } else {
       return true;
+      // Case: when a selectedCountry has been set
+    //   if (countries ) {
+    //     return true;
+    //   }
+    //   else {
+    //     return false;
+    //   }
+    // } else {
+    //   return true;
+    // }
     }
   };
 
@@ -2073,7 +2231,7 @@ fetchRecommendationText = async (optionId) => {
 
   handleSubmit = async (e) => {
     e.preventDefault();
-
+    
     const isTitleSelectValid = this.validateTitleSelect();
     const isQuestionValid = this.validateQuestion();
     const isOptionTypeValid = this.validateOptionType();
@@ -2131,6 +2289,7 @@ fetchRecommendationText = async (optionId) => {
       questionList,
       questionId,
       selectedTitle,
+      selectedCountries,
       showFirstQuestionNestedTitleOption,
       showFirstQuestionSubTitleOption,
       nestedTitle,
@@ -2146,7 +2305,7 @@ fetchRecommendationText = async (optionId) => {
       linearScale: questionList.linearScale,
       openEndedText: questionList.openEndedText,
       marks: isLeadingQuestion ? undefined : parseFloat(questionList.marks),
-      countries: showCountry ? selectedCountry : undefined,
+      countries: showCountry ? selectedCountries : undefined,
       explanation: showExplanation ? explanation : undefined,
       isLeadingQuestion,
       showCountry,
@@ -2207,7 +2366,7 @@ fetchRecommendationText = async (optionId) => {
 
   render() {
 
-    const { questionList,selectedTitle, selectedTitleQuestions, showCountry, countries, selectedCountry, isLeadingQuestion, showExplanation, validationErrors, questionId, questionIndex, allQuestions, allTitles, showModal, showFirstQuestionNestedTitleOption,showFirstQuestionSubTitleOption,subTitle, nestedTitle,nextQuestion,showNextQuestion,nestedTitleFirstQuestionRender,subTitleFirstQuestionRender, country } = this.state;
+    const { questionList,selectedTitle, selectedTitleQuestions,selectedCountries,showCountry, countries, isLeadingQuestion, showExplanation, validationErrors, questionId, questionIndex, allQuestions, allTitles, showModal, showFirstQuestionNestedTitleOption,showFirstQuestionSubTitleOption,subTitle, nestedTitle,nextQuestion,showNextQuestion,nestedTitleFirstQuestionRender,subTitleFirstQuestionRender, country } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
     const { filteredQuestions } = this.state;
     // const { recommendation } = this.state;
@@ -2425,6 +2584,7 @@ fetchRecommendationText = async (optionId) => {
             {/* Specific Country */}
             {showCountry && (
               <div className="mb-3">
+                <p> SELECT A COUNTRY HERE BELOW IF YOU CHOSE A COUNTRY IN THE CREATE QUESTION</p>
                 <label className="col-form-label">Country:</label>
                 <div style={{ maxHeight: '130px', overflowY: 'auto'}}>
                   {countries.map((country, index) => (
@@ -2433,12 +2593,17 @@ fetchRecommendationText = async (optionId) => {
                         type="checkbox"
                         id={country}
                         value={country}
-                        checked={this.state.country.selectedCountry.includes(country)}
+                        checked={selectedCountries.includes(country)}
+                        // checked={this.state.selectedCountries.includes(country)}
+                        // checked={this.state.country.selectedCountry === country}
+                        // onChange={this.handleCountryChange}
+
                         onChange={(event) => this.handleCountryChange(event,country)}
-                        className="form-check-input"
+                        // className="form-check-input"
+                        className='form-check-input'
                         size={8}
                       />
-                      
+                      {console.log()}
                       <label htmlFor={country} className="form-check-label">
                         {country}
                       </label>
