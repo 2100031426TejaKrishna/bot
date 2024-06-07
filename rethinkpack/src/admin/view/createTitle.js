@@ -3,8 +3,8 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
 import Modal from 'react-bootstrap/Modal';
 
-// const destination = "localhost:5000";
-const destination = "rtp.dusky.bond:5000";
+const destination = "localhost:5000";
+// const destination = "rtp.dusky.bond:5000";
 
 class CreateTitle extends Component {
   constructor(props) {

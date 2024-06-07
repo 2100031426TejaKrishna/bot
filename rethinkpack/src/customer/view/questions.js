@@ -2,17 +2,11 @@ import React, { useEffect, useState, useRef } from 'react';
 import './questions.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate hook
+import { useNavigate } from 'react-router-dom';
 
 const Questions = () => {
     const [questions, setQuestions] = useState([]);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-    const [titleDetails, setTitleDetails] = useState({
-        title: '',
-        subtitle: '',
-        nestedTitle: '',
-    });
-    const [titlesDetails, setTitlesDetails] = useState([]);
     const [currentAnswer, setCurrentAnswer] = useState('');
     const [selectedOptions, setSelectedOptions] = useState([]);
     const [gridAnswers, setGridAnswers] = useState({});
@@ -22,15 +16,22 @@ const Questions = () => {
     const [canProceed, setCanProceed] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [answers, setAnswers] = useState({});
-    const [uniqueQuestions, setUniqueQuestions] = useState([]);
-    const [isLastQuestion, setIsLastQuestion] = useState(false);
     const [navigationHistory, setNavigationHistory] = useState([]);
     const [showModal, setShowModal] = useState(false);
-    const [selectedCountry, setSelectedCountry] = useState('');
-    const [showCountrySelection, setShowCountrySelection] = useState(true);
-    const [countrySpecificQuestions, setCountrySpecificQuestions] = useState([]);
-    const [hasSelectedCountries, setHasSelectedCountries] = useState(false);
+    const [showCountrySelectionModal, setShowCountrySelectionModal] = useState(false);
+    const [selectedCountries, setSelectedCountries] = useState([]);
+    const [showCountrySelection, setShowCountrySelection] = useState(false);
+    const [generalQuestions, setGeneralQuestions] = useState([]);
+    const [currentStage, setCurrentStage] = useState('general');
+    const [filteredCountries, setFilteredCountries] = useState([]);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [recommendations, setRecommendations] = useState({});
+    const [currentTitle, setCurrentTitle] = useState('');
+    const [sortedQuestions, setSortedQuestions] = useState([]); // New state for sorted questions
+    
+
     const countries = [
+        // List of countries...
         "Afghanistan", "Albania", "Algeria", "Andorra", "Angola",
         "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria",
         "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh", "Barbados",
@@ -72,74 +73,60 @@ const Questions = () => {
         "Vanuatu", "Vatican City", "Venezuela", "Vietnam", "Yemen",
         "Zambia", "Zimbabwe"
     ];
-    const [filteredCountries, setFilteredCountries] = useState(countries);
-    const [searchQuery, setSearchQuery] = useState('');
     const countryRefs = useRef(countries.reduce((acc, country) => {
         acc[country] = React.createRef();
         return acc;
     }, {}));
-
-    const navigate = useNavigate(); // Initialize the useNavigate hook
-    // const destination = "localhost:5000";
-    const destination = "rtp.dusky.bond:5000";
+    const navigate = useNavigate();
+    const destination = "localhost:5000";
 
     useEffect(() => {
-        const fetchQuestionsDetails = async () => {
+        const fetchGeneralQuestions = async () => {
             try {
-                const response = await fetch(`http://${destination}/api/fetchQuestionsDetails`);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const data = await response.json();
-                setTitlesDetails(data); // Store fetched title details
+                const response = await fetch(`http://${destination}/api/fetchGeneralQuestions`);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const generalQuestions = await response.json();
+                setGeneralQuestions(generalQuestions);
+                setQuestions(generalQuestions);
                 setIsLoading(false);
-                console.log("Questions Details: ", data);
             } catch (error) {
-                console.error("Error fetching titles with details:", error);
-            }
-        };
-
-        fetchQuestionsDetails();
-    }, []);
-
-    useEffect(() => {
-        const fetchAllQuestions = async () => {
-            try {
-                const generalResponse = await fetch(`http://${destination}/api/fetchGeneralQuestions`);
-                if (!generalResponse.ok) throw new Error(`HTTP error! status: ${generalResponse.status}`);
-                const generalQuestions = await generalResponse.json();
-
-                const countryResponse = await fetch(`http://${destination}/api/fetchQuestionsByCountries`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ countries: [selectedCountry] }),
-                });
-                if (!countryResponse.ok) throw new Error(`HTTP error! status: ${countryResponse.status}`);
-                const countryQuestions = await countryResponse.json();
-                console.log("Fetched Questions:", countryQuestions);  // Log the fetched data for debugging
-                
-                // Merge general and country-specific questions
-                const allQuestions = [...generalQuestions, ...countryQuestions];
-                setQuestions(allQuestions);
-                setIsLoading(false);
-                if (allQuestions.length > 0) {
-                    setCurrentQuestionIndex(0);
-                }
-            } catch (error) {
-                console.error("Error fetching questions:", error);
+                console.error("Error fetching general questions:", error);
                 setIsLoading(false);
             }
         };
-
-        if (selectedCountry) {
-            fetchAllQuestions();
-        }
-    }, [selectedCountry]);
+        fetchGeneralQuestions();
+    }, [destination]);
 
     useEffect(() => {
         if (questions.length === 0) return;
         const currentQuestion = questions[currentQuestionIndex];
-        if (!currentQuestion) return;
+        if (!currentQuestion) {
+            setCurrentTitle('');
+            return;
+        }
+
+        const fetchTitleForQuestion = async (questionId) => {
+            try {
+                console.log(`Fetching title for question ID: ${questionId}`); // Debugging statement
+                const response = await fetch(`http://${destination}/api/fetchTitleForQuestion/${questionId}`);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const { title, subtitle, nestedTitle } = await response.json();
+                const formattedTitle = [title, subtitle, nestedTitle].filter(Boolean).join(' > ');
+                setCurrentTitle(formattedTitle);
+
+                console.log(`Question ID: ${questionId}, Title: ${formattedTitle}`); // Debugging statement
+
+            } catch (error) {
+                if (error.message.includes('404')) {
+                    console.error(`Error 404: Title for question ID ${questionId} not found`);
+                } else {
+                    console.error("Error fetching title for question:", error);
+                }
+                setCurrentTitle('');
+            }
+        };
+
+        fetchTitleForQuestion(currentQuestion._id);
 
         let answer = answers[currentQuestionIndex];
         const prevAnswer = answers[currentQuestionIndex];
@@ -164,9 +151,38 @@ const Questions = () => {
             setGridAnswers({});
             setCanProceed(false);
         }
+
+        if (currentQuestion.options) {
+            currentQuestion.options.forEach(async (option) => {
+                try {
+                    const response = await fetch(`http://${destination}/api/recommendationText/${option._id}`);
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    const { recommendations } = await response.json();
+                    setRecommendations((prevRecommendations) => ({
+                        ...prevRecommendations,
+                        [option._id]: recommendations
+                    }));
+                } catch (error) {
+                    console.error("Error fetching recommendation:", error);
+                }
+            });
+        }
     }, [currentQuestionIndex, answers, questions]);
 
-    const handleAnswerChange = (event, optionType) => {
+    // Updated sorting function
+    useEffect(() => {
+        if (questions.length > 0) {
+            const sorted = [...questions].sort((a, b) => {
+                const titleA = (a.title || '').toLowerCase();
+                const titleB = (b.title || '').toLowerCase();
+                return titleA.localeCompare(titleB);
+            });
+            setSortedQuestions(sorted);
+            console.log("Sorted Questions:", sorted); // Debugging statement
+        }
+    }, [questions]);
+
+    const handleAnswerChange = async (event, optionType) => {
         if (optionType === 'checkbox') {
             const updatedOptions = event.target.checked
                 ? [...selectedOptions, event.target.value]
@@ -186,6 +202,7 @@ const Questions = () => {
     };
 
     const handleGridAnswerChange = (rowIndex, colIndex, optionType) => {
+        const currentQuestion = sortedQuestions[currentQuestionIndex];
         setGridAnswers((prevGridAnswers) => {
             const newGridAnswers = { ...prevGridAnswers };
 
@@ -203,7 +220,7 @@ const Questions = () => {
             }
 
             updateAnswers(newGridAnswers);
-            const isValid = validateGridAnswersWithTempAnswers(newGridAnswers);
+            const isValid = validateGridAnswersWithTempAnswers(newGridAnswers, currentQuestion);
             setCanProceed(isValid);
 
             return newGridAnswers;
@@ -234,15 +251,14 @@ const Questions = () => {
     };
 
     const handleNextQuestion = () => {
-        const currentQuestion = questions[currentQuestionIndex];
+        const currentQuestion = sortedQuestions[currentQuestionIndex];
         let newAnswer;
 
         if (currentQuestion.optionType === 'openEnded' && !canProceed) {
             alert("Please enter some text for the open-ended question before proceeding.");
-            return; // Prevent moving to the next question if no input is provided
+            return;
         }
 
-        // Determine the new answer based on the question type
         if (currentQuestion.optionType === 'checkbox') {
             newAnswer = selectedOptions;
         } else if (currentQuestion.optionType.includes('Grid')) {
@@ -253,21 +269,22 @@ const Questions = () => {
             newAnswer = currentAnswer;
         }
 
-        // Update answers state with the new answer
         updateAnswers(newAnswer);
 
         setNavigationHistory((prevHistory) => [...prevHistory, currentQuestionIndex]);
 
-        if (currentQuestionIndex < questions.length - 1) {
+        if (currentQuestionIndex < sortedQuestions.length - 1) {
             setCurrentQuestionIndex(currentQuestionIndex + 1);
-        } else {
-            setIsLastQuestion(true);
+            setRecommendations({}); // Clear recommendations when moving to next question
+        } else if (currentStage === 'general') {
+            setShowCountrySelection(true);
         }
     };
 
     const handlePreviousQuestion = () => {
         if (currentQuestionIndex > 0) {
             setCurrentQuestionIndex(currentQuestionIndex - 1);
+            setRecommendations({}); // Clear recommendations when moving to previous question
 
             const prevQuestionAnswers = answers[currentQuestionIndex - 1];
             if (Array.isArray(prevQuestionAnswers)) {
@@ -278,13 +295,12 @@ const Questions = () => {
                 setCurrentAnswer(prevQuestionAnswers || '');
             }
 
-            setIsLastQuestion(false);
             setCanProceed(true);
         }
     };
 
     const handleClearSelection = () => {
-        const currentQuestion = questions[currentQuestionIndex];
+        const currentQuestion = sortedQuestions[currentQuestionIndex];
 
         if (currentQuestion.optionType === 'checkboxGrid' || currentQuestion.optionType === 'multipleChoiceGrid') {
             const resetGridAnswers = {};
@@ -304,62 +320,141 @@ const Questions = () => {
         setCanProceed(false);
     };
 
-    if (isLoading) {
-        return <div>Loading questions details...</div>;
-    }
+    const handleCountrySelect = (country) => {
+        setSelectedCountries((prevSelectedCountries) =>
+            prevSelectedCountries.includes(country)
+                ? prevSelectedCountries.filter((c) => c !== country)
+                : [...prevSelectedCountries, country]
+        );
+    };
 
-    if (!titlesDetails.length) {
-        return <div>No questions details available</div>;
-    }
+    const handleCountrySelectionConfirm = () => {
+        const currentQuestion = sortedQuestions[currentQuestionIndex];
+        let newAnswer;
 
-    const currentQuestion = questions[currentQuestionIndex];
+        if (currentQuestion.optionType === 'checkbox') {
+            newAnswer = selectedOptions;
+        } else if (currentQuestion.optionType.includes('Grid')) {
+            newAnswer = gridAnswers;
+        } else if (currentQuestion.optionType === 'openEnded') {
+            newAnswer = openEndedText;
+        } else {
+            newAnswer = currentAnswer;
+        }
+
+        updateAnswers(newAnswer);
+        setShowCountrySelectionModal(true);
+    };
+
+    const handleCountrySelectionModalConfirm = async () => {
+        if (selectedCountries.length > 0) {
+            setShowCountrySelection(false);
+            setShowCountrySelectionModal(false);
+
+            try {
+                const response = await fetch(`http://${destination}/api/fetchQuestionsByCountries`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ countries: selectedCountries }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error on fetchQuestionsByCountries endpoint! status: ${response.status}`);
+                }
+
+                const countrySpecificQuestions = await response.json();
+                console.log("Specific country questions:", countrySpecificQuestions);
+
+                if (countrySpecificQuestions.length === 0) {
+                    alert("No questions available for the selected countries.");
+                    setShowCountrySelection(true);
+                    setCurrentStage('general');
+                    return;
+                }
+
+                const allQuestions = [
+                    ...generalQuestions,
+                    ...countrySpecificQuestions
+                ];
+                setQuestions(allQuestions);
+                setCurrentQuestionIndex(generalQuestions.length); // Start from the first country-specific question
+                setCurrentStage('country');
+                setIsLoading(false);
+
+            } catch (error) {
+                console.error("Error processing countries or fetching related questions:", error);
+            }
+        } else {
+            alert("Please select at least one country.");
+        }
+    };
+
+    const handleSearchChange = (event) => {
+        const query = event.target.value.toLowerCase();
+        setSearchQuery(query);
+
+        const filtered = countries.filter(country =>
+            country.toLowerCase().includes(query)
+        );
+
+        setFilteredCountries(filtered);
+    };
+
+    const scrollToCountry = (countryName) => {
+        const countryRef = countryRefs.current[countryName];
+
+        if (countryRef && countryRef.current) {
+            countryRef.current.scrollIntoView({
+                behavior: "smooth",
+                block: "nearest"
+            });
+        }
+    };
 
     const handleSubmit = () => {
+        const currentQuestion = sortedQuestions[currentQuestionIndex];
+        let newAnswer;
+
+        if (currentQuestion.optionType === 'checkbox') {
+            newAnswer = selectedOptions;
+        } else if (currentQuestion.optionType.includes('Grid')) {
+            newAnswer = gridAnswers;
+        } else if (currentQuestion.optionType === 'openEnded') {
+            newAnswer = openEndedText;
+        } else {
+            newAnswer = currentAnswer;
+        }
+
+        updateAnswers(newAnswer);
         setShowModal(true);
     };
 
-    const handleConfirmSubmit = async () => {
-        setShowModal(false);
+    const handleConfirmSubmit = () => {
+        const currentQuestion = sortedQuestions[currentQuestionIndex];
         const lastAnswer = currentQuestion.optionType.includes('Grid') ? gridAnswers : currentQuestion.optionType === 'checkbox' ? selectedOptions : currentAnswer;
         updateAnswers(lastAnswer);
 
-        const answeredQuestions = questions.filter((question, index) => {
+        const answeredQuestions = sortedQuestions.map((question, index) => {
             const answer = answers[index];
-            return answer !== undefined && ((Array.isArray(answer) && answer.length > 0) || (typeof answer === 'string' && answer.trim() !== '') || (typeof answer === 'object' && Object.keys(answer).length > 0));
-        });
-
-        const formattedResponses = answeredQuestions.map((question, index) => {
-            const answerForQuestion = answers[index];
             return {
                 questionId: question._id,
-                answer: answerForQuestion,
+                question: question.question,
+                answer: answer,
             };
         });
 
-        console.log("Submitted Answers:", formattedResponses);
+        console.log("Submitted Answers:", answeredQuestions)
 
-        const userId = "1";
+        localStorage.setItem('surveyResponses', JSON.stringify(answeredQuestions));
 
-        try {
-            const response = await fetch(`http://${destination}/api/submitResponse`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ userId, responses: formattedResponses, selectedCountry }),
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            console.log("Response submitted successfully");
-            
-            // Navigate to the result page after successful submission
-            navigate('/result');
-        } catch (error) {
-            console.error("Error submitting response:", error);
-        }
+        navigate('/result');
     };
+
+    if (isLoading) {
+        return <div>Loading questions...</div>;
+    }
+
+    const showCountrySelectionButton = currentStage === 'general' && currentQuestionIndex === sortedQuestions.length - 1;
 
     const renderOptions = (question) => {
         if (!question) return null;
@@ -371,11 +466,16 @@ const Questions = () => {
                             type="radio"
                             id={`option_${index}`}
                             value={option.text}
-                            onChange={handleAnswerChange}
+                            onChange={(e) => handleAnswerChange(e, 'multipleChoice')}
                             checked={currentAnswer === option.text}
                             className="form-check-input"
                         />
                         <label htmlFor={`option_${index}`}>{option.text}</label>
+                        {recommendations[option._id] && (
+                            <div className="recommendation-text">
+                                <strong>Recommendation:</strong> {recommendations[option._id]}
+                            </div>
+                        )}
                     </div>
                 ));
             case 'checkbox':
@@ -390,6 +490,11 @@ const Questions = () => {
                             className="form-check-input"
                         />
                         <label htmlFor={`option_${index}`}>{option.text}</label>
+                        {recommendations[option._id] && (
+                            <div className="recommendation-text">
+                                <strong>Recommendation:</strong> {recommendations[option._id]}
+                            </div>
+                        )}
                     </div>
                 ));
             case 'dropdown':
@@ -483,88 +588,20 @@ const Questions = () => {
                         </div>
                     </>
                 );
+            case 'debug':
+                return (
+                    <pre>{JSON.stringify(question.options, null, 2)}</pre>
+                );
             default:
                 return null;
         }
     };
 
-    const handleCountrySelect = (country) => {
-        setSelectedCountry(country);
-    };
-
-    const handleCountrySelectionConfirm = async () => {
-        if (selectedCountry) {
-            setShowCountrySelection(false);
-            setHasSelectedCountries(true);
-
-            try {
-                let response = await fetch(`http://${destination}/api/selectedCountries`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ countries: [selectedCountry] }),
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error on selectedCountries endpoint! status: ${response.status}`);
-                }
-
-                response = await fetch(`http://${destination}/api/fetchQuestionsByCountries`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ countries: [selectedCountry] }),
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error on fetchQuestionsByCountries endpoint! status: ${response.status}`);
-                }
-
-                const countrySpecificQuestions = await response.json();
-                console.log("Specific country questions:", countrySpecificQuestions);
-
-                setCountrySpecificQuestions(countrySpecificQuestions);
-                setQuestions(countrySpecificQuestions); // Update questions with country-specific questions
-                setCurrentQuestionIndex(0); // Reset to the first question of the country-specific questions
-                setIsLoading(false);
-
-            } catch (error) {
-                console.error("Error processing countries or fetching related questions:", error);
-            }
-        } else {
-            alert("Please select a country.");
-        }
-    };
-
-    const handleSearchChange = (event) => {
-        const query = event.target.value.toLowerCase();
-        setSearchQuery(query);
-
-        const filtered = countries.filter(country =>
-            country.toLowerCase().includes(query)
-        );
-
-        setFilteredCountries(filtered);
-    };
-
-    const scrollToCountry = (countryName) => {
-        const countryRef = countryRefs.current[countryName];
-
-        if (countryRef && countryRef.current) {
-            countryRef.current.scrollIntoView({
-                behavior: "smooth",
-                block: "nearest"
-            });
-        }
-    };
-
-    if (showCountrySelection) {
+    const renderCountrySelection = () => {
         return (
             <div className="survey-questions-container">
                 <div className="survey-questions-card">
-                    <h5>Select which country to export</h5>
+                    <h5>Select countries to export</h5>
                     <div className="input-group mb-3 search-input-group">
                         <span className="input-group-text" id="basic-addon1">
                             <FontAwesomeIcon icon={faSearch} className="search-icon" />
@@ -588,11 +625,11 @@ const Questions = () => {
                         {filteredCountries.map((country, index) => (
                             <div key={index} ref={countryRefs.current[country]}>
                                 <input
-                                    type="radio"
+                                    type="checkbox"
                                     id={`country_${country}`}
                                     value={country}
                                     onChange={() => handleCountrySelect(country)}
-                                    checked={selectedCountry === country}
+                                    checked={selectedCountries.includes(country)}
                                     className="form-check-input"
                                 />
                                 <label htmlFor={`country_${country}`}>{country}</label>
@@ -604,31 +641,34 @@ const Questions = () => {
                     <button
                         className="survey-questions-button"
                         onClick={handleCountrySelectionConfirm}
-                        disabled={!selectedCountry}
+                        disabled={selectedCountries.length === 0}
                     >
                         Confirm
                     </button>
                 </footer>
             </div>
         );
-    }
+    };
 
     return (
         <div className="survey-questions-container">
-            {isLoading && <div>Loading questions details...</div>}
-            {!isLoading && !questions.length && <div>No questions available</div>}
-            {!isLoading && questions.length > 0 && (
+            {isLoading && <div>Loading questions...</div>}
+            {!isLoading && !sortedQuestions.length && <div>No questions available</div>}
+            {!isLoading && sortedQuestions.length > 0 && (
                 <div className="survey-questions-card">
-                    <h4>{currentQuestionIndex + 1}. {questions[currentQuestionIndex].question}</h4>
+                    {currentTitle && <h5 className="survey-questions-title">{currentTitle}</h5>}
+                    <h4>{currentQuestionIndex + 1}. {sortedQuestions[currentQuestionIndex]?.question || 'Select Country'}</h4>
                     <div className="options-container">
-                        {renderOptions(questions[currentQuestionIndex])}
+                        {renderOptions(sortedQuestions[currentQuestionIndex])}
                     </div>
                     <footer className="survey-questions-footer">
                         <div className="survey-questions-navigation-buttons">
                             {currentQuestionIndex > 0 && (
                                 <button className="survey-questions-button" onClick={handlePreviousQuestion}>Back</button>
                             )}
-                            {currentQuestionIndex < questions.length - 1 ? (
+                            {showCountrySelectionButton ? (
+                                <button className="survey-questions-button" onClick={() => setShowCountrySelection(true)}>Go to Country Selection</button>
+                            ) : currentQuestionIndex < sortedQuestions.length - 1 ? (
                                 <button className="survey-questions-button" onClick={handleNextQuestion} disabled={!canProceed || isWordCountExceeded}>Next</button>
                             ) : (
                                 <button className="survey-questions-button" onClick={handleSubmit} disabled={!canProceed || isWordCountExceeded}>Submit</button>
@@ -638,6 +678,7 @@ const Questions = () => {
                     </footer>
                 </div>
             )}
+            {showCountrySelection && renderCountrySelection()}
             {showModal && (
                 <div className="modal show" style={{ display: "block" }} tabIndex="-1">
                     <div className="modal-dialog modal-dialog-centered">
@@ -657,8 +698,26 @@ const Questions = () => {
                     </div>
                 </div>
             )}
+            {showCountrySelectionModal && (
+                <div className="modal show" style={{ display: "block" }} tabIndex="-1">
+                    <div className="modal-dialog modal-dialog-centered">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title">Confirm Navigation</h5>
+                                <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close" onClick={() => setShowCountrySelectionModal(false)}></button>
+                            </div>
+                            <div className="modal-body">
+                                <p>Are you sure you want to navigate? You can't go back once you confirm.</p>
+                            </div>
+                            <div className="modal-footer">
+                                <button type="button" className="btn btn-secondary" data-bs-dismiss="modal" onClick={() => setShowCountrySelectionModal(false)}>Close</button>
+                                <button type="button" className="btn btn-primary" onClick={handleCountrySelectionModalConfirm}>Confirm</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
-
 export default Questions;

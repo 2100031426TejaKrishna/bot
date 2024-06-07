@@ -307,8 +307,8 @@ import 'bootstrap/dist/js/bootstrap.bundle.min';
 import Modal from 'react-bootstrap/Modal';
 import './firstQuestionModal.css';
 
-// const destination = "localhost:5000";
-const destination = "rtp.dusky.bond:5000";
+const destination = "localhost:5000";
+// const destination = "rtp.dusky.bond:5000";
 
 class FirstQuestionModal extends Component {
   constructor(props) {

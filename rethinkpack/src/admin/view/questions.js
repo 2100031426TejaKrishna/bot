@@ -5,14 +5,17 @@ import duplicateQuestion from './duplicateQuestion'; // Import the duplicate fun
 
 
 // Switch URLs between Server and Local hosting here
-// const destination = "localhost:5000";
-const destination = "rtp.dusky.bond:5000";
+const destination = "localhost:5000";
+// const destination = "rtp.dusky.bond:5000";
 
 const Questions = (triggerRefresh ) => {       //
     const [questions, setQuestions] = useState([]);
     const [showResults, setShowResults] = useState(false);
 
     const [scores,setScores] = useState([]);
+    const [score, setScore] = useState(0);
+    const [checkscore, setCheckScore] = useState(0);
+
     const [checkboxSelections, setCheckboxSelections] = useState({});
     const [selectedOption, setSelectedOption] = useState({});
     const [questionToDelete, setQuestionToDelete] = useState([]);
@@ -23,37 +26,143 @@ const Questions = (triggerRefresh ) => {       //
     const [clearNextQuestion, setClearNextQuestion] = useState([]);
     //const [clearPreviousQuestion, setClearPreviousQuestion] = useState([]);
     const [clearOptionsNextQuestion, setClearOptionsNextQuestion] = useState([]);
-    const [clearOptionsPreviousQuestion, setClearOptionsPreviousQuestion] = useState([]);
+    // const [clearOptionsPreviousQuestion, setClearOptionsPreviousQuestion] = useState([]);
     const [duplicateMessage, setDuplicateMessage] = useState('');
-    const [detailsFromRecommendation, setDetailsFromRecommendation] = useState({ recommendation: '' });
-    const [checkScores, setCheckScores] = useState({});
-    const newscore =0;
-    const handleCheck = (isChecked, optionId) => {
-        setCheckScores(prevState => ({
-            ...prevState,
-            [optionId]: isChecked ? 1 : 0
-        }));
+   
+    const [selectedOptions, setSelectedOptions] = useState([]);
+    const [selectedLinearScale, setSelectedLinearScale] = useState(null);
+    const [selectedAnswers, setSelectedAnswers] = useState([]);
+    const [selectedAnswersCheck, setSelectedAnswersCheck] = useState([]);
+
+    const handleRadioChange = (rowIndex, columnIndex, question) => {
+        setSelectedAnswersCheck(prevSelectedAnswers => {
+          // Find and remove any existing answer for the same row to enforce radio behavior
+          const filteredAnswers = prevSelectedAnswers.filter(answer => answer.rowIndex !== rowIndex);
+      
+          // Add the new answer only if it's different from the previous one
+          const existingAnswer = prevSelectedAnswers.find(answer =>
+            answer.rowIndex === rowIndex && answer.columnIndex === columnIndex
+          );
+      
+          let updatedSelectedAnswers = [...filteredAnswers];
+          if (!existingAnswer) {
+            updatedSelectedAnswers.push({ rowIndex, columnIndex });
+          }
+      
+          // Log the current selection
+          console.log('Current Selection', { rowIndex, columnIndex });
+      
+          console.log('Selected Answers:', updatedSelectedAnswers);
+          calculateCheckScore(updatedSelectedAnswers, question);
+      
+          return updatedSelectedAnswers;
+        });
+      };
+    const handleCheckboxChange = (rowIndex, columnIndex,question) => {
+        setSelectedAnswers(prevSelectedAnswers => {
+            const answerIndex = prevSelectedAnswers.findIndex(answer => 
+                answer.rowIndex === rowIndex && answer.columnIndex === columnIndex
+            );
+
+            let updatedSelectedAnswers;
+            if (answerIndex >= 0) {
+                // Remove the existing answer
+                updatedSelectedAnswers = prevSelectedAnswers.filter((_, idx) => idx !== answerIndex);
+            } else {
+                // Add new answer
+                updatedSelectedAnswers = [...prevSelectedAnswers, { rowIndex, columnIndex }];
+            }
+
+            console.log('Selected Answers:', updatedSelectedAnswers);
+            calculateScore(updatedSelectedAnswers,question);
+            return updatedSelectedAnswers;
+        });
     };
-    // const handleCheck = (isChecked, optionId) => {
-    //     if (!questions.options) return; // Ensure options are defined
-    //     setCheckboxSelections(prevSelections => {
-    //         const newSelections = { ...prevSelections, [optionId]: isChecked };
-            
-    //         // Compute score based on updated selections
-    //         const correctOptions = questions.options.filter(option => option.isCorrect);
-    //         const correctOptionIds = correctOptions.map(option => option._id);
-    //         const selectedOptionIds = Object.keys(newSelections).filter(key => newSelections[key]);
+    const calculateScore = (selectedAnswers,question) => {
+        const originalAnswers = question.grid.answers.filter(answer => answer.isCorrect);
+        const isAllCorrect = originalAnswers.every(answer =>
+            selectedAnswers.some(selected =>
+                selected.rowIndex === answer.rowIndex && selected.columnIndex === answer.columnIndex
+            )
+        );
 
-    //         const allCorrectSelected = correctOptionIds.every(id => selectedOptionIds.includes(id));
-    //         const noIncorrectSelected = selectedOptionIds.every(id => correctOptionIds.includes(id));
+        const hasExtraSelections = selectedAnswers.some(selected =>
+            !originalAnswers.some(answer =>
+                selected.rowIndex === answer.rowIndex && selected.columnIndex === answer.columnIndex
+            )
+        );
 
-    //         const newScore = allCorrectSelected && noIncorrectSelected ? 1 : 0;
-    //         setScores(newScore);
+        if (isAllCorrect && !hasExtraSelections) {
+            setScore(1);
+        } else {
+            setScore(0);
+        }
+    };
 
-    //         return newSelections;
-    //     });
-    // };
+    const calculateCheckScore = (selectedAnswers,question) => {
+        const originalAnswers = question.grid.answers.filter(answer => answer.isCorrect);
+        const isAllCorrect = originalAnswers.every(answer =>
+            selectedAnswers.some(selected =>
+                selected.rowIndex === answer.rowIndex && selected.columnIndex === answer.columnIndex
+            )
+        );
+
+        const hasExtraSelections = selectedAnswers.some(selected =>
+            !originalAnswers.some(answer =>
+                selected.rowIndex === answer.rowIndex && selected.columnIndex === answer.columnIndex
+            )
+        );
+
+        if (isAllCorrect && !hasExtraSelections) {
+            setCheckScore(1);
+        } else {
+            setCheckScore(0);
+        }
+    };
+
+
+const handleLinearScaleChange = (event) => {
+    setSelectedLinearScale(event.target.value);
+};
+
+    const handleCheck = (isChecked, option, questionIndex) => {
+        setSelectedOptions((prevSelectedOptions) => {
+            let updatedSelectedOptions = [];
+            if (isChecked) {
+                // Add the option to the selectedOptions array with isCorrect property based on all options
+                updatedSelectedOptions = [...prevSelectedOptions, { ...option, isCorrect: option.isCorrect }];
+            } else {
+                // Remove the option from the selectedOptions array
+                updatedSelectedOptions = prevSelectedOptions.filter(opt => opt._id !== option._id);
+            }
     
+            // Retrieve the current question
+            const currentQuestion = questions[questionIndex];
+            if (!currentQuestion || !currentQuestion.options) {
+                // If currentQuestion or its options are not defined, return the previous selectedOptions
+                return prevSelectedOptions;
+            }
+    
+            // Calculate the score based on the updatedSelectedOptions
+            const selectedIsCorrectCount = updatedSelectedOptions.filter(opt => opt.isCorrect).length;
+            const allIsCorrectCount = currentQuestion.options.filter(opt => opt.isCorrect).length;
+            const score = selectedIsCorrectCount === allIsCorrectCount && updatedSelectedOptions.filter(opt => !opt.isCorrect).length === 0 ? 1 : 0;
+    
+            // Update the scores state
+            const newScores = [...scores];
+            newScores[questionIndex] = score;
+            setScores(newScores);
+    
+            console.log('Selected Options:', updatedSelectedOptions.map(opt => ({ text: opt.text, isCorrect: opt.isCorrect })));
+            console.log('Score:', score);
+    
+            return updatedSelectedOptions;
+        });
+    };
+    
+    
+    
+
     
     const optionClicked = (questionIndex, isCorrect) => {
         const newScores = [...scores];
@@ -419,6 +528,7 @@ const Questions = (triggerRefresh ) => {       //
                     {/* Additional code for other option types */}                                             
                      {question.optionType === 'checkbox' && 
                         <div className="option-container">
+                            {/* {console.log("before checking:", question.options)} */}
                             {question.options && question.options.map((option,optionIndex) => (
                                 <label key={option._id}>
                                      <input 
@@ -427,10 +537,16 @@ const Questions = (triggerRefresh ) => {       //
                                         value={option.text} 
                                         // defaultChecked={option.isCorrect}
                                         // disabled={true}  
-                                        onChange={(e) =>{ handleCheck(e.target.checked, option._id);
+                                        // onChange={(e) =>{ handleCheck(e.target.checked, option);
 
-                                        } }
+                                        // } }
 
+                                        onChange={(e) => { 
+                                            handleCheck(e.target.checked, option,index); 
+                                            if (e.target.checked) { // Only log when checkbox is checked
+                                                console.log('All Options (assuming all selected):', question.options.map(opt => ({ text: opt.text, isCorrect: opt.isCorrect })));
+                                            }
+                                        }}
                                         className="form-check-input"
                                     /> 
                                     
@@ -440,46 +556,15 @@ const Questions = (triggerRefresh ) => {       //
                                     {option.nextQuestionTitle && <span className="next-question-title">Question After this... {option.nextQuestionTitle}</span>}
                                 </label>
                             ))}
-                                <p>Score: </p>
+                                {/* {console.log('All Options (assuming all selected):', question.optionType === 'checkbox'&& question.question && question.options.map(opt => ({ text: opt.text, isCorrect: opt.isCorrect })))} */}
+
+                                <p>Score:{scores[index]} </p>
 
                         </div>
                     } 
                    
                      
     
-                    {/* Repeat similar code for other option types like dropdown, linear, grid, etc. */}
-                    {/* {question.optionType === 'dropdown' && (
-                        <>
-                        <select 
-                            className="form-select" 
-                            aria-label="Small select example" 
-                            value={question.options.find(option => option.isCorrect)?.text || ''}
-                            onChange={(e) => {
-                                const selectedOptionIndex = parseInt(e.target.value, 10); // Ensure the value is an integer
-                                setSelectedOption(prev => ({ ...prev, [question._id]: selectedOptionIndex }));
-                                const isCorrect = question.options[selectedOptionIndex]?.isCorrect;
-                                optionClicked(index, isCorrect);
-                            }}
-
-                        >
-                            {question.options.map((option, index) => (
-                                <option 
-                                    key={option._id} 
-                                    value={option.text}>
-
-                                    {option.text }
-                                    <p>  hint:  { option.recommendation}</p> 
-
-                                </option>
-                            ))}
-
-                        </select>
-                        <p>Score: {scores[index]}</p>
-
-                        </>
-
-
-                    )} */}
                     {question.optionType === 'dropdown' && (
                             <>
                                  <select 
@@ -509,64 +594,168 @@ const Questions = (triggerRefresh ) => {       //
 )                   }
 
 
-                    {question.optionType === 'linear' && (
-                        <div className="linear-scale">
-                            <div className="scale-label-left">{question.linearScale[0].label}</div>
-                            <div className="scale-options-horizontal">
-                                {Array.from({ length: question.linearScale[1].scale - question.linearScale[0].scale + 1 }).map((_, index) => (
-                                    <div key={index} className="scale-option-horizontal">
-                                        <label>{index + question.linearScale[0].scale}</label>
-                                        <input 
-                                            type="radio" 
-                                            name={`linearScale-${question._id}`} 
-                                            value={index + question.linearScale[0].scale} 
-                                            disabled 
-                                            className="form-check-input" 
-                                        />
-                                    </div>
-                                ))}
-                            </div>
-                            <div className="scale-label-right">{question.linearScale[1].label}</div>
-                        </div>
-                    )}
-                    {question.optionType === 'checkboxGrid' && (
-                        <table className="checkbox-grid">
-                            <thead>
-                                <tr>
-                                    <th> </th>
-                                    {question.grid.columns.map((column, columnIndex) => (
-                                        <th key={columnIndex}>{column.text}</th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {question.grid.rows.map((row, rowIndex) => (
-                                    <tr key={rowIndex}>
-                                        <td>{row.text}</td>
-                                        {question.grid.columns.map((column, columnIndex) => {
-                                            const isCorrect = question.grid.answers.some(answer => 
-                                                answer.rowIndex === rowIndex && answer.columnIndex === columnIndex && answer.isCorrect
-                                            );
-                                            return (
-                                                <td key={columnIndex}>
-                                                    <input 
-                                                        type="checkbox" 
-                                                        name={`${row.text}-${column.text}`} 
-                                                        value={`${row.text}-${column.text}`}
-                                                        checked={isCorrect}
-                                                        disabled={true}  
-                                                        className="form-check-input"
-                                                    />
-                                                </td>
-                                            )
-                                        })}
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    )}
-                    
+{question.optionType === 'linear' && (
+    <>
+    <div className="linear-scale">
+        <div className="scale-label-left">{question.linearScale[0].label}</div>
+        <div className="scale-options-horizontal">
+            {Array.from({ length: question.linearScale[1].scale - question.linearScale[0].scale + 1 }).map((_, index) => (
+                <div key={index} className="scale-option-horizontal">
+                    <label>{index + question.linearScale[0].scale}</label>
+                    <input 
+                        type="radio" 
+                        name={`linearScale-${question._id}`} 
+                        value={index + question.linearScale[0].scale} 
+                        onChange={handleLinearScaleChange} 
+                        className="form-check-input" 
+                    />
+                </div>
+            ))}
+        </div>
+        <div className="scale-label-right">{question.linearScale[1].label}</div>
+        <br></br>
+        
+    </div>
+    {selectedLinearScale !== null && (
+        <div className="selected-answer">
+            Selected Scale: {selectedLinearScale}
+        </div>
+    )}
+       </>
+)} 
+     <>
+  {question.optionType === 'multipleChoiceGrid' && (
+    <table className="multiple-choice-grid">
+      <thead>
+        <tr>
+          <th></th>
+          {question.grid.columns.map((column, columnIndex) => (
+            <th key={columnIndex}>{column.text}</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {question.grid.rows.map((row, rowIndex) => (
+          <tr key={rowIndex}>
+            <td>{row.text}</td>
+            {question.grid.columns.map((column, columnIndex) => {
+              const isSelected = selectedAnswersCheck.some(
+                answer =>
+                  answer.rowIndex === rowIndex && answer.columnIndex === columnIndex
+              );
+              return (
+                <td key={columnIndex}>
+                  <input
+                    type="radio"
+                    name={`row-${rowIndex}`}
+                    value={`${row.text}-${column.text}`}
+                    checked={isSelected}
+                    onChange={() => {
+                      handleRadioChange(rowIndex, columnIndex, question);
+                      console.log("Original Answers:", question.grid.answers);
+                    }}
+                    className="form-check-input"
+                  />
+                </td>
+              );
+            })}
+          </tr>
+        ))}
+      </tbody>
+      <p>Score: {checkscore}</p>
+
+    </table>
+  )}
+</>
+               <>
+               {question.optionType === 'checkboxGrid' && (
+                <table className="checkbox-grid">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            {question.grid.columns.map((column, columnIndex) => (
+                                <th key={columnIndex}>{column.text}</th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {question.grid.rows.map((row, rowIndex) => (
+                            <tr key={rowIndex}>
+                                <td>{row.text}</td>
+                                {question.grid.columns.map((column, columnIndex) => {
+                                    const isSelected = selectedAnswers.some(answer => 
+                                        answer.rowIndex === rowIndex && answer.columnIndex === columnIndex
+                                    );
+                                    return (
+                                        <td key={columnIndex}>
+                                            <input 
+                                                type="checkbox" 
+                                                name={`${row.text}-${column.text}`} 
+                                                value={`${row.text}-${column.text}`}
+                                                checked={isSelected}
+                                                onChange={() => {handleCheckboxChange(rowIndex, columnIndex,question) ;
+                                                    console.log("Original Answers:" ,question.grid.answers);
+
+                                                }}  
+                                                className="form-check-input"
+                                            />
+                                        </td>
+
+                                    );
+
+                                })}
+                            </tr>
+                        ))}
+                    </tbody>
+                    <p>Score: {score}</p>
+
+                </table>
+            )}
+
+            </>
                    
+                    {question.optionType === 'openEnded' && (
+    <div className="option-container">
+        <textarea
+            className="form-textarea"
+            aria-label="Open-ended input"
+            value={selectedOption[question._id] || ''}
+            onChange={(e) => {
+                const inputText = e.target.value;
+                setSelectedOption(prev => ({ ...prev, [question._id]: inputText }));
+            }}
+            placeholder="Type your answer here"
+        />
+        <button
+            className="submit-button"
+            onClick={() => {
+                const inputText = (selectedOption[question._id] || '').trim();
+                const newScores = [...scores];
+                const isCorrect = question.options.some(option => option.text.trim().toLowerCase() === inputText.toLowerCase());
+                newScores[index] = isCorrect ? 1 : 0;
+                setScores(newScores);
+                setShowResults(true); // Set a flag to show results after submission
+            }}
+        >
+            Enter
+        </button>
+        {showResults && (
+            <div>
+                <p>Score: {scores[index]}</p>
+                {question.options && question.options.map((option) => (
+                    <div key={option._id} className="option">
+                        <label>
+                            Answer :{option.text}
+                            <p>{option.recommendation}</p>
+                            {option.nextQuestionTitle && <span className="next-question-title">Question After this... {option.nextQuestionTitle}</span>}
+                        </label>
+                    </div>
+                ))}
+            </div>
+        )}
+    </div>
+)}
+
 
                     {/* Include marks, country, explanation, and other details */}
                     {/* <p>Score: {score}</p> */}

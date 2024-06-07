@@ -5,6 +5,53 @@ const mongoose = require('mongoose');
 const Titles = mongoose.model('titles');
 const Questions = mongoose.model('questions');
 
+const fetchGeneralQuestions = async () => {
+    try {
+        const generalQuestions = await Questions.find({
+            $or: [
+                { $and: [
+                     { 'country.selectedCountry': { $eq: '' } },
+                     { 'country.countryFirstQuestion': false }
+                 ]}
+            ]
+        });
+        return generalQuestions;
+    } catch (error) {
+        console.error("Error fetching general questions:", error);
+        throw error;
+    }
+};
+
+router.get('/fetchGeneralQuestions', async (req, res) => {
+    try {
+        const questions = await fetchGeneralQuestions();
+        console.log("Fetched General Questions:", questions); // Log the questions for debugging
+        res.json(questions);
+    } catch (error) {
+        res.status(500).send("Unable to fetch general questions");
+    }
+});
+
+const fetchAllQuestions = async () => {
+    try {
+        const allQuestions = await Questions.find({});
+        return allQuestions;
+    } catch (error) {
+        console.error("Error fetching all questions:", error);
+        throw error;
+    }
+};
+
+router.get('/fetchAllQuestions', async (req, res) => {
+    try {
+        const questions = await fetchAllQuestions();
+        console.log("Fetched All Questions:", questions); // Log the questions for debugging
+        res.json(questions);
+    } catch (error) {
+        res.status(500).send("Unable to fetch all questions");
+    }
+});
+
 const fetchTitleDetails = async (titleId) => {
     try {
         const title = await Titles.findById(titleId);
@@ -30,7 +77,6 @@ const fetchQuestions = async () => {
             let currentQuestion = queue.shift();
             allQuestions.set(currentQuestion._id.toString(), currentQuestion);
 
-            // Function to handle adding next questions to the queue
             const addNextQuestionToQueue = async (nextQuestionId) => {
                 if (!allQuestions.has(nextQuestionId.toString())) {
                     let nextQuestion = await Questions.findById(nextQuestionId);
@@ -40,13 +86,11 @@ const fetchQuestions = async () => {
                 }
             };
 
-            // Check and enqueue the nextQuestion if not already processed
             if (currentQuestion.nextQuestion) {
                 let nextQuestionId = new mongoose.Types.ObjectId(currentQuestion.nextQuestion);
                 await addNextQuestionToQueue(nextQuestionId);
             }
                 
-            // Process options and their nextQuestions
             if (currentQuestion.options && currentQuestion.options.length > 0) {
                 for (let option of currentQuestion.options) {
                     if (option.optionsNextQuestion) {
@@ -66,16 +110,13 @@ const fetchQuestions = async () => {
 
 const fetchQuestionsByCountries = async (selectedCountries) => {
     try {
-        // Find questions related to the selected countries
         const countrySpecificQuestions = await Questions.find({
             "country.selectedCountry": { $in: selectedCountries }
         });
 
-        // Prioritize questions where countryFirstQuestion is true
         const firstQuestions = countrySpecificQuestions.filter(question => question.country.countryFirstQuestion);
         const otherQuestions = countrySpecificQuestions.filter(question => !question.country.countryFirstQuestion);
 
-        // Concatenate the two arrays, ensuring firstQuestions come first
         const orderedQuestions = [...firstQuestions, ...otherQuestions];
 
         return orderedQuestions;
@@ -115,7 +156,7 @@ router.post('/fetchQuestionsByCountries', async (req, res) => {
 
     try {
         const questions = await fetchQuestionsByCountries(countries);
-        console.log("Questions for country:", questions);
+        console.log("Questions for countries:", questions);
         res.json(questions);
     } catch (error) {
         res.status(500).send("Unable to fetch questions by selected countries");
@@ -126,43 +167,45 @@ router.get('/fetchTitleForQuestion/:questionId', async (req, res) => {
     const { questionId } = req.params;
 
     try {
-        // Fetch the question using the provided ID
         const question = await Questions.findById(questionId);
         if (!question) {
             return res.status(404).json({ message: "Question not found" });
         }
 
-        // Extract the titleId from the question
         const { titleId } = question;
 
-        // Initialize variables to hold the title information
         let titleInfo = null;
         let subtitleInfo = null;
         let nestedTitleInfo = null;
 
-        // Fetch all titles and iterate to find the matching nested title ID
         const titles = await Titles.find();
         for (let title of titles) {
             for (let subtitle of title.title.subTitle) {
+                if (subtitle._id.toString() === titleId) {
+                    titleInfo = title.title.titleLabel;
+                    subtitleInfo = subtitle.subTitleLabel;
+                    break;
+                }
+
                 for (let nestedTitle of subtitle.nestedTitle) {
                     if (nestedTitle._id.toString() === titleId) {
-                        // Once found, set the title, subtitle, and nested title information
                         titleInfo = title.title.titleLabel;
                         subtitleInfo = subtitle.subTitleLabel;
                         nestedTitleInfo = nestedTitle.nestedTitleLabel;
                         break;
                     }
                 }
+
                 if (nestedTitleInfo) break;
             }
-            if (nestedTitleInfo) break;
+
+            if (subtitleInfo || nestedTitleInfo) break;
         }
 
-        if (!nestedTitleInfo) {
+        if (!subtitleInfo && !nestedTitleInfo) {
             return res.status(404).json({ message: "Title information not found" });
         }
 
-        // Respond with the found title information
         res.json({ title: titleInfo, subtitle: subtitleInfo, nestedTitle: nestedTitleInfo });
     } catch (error) {
         console.error("Error fetching title for question:", error);
@@ -179,12 +222,10 @@ router.get('/fetchQuestionsDetails', async (req, res) => {
                 title: title.title.titleLabel,
                 dateCreated: title.date,
                 subtitles: await Promise.all(title.title.subTitle.map(async (sub) => {
-                    const subTitleId = sub._id.toString();  // Converting MongoDB ObjectID to string if not already
-                    // Initialize a queue to process the questions in order
+                    const subTitleId = sub._id.toString();
                     let queue = [];
                     let allQuestions = new Map();
 
-                    // Find the first question for the subtitle
                     let firstSubTitleQuestion = await Questions.findOne({
                         'subTitle.id': subTitleId,
                         'subTitle.firstQuestion': true
@@ -198,7 +239,6 @@ router.get('/fetchQuestionsDetails', async (req, res) => {
                         let currentQuestion = queue.shift();
                         allQuestions.set(currentQuestion._id.toString(), currentQuestion);
 
-                        // Enqueue the next question
                         if (currentQuestion.nextQuestion) {
                             let nextQuestionId = new mongoose.Types.ObjectId(currentQuestion.nextQuestion);
                             if (!allQuestions.has(nextQuestionId.toString())) {
@@ -209,7 +249,6 @@ router.get('/fetchQuestionsDetails', async (req, res) => {
                             }
                         }
 
-                        // Enqueue the next questions from options
                         if (currentQuestion.options && currentQuestion.options.length > 0) {
                             for (let option of currentQuestion.options) {
                                 if (option.optionsNextQuestion) {
@@ -225,17 +264,14 @@ router.get('/fetchQuestionsDetails', async (req, res) => {
                         }
                     }
 
-                    // Convert the allQuestions map to an array of questions
                     let questionsArray = Array.from(allQuestions.values());
 
-                    // Nested Titles
                     const nestedTitles = await Promise.all(sub.nestedTitle.map(async (nested) => {
                         const nestedTitleId = nested._id.toString();
 
                         let nestedQueue = [];
                         let nestedAllQuestions = new Map();
 
-                        // Find the first question for the nested title
                         let firstNestedTitleQuestion = await Questions.findOne({
                             'nestedTitle.id': nestedTitleId,
                             'nestedTitle.firstQuestion': true
@@ -249,7 +285,6 @@ router.get('/fetchQuestionsDetails', async (req, res) => {
                             let currentQuestion = nestedQueue.shift();
                             nestedAllQuestions.set(currentQuestion._id.toString(), currentQuestion);
 
-                            // Enqueue the next question
                             if (currentQuestion.nextQuestion) {
                                 let nextQuestionId = new mongoose.Types.ObjectId(currentQuestion.nextQuestion);
                                 if (!nestedAllQuestions.has(nextQuestionId.toString())) {
@@ -260,7 +295,6 @@ router.get('/fetchQuestionsDetails', async (req, res) => {
                                 }
                             }
 
-                            // Enqueue the next questions from options
                             if (currentQuestion.options && currentQuestion.options.length > 0) {
                                 for (let option of currentQuestion.options) {
                                     if (option.optionsNextQuestion) {
@@ -276,7 +310,6 @@ router.get('/fetchQuestionsDetails', async (req, res) => {
                             }
                         }
 
-                        // Convert the allQuestions map to an array of questions
                         let nestedQuestionsArray = Array.from(nestedAllQuestions.values());
 
                         return {
@@ -302,6 +335,7 @@ router.get('/fetchQuestionsDetails', async (req, res) => {
 });
 
 module.exports = router;
+
 
 // const express = require('express');
 // const router = express.Router();

@@ -8,8 +8,8 @@ import FirstQuestionModal from './firstQuestionModal';
 // import RecommendationComponent from './recommendationComponent';
 
 // import Questions from './questions';
-// const destination = "localhost:5000";
-const destination = "rtp.dusky.bond:5000";
+const destination = "localhost:5000";
+// const destination = "rtp.dusky.bond:5000";
 
 class EditQuestion extends Component {
   constructor(props) {
@@ -771,7 +771,7 @@ fetchCountries = async () => {
         ...prevState.gridOptions,
         rows: [
           ...prevState.gridOptions.rows,
-          { text: ``, value: `Row ${prevState.gridOptions.rows.length + 1}` }
+          { text: `Row ${prevState.gridOptions.rows.length + 1}`, value: `Row ${prevState.gridOptions.rows.length + 1}` }
         ]
       }
     }));
@@ -780,17 +780,16 @@ fetchCountries = async () => {
   addGridColumn = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    this.setState(prevState => {
-      return {
+    this.setState(prevState => ({
         gridOptions: {
           ...prevState.gridOptions,
           columns: [
             ...prevState.gridOptions.columns,
-            { text: ``, value: `Column ${prevState.gridOptions.columns.length + 1}` }
+            { text: `Column ${prevState.gridOptions.columns.length + 1}`, value: `Column ${prevState.gridOptions.columns.length + 1}` }
           ]
         }
-      };
-    });
+      
+    }));
   };
   
   deleteGridRow = (index) => {
@@ -839,38 +838,7 @@ fetchCountries = async () => {
     }}) 
   };
  
-  // 
-  // handleOptionRecommendationChange = async (index, recommendation) => {
-  //   try {
-  //     // Update recommendation in state
-  //     const updatedOptions = [...this.state.questionList.options];
-  //     updatedOptions[index].recommendation = recommendation;
-  //     this.setState({ questionList: { ...this.state.questionList, options: updatedOptions } });
-  
-  //     // Send recommendation to backend to store in the database
-  //     await this.storeRecommendationInDatabase(recommendation, updatedOptions[index].optionId);
-  //   } catch (error) {
-  //     console.error('Error handling recommendation change:', error);
-  //   }
-  // };
-  // storeRecommendationInDatabase = async (recommendation, optionId) => {
-  //   try {
-  //     const response = await fetch(`http://${destination}/api/recommendation/option/${optionId}`, {
-  //       method: 'POST',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //       },
-  //       body: JSON.stringify({ recommendation }),
-  //     });
-      
-  //     if (!response.ok) {
-  //       throw new Error('Failed to store recommendation in the database');
-  //     }
-  //   } catch (error) {
-  //     console.error('Error storing recommendation in the database:', error);
-  //     throw error;
-  //   }
-  // };
+ 
   
   
   
@@ -888,13 +856,7 @@ fetchCountries = async () => {
 
  
     
-     
-  // handleOptionRecommendationChange = (index, recommendation) => {
-  //   const updatedOption = { ...this.state.questionList.options[index], recommendation };
-  //   const updatedOptions = this.state.questionList.options.map((option, i) => (i === index ? updatedOption : option));
-  //   this.setState({ questionList: { ...this.state.questionList, options: updatedOptions } });
-  // };
-  
+   
   
   
   
@@ -1095,7 +1057,7 @@ fetchCountries = async () => {
  //This makes u check all the selected countries in an array.
   handleCountryChange(event, country) {
     const isChecked = event.target.checked;
-    const {allQuestions} = this.state;
+    // const {allQuestions} = this.state;
     if (isChecked) {
       this.setState(prevState => ({
         selectedCountries: [...prevState.selectedCountries, country]
@@ -1338,10 +1300,7 @@ fetchCountries = async () => {
       case "checkbox":
         return (
           <>
-            {/* Options label */}
-            {/* console.log(----------------------------------------------); */}
-            {/* console.log(questionList); */}
-
+            
             {questionList.options.map((option, index) => (
               <div key={index} className="d-flex align-items-center mb-2">
                 <input
@@ -1916,7 +1875,7 @@ fetchCountries = async () => {
         gridOptions.answers.splice(answerIndex, 1);
       } else {
         // If answer doesn't exist, add it
-        gridOptions.answers.push({ rowIndex, columnIndex: colIndex, isCorrect: true });
+        gridOptions.answers.push({ rowIndex, columnIndex: colIndex, isCorrect: true,marks: '' });
       }
 
       this.setState( { gridOptions } );
@@ -1931,7 +1890,7 @@ fetchCountries = async () => {
       }
   
       // Add the new answer with isCorrect set to true
-      gridOptions.answers.push({ rowIndex, columnIndex: colIndex, isCorrect: true });
+      gridOptions.answers.push({ rowIndex, columnIndex: colIndex, isCorrect: true,marks: '' });
   
       this.setState( { gridOptions } );
     }
@@ -2164,20 +2123,20 @@ fetchCountries = async () => {
   };
 
   validateCountry = () => {
-    const { countries, showCountry } = this.state;
     // Case: when "Specific Country" is switched on
+    const { country, showCountry ,selectedCountries} = this.state;
+    // const { countries, showCountry } = this.state;
     if (showCountry) {
+     // Case: when a selectedCountry has been set
+      if (selectedCountries) {
+        return true;
+      }
+      else {
+        return false;
+      }
+    } else {
       return true;
-      // Case: when a selectedCountry has been set
-    //   if (countries ) {
-    //     return true;
-    //   }
-    //   else {
-    //     return false;
-    //   }
-    // } else {
-    //   return true;
-    // }
+     
     }
   };
 
@@ -2278,7 +2237,7 @@ fetchCountries = async () => {
 
     const {
       //previousQuestion,
-      nextQuestion,
+      // nextQuestion,
       gridOptions,
       isLeadingQuestion,
       showCountry,
@@ -2347,8 +2306,8 @@ fetchCountries = async () => {
 
     if (questionList.optionType === 'multipleChoiceGrid' || questionList.optionType === 'checkboxGrid') {
       dataToUpdate.grid = {
-        rows: gridOptions.rows.map(rows => ({ text: rows.text ,recommendation: rows.recommendation})),
-        columns: gridOptions.columns.map(columns => ({ text: columns.text ,recommendation: columns.recommendation})),
+        rows: gridOptions.rows.map(rows => ({ text: rows.text})),
+        columns: gridOptions.columns.map(columns => ({ text: columns.text })),
         answers: gridOptions.answers.filter(answer => answer.isCorrect)
       };
     } else {
@@ -2584,7 +2543,7 @@ fetchCountries = async () => {
             {/* Specific Country */}
             {showCountry && (
               <div className="mb-3">
-                <p> SELECT A COUNTRY HERE BELOW IF YOU CHOSE A COUNTRY IN THE CREATE QUESTION</p>
+                <p> SELECT A COUNTRY HERE BELOW IF YOU CHOSE A COUNTRY IN THE CREATE QUESTION AND DELETE QUESTION IF YOU CHOSE COUNTRY BY MISTAKE WHILE CREATING QUESTION</p>
                 <label className="col-form-label">Country:</label>
                 <div style={{ maxHeight: '130px', overflowY: 'auto'}}>
                   {countries.map((country, index) => (

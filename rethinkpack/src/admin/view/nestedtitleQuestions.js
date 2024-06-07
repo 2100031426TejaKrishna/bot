@@ -3,8 +3,8 @@ import './questions.css';
 import EditQuestion from './editQuestion';
 
 // Switch URLs between Server and Local hosting here
-// const destination = "localhost:5000";
-const destination = "rtp.dusky.bond:5000";
+const destination = "localhost:5000";
+// const destination = "rtp.dusky.bond:5000";
 
 const Questions = ({ triggerRefresh, selectedNestedtitle }) => {
     const [questions, setQuestions] = useState([]);

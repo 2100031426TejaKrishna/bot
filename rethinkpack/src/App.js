@@ -7,12 +7,15 @@ import UnlinkedQuestions from './admin/view/unlinkedQuestions';
 import SubtitleQuestions from './admin/view/subtitleQuestions';
 import NestedtitleQuestions from './admin/view/nestedtitleQuestions';
 import TitleTab from './admin/view/titleTab';
+// import Result from './customer/view/result';
+import UserResponseMarks from './admin/view/userResponseMarks'; // Import the new component
+// import { SurveyProvider } from './customer/view/surveyContext';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import axios from 'axios'; // Import Axios for making HTTP requests
 
 // Switch URLs between Server and Local hosting here
-// const destination = "localhost:5000";
-const destination = "rtp.dusky.bond:5000";
+const destination = "localhost:5000";
+// const destination = "rtp.dusky.bond:5000";
 
 function App() {
   const [triggerRefresh, setTriggerRefresh] = useState(false);
@@ -103,6 +106,15 @@ function App() {
                   </a>
                 </li>
               ))}
+              <li className="nav-item">
+                <a 
+                  className={`nav-link ${activeTab === 'userResponseMarks' ? 'active' : ''}`} 
+                  href="#" 
+                  onClick={() => setActiveTab('userResponseMarks')}
+                >
+                  User Response+Marks
+                </a>
+              </li>
             </ul>
             
             {/* Render subtitles below the current <ul> */}
@@ -211,7 +223,7 @@ function App() {
                   ))}
               </ul>
             )}
-
+            
             {/* Render appropriate content based on the active tab */}
             {activeTab === 'list' && <Questions triggerRefresh={triggerRefresh} />}
             {activeTab === 'treeMap' && <QuestionsTreeMap />}
@@ -219,14 +231,25 @@ function App() {
             {activeTab === 'title' && <TitleTab />}
             {activeTab === activeSubTitle && <SubtitleQuestions selectedSubtitle={selectedSubtitle} />}
             {activeTab === activeNestedTitle && <NestedtitleQuestions selectedNestedtitle={selectedNestedtitle} />}
+            {activeTab === 'userResponseMarks' && <UserResponseMarks />} {/* Add the new tab content */}
 
           </div>
         } />
+        
 
         <Route path="/customer" element={<CustomerQuestions triggerRefresh={triggerRefresh} />} />
+        {/* <Route path='/result' element={<Result triggerRefresh={triggerRefresh} />} /> */}
+        <Route path='/result' element={
+  <React.Fragment>
+    {/* <Result triggerRefresh={triggerRefresh} /> */}
+    <UserResponseMarks />
+  </React.Fragment>
+} />
+
       </Routes>
     </Router>
   );
 }
 
 export default App;
+

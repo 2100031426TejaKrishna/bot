@@ -23,10 +23,19 @@
     margin-bottom: 20px;
     text-align: left; 
     border: 1px solid #ccc;
+    min-height: 300px;
 }
 
 .survey-questions-card div {
     margin-bottom: 10px;
+}
+
+/* Survey Questions Title */
+.survey-questions-title {
+    font-size: 1.25em;
+    font-weight: bold;
+    margin-bottom: 15px;
+    color: #333;
 }
 
 /* Survey Questions Progress Bar */
@@ -141,3 +150,11 @@
 .word-count-exceeded {
     color: red;
 }
+
+.recommendation-text {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    font-size: 16px;
+    color: #333;
+}
+

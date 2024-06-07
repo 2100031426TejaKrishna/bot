@@ -9,8 +9,8 @@ import CreateTitle from './createTitle';
 import FirstQuestionModal from './firstQuestionModal';
 
 // Switch URLs between Server and Local hosting here
-// const destination = "localhost:5000";
-const destination = "rtp.dusky.bond:5000";
+const destination = "localhost:5000";
+// const destination = "rtp.dusky.bond:5000";
 
 class CreateQuestion extends Component {
   constructor(props) {
@@ -1748,12 +1748,12 @@ class CreateQuestion extends Component {
                     // Check if the option is correct, and only render if it is
                     selection.isCorrect && (
                       <div className="mb-3" key={index}>
-                        <a>{gridOptions.row[selection.rowIndex] ? gridOptions.row[selection.rowIndex].text : ''} / {gridOptions.column[selection.columnIndex] ? gridOptions.column[selection.columnIndex].text : ''}</a>
+                        <a>{gridOptions.row[selection.rowIndex] ? gridOptions.row[selection.rowIndex].text : ''}  {gridOptions.column[selection.columnIndex] ? gridOptions.column[selection.columnIndex].text : ''}</a>
                         
                         <input
                           type="text"
                           className="form-control"
-                          id="marks"
+                          id={`marks-${index}`} // Use unique IDs for each input
                           placeholder="Enter marks for this option"
                           value={selection.marks}
                           onChange={(e) => {
@@ -1771,7 +1771,9 @@ class CreateQuestion extends Component {
                                 answers: updatedAnswers
                               }
                             }));
+                           
                           }}
+                          
                         />
                       </div>
                     )
