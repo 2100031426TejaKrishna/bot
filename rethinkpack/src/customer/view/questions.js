@@ -27,11 +27,11 @@ const Questions = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [recommendations, setRecommendations] = useState({});
     const [currentTitle, setCurrentTitle] = useState('');
-    const [sortedQuestions, setSortedQuestions] = useState([]); // New state for sorted questions
-    
+    const [questionOrder, setQuestionOrder] = useState([]);
+    const [countryQuestions, setCountryQuestions] = useState([]);
+    const [titles, setTitles] = useState({});
 
     const countries = [
-        // List of countries...
         "Afghanistan", "Albania", "Algeria", "Andorra", "Angola",
         "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria",
         "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh", "Barbados",
@@ -79,6 +79,7 @@ const Questions = () => {
     }, {}));
     const navigate = useNavigate();
     const destination = "localhost:5000";
+    // const destination = "rtp.dusky.bond:5000";
 
     useEffect(() => {
         const fetchGeneralQuestions = async () => {
@@ -98,38 +99,41 @@ const Questions = () => {
     }, [destination]);
 
     useEffect(() => {
-        if (questions.length === 0) return;
-        const currentQuestion = questions[currentQuestionIndex];
+        const fetchTitles = async () => {
+            try {
+                const titlesMap = {};
+                for (const question of questions) {
+                    const response = await fetch(`http://${destination}/api/fetchTitleForQuestion/${question._id}`);
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    const { title } = await response.json();
+                    titlesMap[question._id] = title;
+                }
+                setTitles(titlesMap);
+                const sortedQuestions = questions.sort((a, b) => {
+                    const titleA = titlesMap[a._id].toLowerCase();
+                    const titleB = titlesMap[b._id].toLowerCase();
+                    return titleA.localeCompare(titleB);
+                });
+                setQuestionOrder(sortedQuestions);
+            } catch (error) {
+                console.error("Error fetching titles:", error);
+            }
+        };
+
+        if (questions.length > 0) {
+            fetchTitles();
+        }
+    }, [questions]);
+
+    useEffect(() => {
+        if (questionOrder.length === 0) return;
+        const currentQuestion = questionOrder[currentQuestionIndex];
         if (!currentQuestion) {
             setCurrentTitle('');
             return;
         }
 
-        const fetchTitleForQuestion = async (questionId) => {
-            try {
-                console.log(`Fetching title for question ID: ${questionId}`); // Debugging statement
-                const response = await fetch(`http://${destination}/api/fetchTitleForQuestion/${questionId}`);
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                const { title, subtitle, nestedTitle } = await response.json();
-                const formattedTitle = [title, subtitle, nestedTitle].filter(Boolean).join(' > ');
-                setCurrentTitle(formattedTitle);
-
-                console.log(`Question ID: ${questionId}, Title: ${formattedTitle}`); // Debugging statement
-
-            } catch (error) {
-                if (error.message.includes('404')) {
-                    console.error(`Error 404: Title for question ID ${questionId} not found`);
-                } else {
-                    console.error("Error fetching title for question:", error);
-                }
-                setCurrentTitle('');
-            }
-        };
-
-        fetchTitleForQuestion(currentQuestion._id);
-
-        let answer = answers[currentQuestionIndex];
-        const prevAnswer = answers[currentQuestionIndex];
+        const prevAnswer = answers[currentQuestion._id];
         if (prevAnswer) {
             if (Array.isArray(prevAnswer)) {
                 setSelectedOptions(prevAnswer);
@@ -143,8 +147,8 @@ const Questions = () => {
                 setCanProceed(prevAnswer.trim() !== '');
             }
         } else if (currentQuestion.optionType === 'openEnded') {
-            setOpenEndedText(answer || '');
-            setCanProceed(!!answer && answer.trim().length > 0);
+            setOpenEndedText(prevAnswer || '');
+            setCanProceed(!!prevAnswer && prevAnswer.trim().length > 0);
         } else {
             setCurrentAnswer('');
             setSelectedOptions([]);
@@ -167,20 +171,9 @@ const Questions = () => {
                 }
             });
         }
-    }, [currentQuestionIndex, answers, questions]);
 
-    // Updated sorting function
-    useEffect(() => {
-        if (questions.length > 0) {
-            const sorted = [...questions].sort((a, b) => {
-                const titleA = (a.title || '').toLowerCase();
-                const titleB = (b.title || '').toLowerCase();
-                return titleA.localeCompare(titleB);
-            });
-            setSortedQuestions(sorted);
-            console.log("Sorted Questions:", sorted); // Debugging statement
-        }
-    }, [questions]);
+        setCurrentTitle(titles[currentQuestion._id] || '');
+    }, [currentQuestionIndex, answers, questionOrder, titles]);
 
     const handleAnswerChange = async (event, optionType) => {
         if (optionType === 'checkbox') {
@@ -202,7 +195,7 @@ const Questions = () => {
     };
 
     const handleGridAnswerChange = (rowIndex, colIndex, optionType) => {
-        const currentQuestion = sortedQuestions[currentQuestionIndex];
+        const currentQuestion = questionOrder[currentQuestionIndex];
         setGridAnswers((prevGridAnswers) => {
             const newGridAnswers = { ...prevGridAnswers };
 
@@ -219,7 +212,7 @@ const Questions = () => {
                 newGridAnswers[rowIndex] = [colIndex];
             }
 
-            updateAnswers(newGridAnswers);
+            updateAnswers(newGridAnswers, currentQuestion._id);
             const isValid = validateGridAnswersWithTempAnswers(newGridAnswers, currentQuestion);
             setCanProceed(isValid);
 
@@ -239,10 +232,10 @@ const Questions = () => {
         return true;
     };
 
-    const updateAnswers = (newAnswer) => {
+    const updateAnswers = (newAnswer, questionId) => {
         setAnswers((prevAnswers) => ({
             ...prevAnswers,
-            [currentQuestionIndex]: newAnswer
+            [questionId]: newAnswer
         }));
     };
 
@@ -251,7 +244,7 @@ const Questions = () => {
     };
 
     const handleNextQuestion = () => {
-        const currentQuestion = sortedQuestions[currentQuestionIndex];
+        const currentQuestion = questionOrder[currentQuestionIndex];
         let newAnswer;
 
         if (currentQuestion.optionType === 'openEnded' && !canProceed) {
@@ -269,11 +262,11 @@ const Questions = () => {
             newAnswer = currentAnswer;
         }
 
-        updateAnswers(newAnswer);
+        updateAnswers(newAnswer, currentQuestion._id);
 
         setNavigationHistory((prevHistory) => [...prevHistory, currentQuestionIndex]);
 
-        if (currentQuestionIndex < sortedQuestions.length - 1) {
+        if (currentQuestionIndex < questionOrder.length - 1) {
             setCurrentQuestionIndex(currentQuestionIndex + 1);
             setRecommendations({}); // Clear recommendations when moving to next question
         } else if (currentStage === 'general') {
@@ -286,7 +279,7 @@ const Questions = () => {
             setCurrentQuestionIndex(currentQuestionIndex - 1);
             setRecommendations({}); // Clear recommendations when moving to previous question
 
-            const prevQuestionAnswers = answers[currentQuestionIndex - 1];
+            const prevQuestionAnswers = answers[questionOrder[currentQuestionIndex - 1]._id];
             if (Array.isArray(prevQuestionAnswers)) {
                 setSelectedOptions(prevQuestionAnswers);
             } else if (typeof prevQuestionAnswers === 'object' && prevQuestionAnswers !== null) {
@@ -300,7 +293,7 @@ const Questions = () => {
     };
 
     const handleClearSelection = () => {
-        const currentQuestion = sortedQuestions[currentQuestionIndex];
+        const currentQuestion = questionOrder[currentQuestionIndex];
 
         if (currentQuestion.optionType === 'checkboxGrid' || currentQuestion.optionType === 'multipleChoiceGrid') {
             const resetGridAnswers = {};
@@ -308,13 +301,13 @@ const Questions = () => {
                 resetGridAnswers[rowIndex] = [];
             });
             setGridAnswers(resetGridAnswers);
-            updateAnswers(resetGridAnswers);
+            updateAnswers(resetGridAnswers, currentQuestion._id);
         } else if (currentQuestion.optionType === 'checkbox') {
             setSelectedOptions([]);
-            updateAnswers([]);
+            updateAnswers([], currentQuestion._id);
         } else {
             setCurrentAnswer('');
-            updateAnswers('');
+            updateAnswers('', currentQuestion._id);
         }
 
         setCanProceed(false);
@@ -329,7 +322,7 @@ const Questions = () => {
     };
 
     const handleCountrySelectionConfirm = () => {
-        const currentQuestion = sortedQuestions[currentQuestionIndex];
+        const currentQuestion = questionOrder[currentQuestionIndex];
         let newAnswer;
 
         if (currentQuestion.optionType === 'checkbox') {
@@ -342,7 +335,7 @@ const Questions = () => {
             newAnswer = currentAnswer;
         }
 
-        updateAnswers(newAnswer);
+        updateAnswers(newAnswer, currentQuestion._id);
         setShowCountrySelectionModal(true);
     };
 
@@ -372,12 +365,9 @@ const Questions = () => {
                     return;
                 }
 
-                const allQuestions = [
-                    ...generalQuestions,
-                    ...countrySpecificQuestions
-                ];
-                setQuestions(allQuestions);
-                setCurrentQuestionIndex(generalQuestions.length); // Start from the first country-specific question
+                setCountryQuestions(countrySpecificQuestions); // Set only country-specific questions
+                setQuestions(countrySpecificQuestions); // Include only country-specific questions
+                setCurrentQuestionIndex(0); // Start from the first country-specific question
                 setCurrentStage('country');
                 setIsLoading(false);
 
@@ -412,7 +402,7 @@ const Questions = () => {
     };
 
     const handleSubmit = () => {
-        const currentQuestion = sortedQuestions[currentQuestionIndex];
+        const currentQuestion = questionOrder[currentQuestionIndex];
         let newAnswer;
 
         if (currentQuestion.optionType === 'checkbox') {
@@ -425,17 +415,17 @@ const Questions = () => {
             newAnswer = currentAnswer;
         }
 
-        updateAnswers(newAnswer);
+        updateAnswers(newAnswer, currentQuestion._id);
         setShowModal(true);
     };
 
     const handleConfirmSubmit = () => {
-        const currentQuestion = sortedQuestions[currentQuestionIndex];
+        const currentQuestion = questionOrder[currentQuestionIndex];
         const lastAnswer = currentQuestion.optionType.includes('Grid') ? gridAnswers : currentQuestion.optionType === 'checkbox' ? selectedOptions : currentAnswer;
-        updateAnswers(lastAnswer);
+        updateAnswers(lastAnswer, currentQuestion._id);
 
-        const answeredQuestions = sortedQuestions.map((question, index) => {
-            const answer = answers[index];
+        const answeredQuestions = [...generalQuestions, ...countryQuestions].map((question) => {
+            const answer = answers[question._id];
             return {
                 questionId: question._id,
                 question: question.question,
@@ -443,18 +433,18 @@ const Questions = () => {
             };
         });
 
-        console.log("Submitted Answers:", answeredQuestions)
+        console.log("Submitted Answers:", answeredQuestions);
 
         localStorage.setItem('surveyResponses', JSON.stringify(answeredQuestions));
 
-        navigate('/result');
+        navigate('/responses');
     };
 
     if (isLoading) {
         return <div>Loading questions...</div>;
     }
 
-    const showCountrySelectionButton = currentStage === 'general' && currentQuestionIndex === sortedQuestions.length - 1;
+    const showCountrySelectionButton = currentStage === 'general' && currentQuestionIndex === questionOrder.length - 1;
 
     const renderOptions = (question) => {
         if (!question) return null;
@@ -653,22 +643,23 @@ const Questions = () => {
     return (
         <div className="survey-questions-container">
             {isLoading && <div>Loading questions...</div>}
-            {!isLoading && !sortedQuestions.length && <div>No questions available</div>}
-            {!isLoading && sortedQuestions.length > 0 && (
+            {!isLoading && !questionOrder.length && <div>Sorting questions</div>}
+            {!isLoading && questionOrder.length > 0 && (
                 <div className="survey-questions-card">
                     {currentTitle && <h5 className="survey-questions-title">{currentTitle}</h5>}
-                    <h4>{currentQuestionIndex + 1}. {sortedQuestions[currentQuestionIndex]?.question || 'Select Country'}</h4>
+                    <h4>{currentStage === 'general' ? currentQuestionIndex + 1 : currentQuestionIndex + 1}. {questionOrder[currentQuestionIndex]?.question || 'Select Country'}</h4>
                     <div className="options-container">
-                        {renderOptions(sortedQuestions[currentQuestionIndex])}
+                        {renderOptions(questionOrder[currentQuestionIndex])}
                     </div>
                     <footer className="survey-questions-footer">
                         <div className="survey-questions-navigation-buttons">
-                            {currentQuestionIndex > 0 && (
+                            {(currentStage === 'general' && currentQuestionIndex > 0) || 
+                            (currentStage === 'country' && currentQuestionIndex > 0) ? (
                                 <button className="survey-questions-button" onClick={handlePreviousQuestion}>Back</button>
-                            )}
+                            ) : null}
                             {showCountrySelectionButton ? (
                                 <button className="survey-questions-button" onClick={() => setShowCountrySelection(true)}>Go to Country Selection</button>
-                            ) : currentQuestionIndex < sortedQuestions.length - 1 ? (
+                            ) : currentQuestionIndex < questionOrder.length - 1 ? (
                                 <button className="survey-questions-button" onClick={handleNextQuestion} disabled={!canProceed || isWordCountExceeded}>Next</button>
                             ) : (
                                 <button className="survey-questions-button" onClick={handleSubmit} disabled={!canProceed || isWordCountExceeded}>Submit</button>
@@ -720,4 +711,5 @@ const Questions = () => {
         </div>
     );
 };
+
 export default Questions;
