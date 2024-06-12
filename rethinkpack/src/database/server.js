@@ -14,7 +14,8 @@ const displayTitlesRoute = require('./displayTitles');
 const displayCustomerQuestionRoute = require('./displayCustomerQuestion');
 const duplicateQuestionRoute = require('./duplicateQuestions');
 const recommendationRoute = require('./recommendation');
-// const displayCountriesRoute = require('./displayCountries')
+const loginapi = require('./loginapi');
+
 const corsOptions = {
   origin: ['http://rtp.dusky.bond'],
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
@@ -41,12 +42,11 @@ connectToDatabase().then(async () => {
   app.use('/api', displayCustomerQuestionRoute);
   app.use('/api', duplicateQuestionRoute);
   app.use('/api', recommendationRoute);
-  // app.use('/api', displayCountriesRoute);
-
+  app.use('/api', loginapi); // Add the loginapi routes
 
   const PORT = 5000;
   
-    // Use '0.0.0.0' as the host to listen on all network interfaces
+  // Use '0.0.0.0' as the host to listen on all network interfaces
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://0.0.0.0:${PORT}`);
   });

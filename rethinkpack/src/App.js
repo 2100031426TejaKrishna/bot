@@ -1,4 +1,9 @@
 import React, { useState, useCallback, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Login from './components/Login';
+import AdminLogin from './components/AdminLogin';
+import CustomerLogin from './components/CustomerLogin';
+//import Responses from './customer/view/responses';
 import CreateQuestion from './admin/view/createQuestion';
 import Questions from './admin/view/questions';
 import QuestionsTreeMap from './admin/view/questionsTreeMap';
@@ -7,13 +12,7 @@ import UnlinkedQuestions from './admin/view/unlinkedQuestions';
 import SubtitleQuestions from './admin/view/subtitleQuestions';
 import NestedtitleQuestions from './admin/view/nestedtitleQuestions';
 import TitleTab from './admin/view/titleTab';
-// import Result from './customer/view/result';
-import UserResponseMarks from './admin/view/userResponseMarks'; // Import the new component
-// import { SurveyProvider } from './customer/view/surveyContext';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import axios from 'axios'; // Import Axios for making HTTP requests
 
-// Switch URLs between Server and Local hosting here
 const destination = "localhost:5000";
 // const destination = "rtp.dusky.bond:5000";
 
@@ -23,36 +22,39 @@ function App() {
   const [titleTab, setTitleTab] = useState('');
   const [subtitleTab, setSubTitleTab] = useState('');
   const [nestedtitleTab, setNestedTitleTab] = useState('');
-  const [titles, setTitles] = useState([]); // State to hold titles
+  const [titles, setTitles] = useState([]);
   const [activeSubTitle, setActiveSubTitle] = useState(null);
-  const [selectedSubtitle, setSelectedSubtitle] = useState(null); // State to hold selected subtitle
+  const [selectedSubtitle, setSelectedSubtitle] = useState(null);
   const [activeNestedTitle, setActiveNestedTitle] = useState(null);
-  const [selectedNestedtitle, setSelectedNestedtitle] = useState(null); // State to hold selected nested title
-
+  const [selectedNestedtitle, setSelectedNestedtitle] = useState(null);
 
   const refreshQuestions = useCallback(() => {
     setTriggerRefresh(prev => !prev); 
   }, []);
 
-  // Fetch titles when component mounts
   useEffect(() => {
     const fetchTitles = async () => {
       try {
-        const response = await axios.get(`http://${destination}/api/displayTitles`); // Assuming the endpoint is available at /api/displayAllTitles
-        setTitles(response.data); // Set titles from the response
-        console.log(response.data); // Log the titles data to the console
+        const response = await fetch(`http://${destination}/api/displayTitles`);
+        if (response.ok) {
+          const data = await response.json();
+          setTitles(data);
+        }
       } catch (error) {
         console.error('Error fetching titles:', error);
       }
     };
-
-    fetchTitles(); // Call the fetchTitles function
-  }, []); // Empty dependency array ensures this effect runs only once when component mounts
+    fetchTitles();
+  }, [destination]);
 
   return (
     <Router>
       <Routes>
-        <Route path="/" element={
+        <Route path="/" element={<Login />} />
+        <Route path="/admin-login" element={<AdminLogin />} />
+        <Route path="/customer-login" element={<CustomerLogin />} />
+        <Route path="/customer" element={<CustomerQuestions triggerRefresh={triggerRefresh} />} />
+        <Route path="/admin" element={
           <div className="App">
             <CreateQuestion onQuestionCreated={refreshQuestions} onQuestionDeleted={refreshQuestions} triggerRefresh={triggerRefresh} />
             <ul className="nav nav-tabs" style={{ paddingLeft: '80px' }}>
@@ -92,7 +94,6 @@ function App() {
                   Title
                 </a>
               </li>
-              {/* Render <li> elements based on titles */}
               {titles.map((title, index) => (
                 <li key={index} className="nav-item">
                   <a className={`nav-link ${activeTab === title.title.titleLabel ? 'active' : ''}`} 
@@ -106,30 +107,9 @@ function App() {
                   </a>
                 </li>
               ))}
-              <li className="nav-item">
-                <a 
-                  className={`nav-link ${activeTab === 'userResponseMarks' ? 'active' : ''}`} 
-                  href="#" 
-                  onClick={() => setActiveTab('userResponseMarks')}
-                >
-                  User Response+Marks
-                </a>
-              </li>
             </ul>
-            
-            {/* Render subtitles below the current <ul> */}
             {activeTab !== 'list' && (
               <ul className="nav nav-tabs" style={{ paddingLeft: '80px' }}>
-                {/* {activeTab !== 'list' && (
-                  <a 
-                    className='nav-link' 
-                    href='#'
-                    id='btBackList' 
-                    style={{ display: 'inline' }} 
-                    onClick={() => setActiveTab('list')}
-                    >Home
-                  </a>
-                )} */}
                 {titles
                   .filter(title => title.title.titleLabel === activeTab)
                   .map((title, index) => (
@@ -142,11 +122,10 @@ function App() {
                             setSubTitleTab(subTitle.subTitleLabel);
                             setActiveTab(subTitle.subTitleLabel)
                             setActiveSubTitle(subTitle.subTitleLabel)
-                            setSelectedSubtitle(subTitle._id.toString()); // Update selected subtitle
-                            // document.getElementById('btBackList').style.display = 'none';
+                            setSelectedSubtitle(subTitle._id.toString());
                             document.getElementById('btBackSub').style.display = 'inline';
                             document.getElementById('btBackNested').style.display = 'none';
-                            console.log('Selected Subtitle:', subTitle._id.toString()); // Log the selected subtitle ID
+                            console.log('Selected Subtitle:', subTitle._id.toString());
                           }}
                         >
                           {subTitle.subTitleLabel.toString()}
@@ -156,8 +135,6 @@ function App() {
                   ))}
               </ul>
             )}
-
-            {/* Render nested titles below the current <ul> */}
             {activeTab !== 'list' && (
               <ul className="nav nav-tabs" style={{ paddingLeft: '80px' }}>
                 {activeTab !== 'list' && (
@@ -167,14 +144,11 @@ function App() {
                     id='btBackSub' 
                     style={{ display: 'none' }} 
                     onClick={() =>{
-                      // document.getElementById('btBackList').style.display = 'inline';
                       document.getElementById('btBackSub').style.display = 'none';
                       document.getElementById('btBackNested').style.display = 'none';
                       setActiveTab(titleTab)
-                      
                     }} 
                   >Back</a>
-                    
                 )}
                 {activeTab !== 'list' && (
                   <a 
@@ -184,14 +158,10 @@ function App() {
                     style={{ display: 'none' }} 
                     onClick={() =>{
                       setActiveTab(subtitleTab)
-                      // document.getElementById('btBackList').style.display = 'none';
-
-  
                       document.getElementById('btBackSub').style.display = 'inline';
                       document.getElementById('btBackNested').style.display = 'none';
                     }} 
                   >Back</a>
-                    
                 )}
                 {titles
                   .filter(title => title.title.subTitle.some(subTitle => subTitle.subTitleLabel === activeTab))
@@ -208,11 +178,10 @@ function App() {
                                 setNestedTitleTab(nestedTitle.nestedTitleLabel);
                                 setActiveTab(nestedTitle.nestedTitleLabel)
                                 setActiveNestedTitle(nestedTitle.nestedTitleLabel)
-                                setSelectedNestedtitle(nestedTitle._id.toString()); // Update selected nestedtitle
+                                setSelectedNestedtitle(nestedTitle._id.toString());
                                 document.getElementById('btBackSub').style.display = 'none';
-                                // document.getElementById('btBackList').style.display = 'none';
                                 document.getElementById('btBackNested').style.display = 'inline';
-                                console.log('Selected Nestedtitle:', nestedTitle._id.toString()); // Log the selected nestedtitle ID
+                                console.log('Selected Nestedtitle:', nestedTitle._id.toString());
                               }}
                             >
                               {nestedTitle.nestedTitleLabel.toString()}
@@ -223,33 +192,17 @@ function App() {
                   ))}
               </ul>
             )}
-            
-            {/* Render appropriate content based on the active tab */}
             {activeTab === 'list' && <Questions triggerRefresh={triggerRefresh} />}
             {activeTab === 'treeMap' && <QuestionsTreeMap />}
             {activeTab === 'unlinked' && <UnlinkedQuestions />}
             {activeTab === 'title' && <TitleTab />}
             {activeTab === activeSubTitle && <SubtitleQuestions selectedSubtitle={selectedSubtitle} />}
             {activeTab === activeNestedTitle && <NestedtitleQuestions selectedNestedtitle={selectedNestedtitle} />}
-            {activeTab === 'userResponseMarks' && <UserResponseMarks />} {/* Add the new tab content */}
-
           </div>
         } />
-        
-
-        <Route path="/customer" element={<CustomerQuestions triggerRefresh={triggerRefresh} />} />
-        {/* <Route path='/result' element={<Result triggerRefresh={triggerRefresh} />} /> */}
-        <Route path='/result' element={
-  <React.Fragment>
-    {/* <Result triggerRefresh={triggerRefresh} /> */}
-    <UserResponseMarks />
-  </React.Fragment>
-} />
-
       </Routes>
     </Router>
   );
 }
 
 export default App;
-

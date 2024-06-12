@@ -1,0 +1,70 @@
+
+.customer-login-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background-color: #f0f2f5;
+  }
+  
+  .customer-login-container h2 {
+    margin-bottom: 20px;
+    color: #333;
+  }
+  
+  .customer-login-container form {
+    display: flex;
+    flex-direction: column;
+    width: 300px;
+  }
+  
+  .customer-login-container input {
+    margin-bottom: 10px;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  
+  .customer-login-container button {
+    padding: 10px;
+    font-size: 16px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .customer-login-container button:hover {
+    background-color: #75de8c;
+  }
+  
+  .customer-login-container p {
+    margin-top: 20px;
+    color: #333;
+  }
+  
+  .customer-login-container p button {
+    background: none;
+    border: none;
+    color: #007bff;
+    cursor: pointer;
+    font-size: 16px;
+    transition: color 0.3s ease;
+  }
+  
+  .customer-login-container p button:hover {
+    color: #0056b3;
+  }
+
+.customer-login-container .error-message {
+    color: red !important;
+    font-size: 14px !important;
+    margin-top: -10px !important;
+    margin-bottom: 10px !important;
+  }
+  
+  
