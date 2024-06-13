@@ -1,5 +1,7 @@
+// src/components/CustomerLogin.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../AuthContext';
 import './CustomerLogin.css';
 
 const CustomerLogin = () => {
@@ -11,6 +13,7 @@ const CustomerLogin = () => {
   const [passwordError, setPasswordError] = useState('');
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   useEffect(() => {
     if (email && !/\S+@\S+\.\S+/.test(email)) {
@@ -44,6 +47,7 @@ const CustomerLogin = () => {
       const result = await response.json();
 
       if (result.success) {
+        login('customer');
         navigate('/customer');
       } else {
         alert(result.message || 'Login failed');
