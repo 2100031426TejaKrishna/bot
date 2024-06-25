@@ -1,5 +1,7 @@
+// src/components/AdminLogin.js
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../AuthContext';
 import './AdminLogin.css';
 
 const AdminLogin = () => {
@@ -7,6 +9,7 @@ const AdminLogin = () => {
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,6 +26,7 @@ const AdminLogin = () => {
       const result = await response.json();
 
       if (result.success) {
+        login('admin');
         navigate('/admin');
       } else {
         alert(result.message || 'Login failed');
