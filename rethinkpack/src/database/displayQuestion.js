@@ -126,7 +126,6 @@ router.get('/displayAllQuestions', async (req, res) => {
     }
 });
 
-  
 
 router.get('/question/:id', async (req, res) => {
     try {

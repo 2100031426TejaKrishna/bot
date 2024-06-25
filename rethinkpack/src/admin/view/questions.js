@@ -15,7 +15,7 @@ const Questions = (triggerRefresh ) => {       //
     const [scores,setScores] = useState([]);
     const [score, setScore] = useState(0);
     const [checkscore, setCheckScore] = useState(0);
-
+    const [refreshPage, setRefreshPage] = useState(false);
     const [checkboxSelections, setCheckboxSelections] = useState({});
     const [selectedOption, setSelectedOption] = useState({});
     const [questionToDelete, setQuestionToDelete] = useState([]);
@@ -33,7 +33,44 @@ const Questions = (triggerRefresh ) => {       //
     const [selectedLinearScale, setSelectedLinearScale] = useState(null);
     const [selectedAnswers, setSelectedAnswers] = useState([]);
     const [selectedAnswersCheck, setSelectedAnswersCheck] = useState([]);
+    const rearrangeQuestions = (questions) => {
 
+        const questionMap = new Map();
+        questions.forEach((question) => questionMap.set(question._id, question));
+      
+        for (let i = 0; i < questions.length; i++) {
+          const question = questions[i];
+          if (question.nextQuestion && questionMap.has(question.nextQuestion)) {
+            const nextQuestionId = question.nextQuestion;
+            const nextQuestionIndex = questions.findIndex((q) => q._id === nextQuestionId);
+            if (nextQuestionIndex!== -1 && nextQuestionIndex!== i) {
+              questions.splice(nextQuestionIndex, 0, questions.splice(i, 1)[0]);
+            //   questions.splice(i, 1);
+            //   i--;
+            }
+          }
+        }
+        console.log(questions);
+
+        return questions;
+
+      };
+      
+      
+    const findQuestionById = (_id) => {
+        return questions.find(q => q._id === _id);
+    };
+    
+    const logQuestionDetails = (question) => {
+        const nextQuestion = findQuestionById(question.nextQuestionId);
+        const questionDetails = {
+            ...question,
+            nextQuestion
+        };
+        console.log(questionDetails);
+    };
+
+     
     const handleRadioChange = (rowIndex, columnIndex, question) => {
         setSelectedAnswersCheck(prevSelectedAnswers => {
           // Find and remove any existing answer for the same row to enforce radio behavior
@@ -219,6 +256,9 @@ const handleLinearScaleChange = (event) => {
             
             // Save the duplicate question to the database
             saveDuplicateQuestion(duplicatedQuestion);
+        
+            window.location.reload();
+           
         };
 
 
@@ -293,7 +333,23 @@ const handleLinearScaleChange = (event) => {
         };
     }, [clearNextQuestion, clearOptionsNextQuestion,triggerRefresh]); //trigger
      
-   
+   //testing
+   const logQuestionsWithNextQuestion = () => {
+    // Filter out questions with nextQuestion
+    const questionsWithNextQuestion = questions.filter(question => question.nextQuestion);
+
+    // Iterate through each question and log its details
+    questionsWithNextQuestion.forEach(question => {
+        console.log("Question details:");
+        console.log("Question ID:", question._id);
+        console.log("Question:", question.question);
+        console.log("Next Question ID:", question.nextQuestion);
+        // Log other details as needed
+        console.log("----------------------------------");
+    });
+};
+
+
     
     const handleDelete = () => {
         // nextQuestion check
@@ -391,7 +447,10 @@ const handleLinearScaleChange = (event) => {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const data = await response.json();
-                setQuestions(data);
+                // setQuestions(data);
+                const rearrangedQuestions = rearrangeQuestions(data);
+                setQuestions(rearrangedQuestions);
+                setRefreshPage(true);
                 setScores(Array(data.length).fill(0));
             } catch (error) {
                 console.error("Error fetching questions:", error);
@@ -399,8 +458,12 @@ const handleLinearScaleChange = (event) => {
         };
 
         fetchQuestions();
+        if(refreshPage){
+            window.location.reload();
+            setRefreshPage(false);
+        }
 
-    }, [editUpdateToggle,triggerRefresh]); //trigger
+    }, [triggerRefresh,editUpdateToggle]); //trigger
 
     // useEffect(() => {
     //     if (questions.length === 0 || questionsUpdated) return;
@@ -442,9 +505,12 @@ const handleLinearScaleChange = (event) => {
                 return { ...question, nextQuestionTitle
                 };
             }));
+            
     
             setQuestions(updatedQuestions);
             setQuestionsUpdated(true);
+            logQuestionsWithNextQuestion();
+
         };
     
         updateQuestionsWithTitles();
@@ -459,8 +525,13 @@ const handleLinearScaleChange = (event) => {
         return <div>No questions available</div>;
     }
 
+   
+
     return (
+        
+
 <div className="questions-container">
+    
     {duplicateMessage && (
         <div className="toast-container position-fixed bottom-0 end-0 p-3">
             <div className="toast show bg-dark text-white">
@@ -485,13 +556,22 @@ const handleLinearScaleChange = (event) => {
                     </div>
                 </div>
             )}
+
+
+
+                 
             {questions.map((question, index) => (
+
+             
+
                 <div key={index} className="question-card">
+                    
                     {question.firstQuestion && <h5 style={{ fontWeight: 'bold', color: 'red' }}>Question 1</h5>}
                     <h6>
                         {question.questionType === 'productInfo' ? 'Product Information' : 
                         question.questionType === 'packagingInfo' ? 'Packaging Information' : ''}
                     </h6>
+
                     <h4>{question.question}</h4>
                     {/* Render question details based on optionType */}
                     {question.optionType === 'multipleChoice' && 
@@ -521,6 +601,7 @@ const handleLinearScaleChange = (event) => {
                                     
                                 </div>
                             ))}
+                            
                             <p>Score: {scores[index]}</p>
 
                         </div>
@@ -781,6 +862,7 @@ const handleLinearScaleChange = (event) => {
                     {question.explanation && <p className="question-explanation">Explanation: {question.explanation}</p>}
                     {/* Render "Next Question" details if applicable */}
                     {question.nextQuestionTitle && <p className="next-question">Question After this... {question.nextQuestionTitle}</p>}
+                 
                     {/* render "Previous Question" details if applicable */}
                     {/* {question.previousQuestionTitle && <p className='previous-question'>Previous Question: {question.previousQuestionTitle}</p>} */}
                     {/* {previousQuestionTitle && <p className='previous-question'>Previous Question: {previousQuestionTitle}</p>} */}
@@ -807,9 +889,18 @@ const handleLinearScaleChange = (event) => {
                         >
                             Duplicate
                         </button>
+                        {/* <button 
+                            className="btn btn-info" 
+                            onClick={() => logQuestionDetails(question)}
+                        >
+                            Log Details
+                        </button> */}
                     </div>
                 </div>
             ))}
+
+            
+        
             {/* Modal for confirmation */}
             <div className="modal fade" id="exampleModal" tabIndex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
                 <div className="modal-dialog">
@@ -831,12 +922,14 @@ const handleLinearScaleChange = (event) => {
                         >
                             Delete
                         </button>
+                       
                     </div>
                 </div>
             </div>
         </div>
     </div>
 );
-    
-                }
+
+                
+}
 export default Questions;

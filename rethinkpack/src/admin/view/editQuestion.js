@@ -16,7 +16,7 @@ class EditQuestion extends Component {
     super(props);
     // const [selectedCountries, setSelectedCountries] = useState([]);
 
-
+    this.handleButtonClick = this.handleButtonClick.bind(this);
     // Declare all state variables to observe below
     this.state = {
       initialData: '',
@@ -148,7 +148,12 @@ class EditQuestion extends Component {
     // const [recom,setRecom] = useState({recommendation: ""});
 
   }
-
+  handleButtonClick() {
+    // Call the refreshQuestions function passed via props
+    this.props.refreshQuestions();
+    // Refresh the page
+    window.location.reload();
+}
   resetState() {
     this.setState({
       ...this.initialState,
@@ -237,6 +242,8 @@ class EditQuestion extends Component {
       // Load specific question
       this.fetchQuestion(id)
     );
+    
+
   };
 
 /*--------------API-----------------*/

@@ -1526,6 +1526,9 @@ class CreateQuestion extends Component {
 
       if (response.ok) {
         console.log('Data submitted successfully');
+        const responseData = await response.json(); // Assuming the response contains the created question data
+        const newQuestion = responseData.question;
+  
         console.log(dataToInsert);
         const modalInstance = Modal.getInstance(this.createQuestionModalRef.current);
         modalInstance.hide();
@@ -1535,8 +1538,22 @@ class CreateQuestion extends Component {
           document.body.classList.remove('modal-open');
           this.resetState();
         }, { once: true });
+  
+        // Reorder questions to insert the new question before the selected next question
+        const updatedQuestions = [...this.state.allQuestions];
+        const nextQuestionIndex = updatedQuestions.findIndex(q => q._id === nextQuestion);
+        if (nextQuestionIndex !== -1) {
+          updatedQuestions.splice(nextQuestionIndex, 0, newQuestion);
+        } else {
+          updatedQuestions.push(newQuestion);
+        }
+  
+        this.setState({
+          allQuestions: updatedQuestions,
+          showToast: true
+        });
         this.props.onQuestionCreated();
-        this.setState({ showToast: true });
+  
         setTimeout(() => this.setState({ showToast: false }), 5000);
       } else {
         console.error('Server responded with an error:', response.status, response.statusText);
@@ -1849,7 +1866,9 @@ class CreateQuestion extends Component {
                         className="form-select"
                         id="previousQuestion"
                         value={previousQuestion}
-                        onChange={(e) => this.setState({ previousQuestion: e.target.value })}
+                        onChange={(e) =>{ this.setState({ previousQuestion: e.target.value });
+                        console.log('Previous Question ID:', e.target.value);
+                      }}
                       >
                         <option value="">Select Previous Question</option>
                         {selectedTitleQuestions.map((question) => (
@@ -1865,7 +1884,9 @@ class CreateQuestion extends Component {
                         className="form-select"
                         id="nextQuestion"
                         value={nextQuestion}
-                        onChange={(e) => this.setState({ nextQuestion: e.target.value })}
+                        onChange={(e) => {this.setState({ nextQuestion: e.target.value });
+                        console.log('Next Question ID:', e.target.value);
+                      }}
                       >
                         <option value="">Select Next Question</option>
                         {selectedTitleQuestions.map((question) => (
