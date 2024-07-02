@@ -105,12 +105,21 @@ class CreateQuestion extends Component {
         id: '',
         firstQuestion: false
       },
-      nestedTitleLabel: '',
+      subNestedTitle: {
+        id: '',
+        firstQuestion: false
+      },
+        nestedTitleLabel: '',
+        subNestedTitleLabel: '',
       showMarks: true,
       showFirstQuestionNestedTitleOption: false,
       nestedTitleFirstQuestionRender: false,
       nestedTitleFirstQuestionId: '',
-      nestedTitleFirstQuestionValue: ''
+      nestedTitleFirstQuestionValue: '',
+      subNestedTitleFirstQuestionRender: false,
+      subNestedTitleFirstQuestionId: '',
+      subNestedTitleFirstQuestionValue: ''
+
     };
 
     this.initialState = { ...this.state };
@@ -238,11 +247,42 @@ class CreateQuestion extends Component {
       },
      }));
   };
+  updateSubNestedTitleFirstQuestion = () => {
+    // console.log(`prop updateNestedTitleFirstQuestion executed.`)
+    
+    const { allQuestions, subNestedTitleFirstQuestionId } = this.state;
+    const updatedQuestions = allQuestions.map(question => {
+      if (question._id === subNestedTitleFirstQuestionId) {
+        // console.log(`question._id === nestedTitleFirstQuestionId`)
+        return { 
+          ...question,
+          subNestedTitle: {
+            ...question.subNestedTitle,
+            id: subNestedTitleFirstQuestionId,
+            firstQuestion: false,
+          },
+        };
+      } else {
+        return question;
+      }
+    });
+    this.setState({ allQuestions: updatedQuestions });
+
+    // Reset state value to false and update toggle to TRUE
+    this.setState(prevState => ({ 
+      subNestedTitleFirstQuestionRender: false,
+      subNestedTitle: {
+        ...prevState.subNestedTitle,
+        firstQuestion: true
+      },
+     }));
+  };
   
   firstQuestionModalOnHide = () => {
     this.setState( {
       countryFirstQuestionRender: false,
-      nestedTitleFirstQuestionRender: false
+      nestedTitleFirstQuestionRender: false,
+      subNestedTitleFirstQuestionRender: false
     })
   };
 
@@ -285,6 +325,30 @@ class CreateQuestion extends Component {
     };
     return nestedTitlesArray;
   };
+  fetchSubNestedTitles = () => {
+    const { allTitles } = this.state;
+  
+    // Determine sub nested titles
+    let subNestedTitlesArray = [];
+    // Loops through main titles
+    for (let i = 0; i < allTitles.length; i++) {
+      // Loops through subtitles
+      for (let j = 0; j < allTitles[i].title.subTitle.length; j++) {
+        // Loops through nested titles
+        for (let k = 0; k < allTitles[i].title.subTitle[j].nestedTitle.length; k++) {
+          // Loops through sub nested titles
+          for (let l = 0; l < allTitles[i].title.subTitle[j].nestedTitle[k].subNestedTitle.length; l++) {
+            subNestedTitlesArray.push({
+              subNestedTitleLabel: allTitles[i].title.subTitle[j].nestedTitle[k].subNestedTitle[l].subNestedTitleLabel,
+              id: allTitles[i].title.subTitle[j].nestedTitle[k].subNestedTitle[l]._id
+            });
+          }
+        }
+      }
+    }
+    return subNestedTitlesArray;
+  };
+  
 
   handleFirstQuestionNestedTitleOption = (e) => {
     
@@ -309,6 +373,47 @@ class CreateQuestion extends Component {
       }
     };
   };
+  handleFirstQuestionSubNestedTitleOption = (e) => {
+    let nestedTitlesArray = this.fetchNestedTitles();
+    let subNestedTitlesArray = this.fetchSubNestedTitles();
+  
+    // Determine a match for nested title with the selected title
+    for (let i = 0; i < nestedTitlesArray.length; i++) {
+      if (e === nestedTitlesArray[i].id) {
+        this.setState({
+          showFirstQuestionNestedTitleOption: true,
+          nestedTitle: {
+            ...this.nestedTitle,
+            id: e,
+            firstQuestion: false,
+          },
+          nestedTitleLabel: nestedTitlesArray[i].nestedTitleLabel,
+        });
+        return;
+      } else {
+        this.setState({ showFirstQuestionNestedTitleOption: false });
+      }
+    }
+  
+    // Determine a match for sub nested title with the selected title
+    for (let i = 0; i < subNestedTitlesArray.length; i++) {
+      if (e === subNestedTitlesArray[i].id) {
+        this.setState({
+          showFirstQuestionSubNestedTitleOption: true,
+          subNestedTitle: {
+            ...this.subNestedTitle,
+            id: e,
+            firstQuestion: false,
+          },
+          subNestedTitleLabel: subNestedTitlesArray[i].subNestedTitleLabel,
+        });
+        return;
+      } else {
+        this.setState({ showFirstQuestionSubNestedTitleOption: false });
+      }
+    }
+  };
+  
 
   toggleFirstQuestionNestedTitle = () => {
     
@@ -329,6 +434,7 @@ class CreateQuestion extends Component {
       this.setState({ nestedTitleFirstQuestionRender: true });
     }
   };
+  
 
   addOption = (e) => {
     e.preventDefault();
@@ -1058,7 +1164,9 @@ class CreateQuestion extends Component {
   renderNestedTitleFirstQuestionModal = () => {
     const { 
       nestedTitle, 
-      nestedTitleLabel, 
+      subNestedTitle,
+      nestedTitleLabel,
+      subNestedTitleLabel, 
       nestedTitleFirstQuestionId, 
       nestedTitleFirstQuestionValue
     } = this.state;
@@ -1469,7 +1577,8 @@ class CreateQuestion extends Component {
       previousQuestion,
       nextQuestion,
       showFirstQuestionNestedTitleOption,
-      nestedTitle
+      nestedTitle,
+      subNestedTitle
     } = this.state;
 
     const dataToInsert = {
@@ -1566,7 +1675,7 @@ class CreateQuestion extends Component {
   };
 
   render() {
-    const { allTitles, selectedTitle, selectedTitleQuestions, selectedOption, options, showCountry, countries, country, isLeadingQuestion, showExplanation, countryFirstQuestionRender, validationErrors, allQuestions, nextQuestion, previousQuestion, showMarks, gridOptions, showFirstQuestionNestedTitleOption, nestedTitle, nestedTitleFirstQuestionRender } = this.state;
+    const { allTitles, selectedTitle, selectedTitleQuestions, selectedOption, options, showCountry, countries, country, isLeadingQuestion, showExplanation, countryFirstQuestionRender, validationErrors, allQuestions, nextQuestion, previousQuestion, showMarks, gridOptions, showFirstQuestionNestedTitleOption, nestedTitle,subNestedTitle, nestedTitleFirstQuestionRender } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
     const showNextQuestion = (isLeadingQuestion && (selectedOption === 'checkbox' || selectedOption === 'linear' || selectedOption === 'multipleChoiceGrid' || selectedOption === 'checkboxGrid')) || !isLeadingQuestion;
 
@@ -1613,27 +1722,37 @@ class CreateQuestion extends Component {
                             value={this.state.selectedTitle}
                             onChange={(e) => this.handleTitleSelect(e.target.value)}
                           >
-                            <option value="">Select Title</option>
-                            {/* title loop */}
-                            {allTitles.map((titleObject) => (
-                              <optgroup key={titleObject.title.titleLabel} label={titleObject.title.titleLabel}>
-                                {/* Render subTitleLabel as options */}
-                                {titleObject.title.subTitle.map((subTitleObject) => (
-                                  <React.Fragment key={subTitleObject._id}>
-                                    <option value={subTitleObject._id}>
-                                      {subTitleObject.subTitleLabel}
-                                    </option>
+                         <option value="">Select Title</option>
+{/* title loop */}
+{allTitles.map((titleObject) => (
+  <optgroup key={titleObject.title.titleLabel} label={titleObject.title.titleLabel}>
+    {/* Render subTitleLabel as options */}
+    {titleObject.title.subTitle.map((subTitleObject) => (
+      <React.Fragment key={subTitleObject._id}>
+        <option value={subTitleObject._id}>
+          {subTitleObject.subTitleLabel}
+        </option>
 
-                                    {/* Render nestedTitleLabel as options */}
-                                    {subTitleObject.nestedTitle.map((nestedTitleObject) => (
-                                      <option key={nestedTitleObject._id} value={nestedTitleObject._id}>
-                                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{nestedTitleObject.nestedTitleLabel} {/* Add one more level of indentation for nestedTitleLabel */}
-                                      </option>
-                                    ))}
-                                  </React.Fragment>
-                                ))}
-                              </optgroup>
-                            ))}
+        {/* Render nestedTitleLabel as options */}
+        {subTitleObject.nestedTitle.map((nestedTitleObject) => (
+          <React.Fragment key={nestedTitleObject._id}>
+            <option value={nestedTitleObject._id}>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{nestedTitleObject.nestedTitleLabel}
+            </option>
+
+            {/* Render subNestedTitleLabel as options */}
+            {nestedTitleObject.subNestedTitle.map((subNestedTitleObject) => (
+              <option key={subNestedTitleObject._id} value={subNestedTitleObject._id}>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{subNestedTitleObject.subNestedTitleLabel}
+              </option>
+            ))}
+          </React.Fragment>
+        ))}
+      </React.Fragment>
+    ))}
+  </optgroup>
+))}
+
                           </select>
                           </div>
                         </div>

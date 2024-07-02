@@ -121,13 +121,21 @@ class EditQuestion extends Component {
         id: '',
         firstQuestion: false
       },
+      subNestedTitle: {
+        id: '',
+        firstQuestion: false
+      },
       subTitleLabel: '',
       nestedTitleLabel: '',
+      subNestedTitleLabel: '',
       showFirstQuestionNestedTitleOption: false,
       showFirstQuestionSubTitleOption: false,
       nestedTitleFirstQuestionRender: false,
       nestedTitleFirstQuestionId: '',
       nestedTitleFirstQuestionValue: '',
+      subNestedTitleFirstQuestionRender: false,
+      subNestedTitleFirstQuestionId: '',
+      subNestedTitleFirstQuestionValue: '',
       subTitleFirstQuestionRender: false,
       subTitleFirstQuestionId: '',
       subTitleFirstQuestionValue: '',
@@ -164,6 +172,7 @@ class EditQuestion extends Component {
   firstQuestionModalOnHide = () => {
     this.setState( {
       // countryFirstQuestionRender: false,
+      subNestedTitleFirstQuestionRender: false,
       nestedTitleFirstQuestionRender: false,
       subTitleFirstQuestionRender: false
     })
@@ -264,6 +273,7 @@ class EditQuestion extends Component {
           initialData: data,
           showModal: true, 
           nestedTitle: data.nestedTitle,
+          subNestedTitle: data.subNestedTitle,
           subTitle: data.subTitle,
           questionList: data,
           selectedTitle: data.titleId,
@@ -453,6 +463,30 @@ fetchCountries = async () => {
     };
     return nestedTitlesArray;
   };
+  fetchSubNestedTitles = () => {
+    const { allTitles } = this.state;
+  
+    // Determine sub nested titles
+    let subNestedTitlesArray = [];
+    // Loops through main titles
+    for (let i = 0; i < allTitles.length; i++) {
+      // Loops through subtitles
+      for (let j = 0; j < allTitles[i].title.subTitle.length; j++) {
+        // Loops through nested titles
+        for (let k = 0; k < allTitles[i].title.subTitle[j].nestedTitle.length; k++) {
+          // Loops through sub nested titles
+          for (let l = 0; l < allTitles[i].title.subTitle[j].nestedTitle[k].subNestedTitle.length; l++) {
+            subNestedTitlesArray.push({
+              subNestedTitleLabel: allTitles[i].title.subTitle[j].nestedTitle[k].subNestedTitle[l].subNestedTitleLabel,
+              id: allTitles[i].title.subTitle[j].nestedTitle[k].subNestedTitle[l]._id
+            });
+          }
+        }
+      }
+    }
+    return subNestedTitlesArray;
+  };
+  
 
   fetchSubTitles = () => {
     const { allTitles } = this.state;
@@ -2259,6 +2293,7 @@ fetchCountries = async () => {
       showFirstQuestionNestedTitleOption,
       showFirstQuestionSubTitleOption,
       nestedTitle,
+      subNestedTitle,
       subTitle
     } = this.state;
 
@@ -2280,6 +2315,7 @@ fetchCountries = async () => {
       //previousQuestion: isLeadingQuestion ? undefined : questionList.previousQuestion,
       nextQuestion: isLeadingQuestion ? undefined : questionList.nextQuestion,
       nestedTitle: nestedTitle,
+      subNestedTitle: subNestedTitle,
       subTitle: subTitle
     };
 
@@ -2332,7 +2368,7 @@ fetchCountries = async () => {
 
   render() {
 
-    const { questionList,selectedTitle, selectedTitleQuestions,selectedCountries,showCountry, countries, isLeadingQuestion, showExplanation, validationErrors, questionId, questionIndex, allQuestions, allTitles, showModal, showFirstQuestionNestedTitleOption,showFirstQuestionSubTitleOption,subTitle, nestedTitle,nextQuestion,showNextQuestion,nestedTitleFirstQuestionRender,subTitleFirstQuestionRender, country } = this.state;
+    const { questionList,selectedTitle, selectedTitleQuestions,selectedCountries,showCountry, countries, isLeadingQuestion, showExplanation, validationErrors, questionId, questionIndex, allQuestions, allTitles, showModal, showFirstQuestionNestedTitleOption,showFirstQuestionSubTitleOption,subTitle, nestedTitle,subNestedTitle,nextQuestion,showNextQuestion,nestedTitleFirstQuestionRender,subTitleFirstQuestionRender, country } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
     const { filteredQuestions } = this.state;
     // const { recommendation } = this.state;
@@ -2392,12 +2428,20 @@ fetchCountries = async () => {
                                 {"Sub Title: " + subTitleObject.subTitleLabel}
                               </option>
                               {/* Render nestedTitleLabel as options */}
-                        
-                              {subTitleObject.nestedTitle.map((nestedTitleObject) => (
-                                <option key={nestedTitleObject._id} value={nestedTitleObject._id}>
-                                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{"Nested Title: " + nestedTitleObject.nestedTitleLabel} {/* Add one more level of indentation for nestedTitleLabel */}
-                                </option>
-                              ))}
+        {subTitleObject.nestedTitle.map((nestedTitleObject) => (
+          <React.Fragment key={nestedTitleObject._id}>
+            <option value={nestedTitleObject._id}>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{nestedTitleObject.nestedTitleLabel}
+            </option>
+
+            {/* Render subNestedTitleLabel as options */}
+            {nestedTitleObject.subNestedTitle.map((subNestedTitleObject) => (
+              <option key={subNestedTitleObject._id} value={subNestedTitleObject._id}>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{subNestedTitleObject.subNestedTitleLabel}
+              </option>
+            ))}
+          </React.Fragment>
+        ))}
                             </React.Fragment>
                           ))}
                         </optgroup>

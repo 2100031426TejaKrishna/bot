@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Tree from 'react-d3-tree';
+import { toPng, toJpeg, toSvg } from 'html-to-image';
+import jsPDF from 'jspdf';
 import './questionsTreeMap.css';
 
 const destination = "localhost:5000";
 
 const QuestionsTreeMap = () => {
   const [data, setData] = useState(null);
+  const [downloadFormat, setDownloadFormat] = useState('png');
   const treeContainerRef = useRef(null);
 
   const fetchQuestions = async () => {
@@ -77,7 +80,7 @@ const QuestionsTreeMap = () => {
 
       return node;
     };
-
+    
     const treeData = [];
     questionsData.forEach(question => {
       if (!question.previousQuestion) {
@@ -122,14 +125,56 @@ const QuestionsTreeMap = () => {
     );
   };
 
- 
+  const downloadTree = async () => {
+    if (!treeContainerRef.current) return;
+    const element = treeContainerRef.current;
+    try {
+      let dataUrl;
+      switch (downloadFormat) {
+        case 'png':
+          dataUrl = await toPng(element);
+          break;
+        case 'jpeg':
+          dataUrl = await toJpeg(element, { quality: 0.95 });
+          break;
+        case 'svg':
+          dataUrl = await toSvg(element);
+          break;
+        case 'pdf':
+          dataUrl = await toPng(element);
+          const pdf = new jsPDF();
+          pdf.addImage(dataUrl, 'PNG', 0, 0, pdf.internal.pageSize.getWidth(), pdf.internal.pageSize.getHeight());
+          pdf.save('tree.pdf');
+          return;
+        default:
+          return;
+      }
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = `tree.${downloadFormat}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Error generating download:', error);
+    }
+  };
+
   if (!data) {
     return <div>Loading...</div>;
   }
 
   return (
     <div className="container">
-     
+      <div className="controls">
+        <select className='dropdown' value={downloadFormat} onChange={(e) => setDownloadFormat(e.target.value)}>
+          <option value="png">PNG</option>
+          <option value="jpeg">JPEG</option>
+          <option value="svg">SVG</option>
+          <option value="pdf">PDF</option>
+        </select>
+        <button className='download-button' onClick={downloadTree}>Download Tree</button>
+      </div>
       <div ref={treeContainerRef} className="tree-container mt4">
         <Tree
           data={data}

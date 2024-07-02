@@ -8,9 +8,14 @@ const titlesSchema = new mongoose.Schema({
         subTitle: [
             {
                 subTitleLabel: String,
-                nestedTitle: [ 
-                    { 
+                nestedTitle: [
+                    {
                         nestedTitleLabel: String,
+                        subNestedTitle: [
+                            {
+                                subNestedTitleLabel: String
+                            }
+                        ]
                     }
                 ]
             }
@@ -114,6 +119,7 @@ router.post('/insertNestedtitle/:titleId/:subtitleId', async (req, res) => {
         const titleId = req.params.titleId;
         const subtitleId = req.params.subtitleId;
 
+
         // Log the received payload and IDs for debugging
         console.log("Received payload:", req.body);
         console.log("Received titleId:", titleId);
@@ -151,7 +157,62 @@ router.post('/insertNestedtitle/:titleId/:subtitleId', async (req, res) => {
         res.status(500).send("Error inserting nested title");
     }
 });
+router.post('/insertSubNestedTitle/:titleId/:subtitleId/:nestedTitleId', async (req, res) => {
+    try {
+        const { subNestedTitle } = req.body;
+        const titleId = req.params.titleId;
+        const subtitleId = req.params.subtitleId;
+        const nestedTitleId = req.params.nestedTitleId;
 
+        // Log the received payload and IDs for debugging
+        console.log("Received payload:", req.body);
+        console.log("Received titleId:", titleId);
+        console.log("Received subtitleId:", subtitleId);
+        console.log("Received nestedTitleId:", nestedTitleId);
+
+        // Fetch the title document
+        const existingTitle = await Titles.findById(titleId);
+
+        if (!existingTitle) {
+            console.error("Title not found for ID:", titleId);
+            return res.status(404).json({ error: 'Title not found' });
+        }
+
+        console.log("Existing title document:", existingTitle);
+
+        // Find the correct subtitle by its _id
+        const selectedSubtitle = existingTitle.title.subTitle.find(subtitle => subtitle._id == subtitleId);
+
+        if (!selectedSubtitle) {
+            console.error("Subtitle not found for ID:", subtitleId);
+            return res.status(404).json({ error: 'Subtitle not found' });
+        }
+
+        console.log("Selected subtitle:", selectedSubtitle);
+
+        // Find the correct nested title by its _id
+        const selectedNestedTitle = selectedSubtitle.nestedTitle.find(nestedTitle => nestedTitle._id == nestedTitleId);
+
+        if (!selectedNestedTitle) {
+            console.error("Nested title not found for ID:", nestedTitleId);
+            return res.status(404).json({ error: 'Nested title not found' });
+        }
+
+        console.log("Selected nested title:", selectedNestedTitle);
+
+        // Push the new sub-nested title into the selected nested title's subNestedTitle array
+        selectedNestedTitle.subNestedTitle.push({ subNestedTitleLabel: subNestedTitle });
+
+        // Save the updated title with the new sub-nested title
+        const updatedTitle = await existingTitle.save();
+
+        // Respond with the updated title
+        res.json(updatedTitle);
+    } catch (error) {
+        console.error("Error inserting sub-nested title:", error);
+        res.status(500).send("Error inserting sub-nested title");
+    }
+});
 
 
 
