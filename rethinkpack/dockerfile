@@ -3,6 +3,7 @@ FROM node:18
 
 RUN apt-get update && apt-get install -y python3 make python3-dev libmongocrypt-dev
 
+
 ENV PYTHON=python3
 
 # Set the working directory in the container
@@ -14,7 +15,6 @@ COPY package-lock.json .
 
 # Install Node.js dependencies
 RUN npm install 
-
 # Copy all files to the working directory (except those excluded by .dockerignore)
 COPY . .
 

@@ -22,7 +22,7 @@ const AdminLogin = () => {
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/adminLogin?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
+      const response = await fetch(`https://rtp.dusky.bond/api/adminLogin?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
       const result = await response.json();
 
       if (result.success) {
