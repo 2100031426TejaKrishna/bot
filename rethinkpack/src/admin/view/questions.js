@@ -9,6 +9,7 @@ const destination = "localhost:5000";
 // const destination = "https://rtp.dusky.bond";
 //const destination = "rtp.dusky.bond:5000";
 
+
 const Questions = (triggerRefresh ) => {       //
     const [questions, setQuestions] = useState([]);
     const [showResults, setShowResults] = useState(false);
@@ -423,8 +424,8 @@ const handleLinearScaleChange = (event) => {
 
     const fetchQuestionById = async (id) => {
         try {
-            // const response = await fetch(`http://${destination}/api/question/${id}`);
-             const response = await fetch(`https://rtp.dusky.bond/api/question/${id}`);
+             const response = await fetch(`http://${destination}/api/question/${id}`);
+             //const response = await fetch(`https://rtp.dusky.bond/api/question/${id}`);
 
             if (!response.ok) {
                 if (response.status === 404) {
