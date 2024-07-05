@@ -1,4 +1,3 @@
-// src/App.js
 import React, { useState, useCallback, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import { AuthProvider } from './AuthContext';
@@ -106,14 +105,14 @@ const AppContent = () => {
                 </li>
                 {titles.map((title, index) => (
                   <li key={index} className="nav-item">
-                    <a className={`nav-link ${activeTab === title.title.titleLabel ? 'active' : ''}`} 
+                    <a className={`nav-link ${activeTab === title?.title?.titleLabel ? 'active' : ''}`} 
                       href="#"
                       onClick={() => {
-                        setActiveTab(title.title.titleLabel)
-                        setTitleTab(title.title.titleLabel);
+                        setActiveTab(title?.title?.titleLabel)
+                        setTitleTab(title?.title?.titleLabel);
                       }} 
                     >
-                      {title.title.titleLabel.toString()}
+                      {title?.title?.titleLabel?.toString()}
                     </a>
                   </li>
                 ))}
@@ -121,9 +120,9 @@ const AppContent = () => {
               {activeTab !== 'list' && (
                 <ul className="nav nav-tabs" style={{ paddingLeft: '80px' }}>
                   {titles
-                    .filter(title => title.title.titleLabel === activeTab)
+                    .filter(title => title?.title?.titleLabel === activeTab)
                     .map((title, index) => (
-                      title.title.subTitle.map((subTitle, subIndex) => (
+                      title?.title?.subTitle.map((subTitle, subIndex) => (
                         <li key={subIndex} className="nav-item">
                           <a
                             className={`nav-link ${activeTab === subTitle.subTitleLabel ? 'active' : ''}`}
@@ -174,12 +173,12 @@ const AppContent = () => {
                     >Back</a>
                   )}
                   {titles
-                    .filter(title => title.title.subTitle.some(subTitle => subTitle.subTitleLabel === activeTab))
+                    .filter(title => title?.title?.subTitle.some(subTitle => subTitle.subTitleLabel === activeTab))
                     .map((title, index) => (
-                      title.title.subTitle
+                      title?.title?.subTitle
                         .filter(subTitle => subTitle.subTitleLabel === activeTab)
                         .map((subTitle, subIndex) => (
-                          subTitle.nestedTitle.map((nestedTitle, nestedIndex) => (
+                          subTitle?.nestedTitle.map((nestedTitle, nestedIndex) => (
                             <li key={nestedIndex} className="nav-item">
                               <a
                                 className={`nav-link ${activeTab === nestedTitle.nestedTitleLabel ? 'active' : ''}`}
