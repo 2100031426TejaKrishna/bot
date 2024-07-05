@@ -330,21 +330,21 @@ const TitleTab = ({ triggerRefresh }) => {
             {/* Render titles within the component */}
             {titles.map((title, index) => (
                 <div key={index} className="question-card">
-                    <h4>Title: {title.title.titleLabel.toString()}</h4>
+                    <h4>Title: {title?.title?.titleLabel?.toString() ?? 'No title'}</h4>
 
                     {/* Render subtitles */}
-                    {title.title.subTitle.map((subTitle, subIndex) => (
+                    {title?.title?.subTitle?.map((subTitle, subIndex) => (
                         <div key={subIndex}>
-                            <h6>Subtitle: {subTitle.subTitleLabel.toString()}</h6>
+                            <h6>Subtitle: {subTitle?.subTitleLabel?.toString() ?? 'No subtitle'}</h6>
 
                             {/* Check if nestedTitle exists */}
-                            {subTitle.nestedTitle && subTitle.nestedTitle.map((nestedTitle, nestedIndex) => (
+                            {subTitle?.nestedTitle?.map((nestedTitle, nestedIndex) => (
                                 <div key={nestedIndex}>
-                                    <p>NestedTitle: {nestedTitle.nestedTitleLabel.toString()}</p>
+                                    <p>NestedTitle: {nestedTitle?.nestedTitleLabel?.toString() ?? 'No nested title'}</p>
                                     {/* Check if subNestedTitle exists */}
-                        {nestedTitle.subNestedTitle && nestedTitle.subNestedTitle.map((subNestedTitle, subNestedIndex) => (
+                        {nestedTitle?.subNestedTitle?.map((subNestedTitle, subNestedIndex) => (
                             <div key={subNestedIndex}>
-                                <p>SubNestedTitle: {subNestedTitle.subNestedTitleLabel.toString()}</p>
+                                <p>SubNestedTitle: {subNestedTitle?.subNestedTitleLabel?.toString() ?? 'No sub-nested title'}</p>
                             </div>
                         ))}
                                 </div>
@@ -491,7 +491,7 @@ const TitleTab = ({ triggerRefresh }) => {
                 {/* Display default title */}
                 <div className="mb-3">
                     <label htmlFor={`defaultTitle${index}`} className="form-label"><strong>Default Title:</strong></label>
-                    <div id={`defaultTitle${index}`}><em>{title.title.titleLabel}</em></div>
+                    <div id={`defaultTitle${index}`}><em>{title?.title?.titleLabel ?? 'No title'}</em></div>
                 </div>
 
                 {/* Form fields for editing title */}
@@ -503,13 +503,13 @@ const TitleTab = ({ triggerRefresh }) => {
                 </form>
 
                 {/* Display default subtitles and form fields for editing */}
-                {title.title.subTitle.map((subTitle, subIndex) => (
+                {title?.title?.subTitle?.map((subTitle, subIndex) => (
                     <div key={subIndex}>
                         <div className="mb-3">
                             <label htmlFor={`defaultSubTitle${index}_${subIndex}`} className="form-label"><strong>Default SubTitle:</strong></label>
-                            <div id={`defaultSubTitle${index}_${subIndex}`}><em>{subTitle.subTitleLabel}</em></div>
+                            <div id={`defaultSubTitle${index}_${subIndex}`}><em>{subTitle?.subTitleLabel ?? 'No subtitle'}</em></div>
                         </div>
-                        {Array.isArray(subTitle.nestedTitle) && subTitle.nestedTitle.length > 1 && (
+                        {Array.isArray(subTitle?.nestedTitle) && subTitle?.nestedTitle.length > 1 && (
                             <button
                                 className="btn btn-outline-secondary delete-button"
                                 type="button"
@@ -528,13 +528,13 @@ const TitleTab = ({ triggerRefresh }) => {
                         </form>
 
                         {/* Display default nested titles and form fields for editing */}
-                        {subTitle.nestedTitle && subTitle.nestedTitle.map((nestedTitle, nestedIndex) => (
+                        {subTitle?.nestedTitle?.map((nestedTitle, nestedIndex) => (
                             <div key={nestedIndex}>
                                 <div className="mb-3">
                                     <label htmlFor={`defaultNestedTitle${index}_${subIndex}_${nestedIndex}`} className="form-label"><strong>Default NestedTitle:</strong></label>
-                                    <div id={`defaultNestedTitle${index}_${subIndex}_${nestedIndex}`}><em>{nestedTitle.nestedTitleLabel}</em></div>
+                                    <div id={`defaultNestedTitle${index}_${subIndex}_${nestedIndex}`}><em>{nestedTitle?.nestedTitleLabel ?? 'No nested title'}</em></div>
                                 </div>
-                                {Array.isArray(nestedTitle.subNestedTitle) && nestedTitle.subNestedTitle.length > 1 && (
+                                {Array.isArray(nestedTitle?.subNestedTitle) && nestedTitle?.subNestedTitle.length > 1 && (
                                     <button
                                         className="btn btn-outline-secondary delete-button"
                                         type="button"
@@ -553,13 +553,13 @@ const TitleTab = ({ triggerRefresh }) => {
                                 </form>
 
                                 {/* Display default subNested titles and form fields for editing */}
-                                {nestedTitle.subNestedTitle && nestedTitle.subNestedTitle.map((subNestedTitle, subNestedIndex) => (
+                                {nestedTitle?.subNestedTitle?.map((subNestedTitle, subNestedIndex) => (
                                     <div key={subNestedIndex}>
                                         <div className="mb-3">
                                             <label htmlFor={`defaultSubNestedTitle${index}_${subIndex}_${nestedIndex}_${subNestedIndex}`} className="form-label"><strong>Default Sub-NestedTitle:</strong></label>
-                                            <div id={`defaultSubNestedTitle${index}_${subIndex}_${nestedIndex}_${subNestedIndex}`}><em>{subNestedTitle.subNestedTitleLabel}</em></div>
+                                            <div id={`defaultSubNestedTitle${index}_${subIndex}_${nestedIndex}_${subNestedIndex}`}><em>{subNestedTitle?.subNestedTitleLabel ?? 'No sub-nested title'}</em></div>
                                         </div>
-                                        {Array.isArray(nestedTitle.subNestedTitle) && nestedTitle.subNestedTitle.length > 1 && (
+                                        {Array.isArray(nestedTitle?.subNestedTitle) && nestedTitle?.subNestedTitle.length > 1 && (
                                             <button
                                                 className="btn btn-outline-secondary delete-button"
                                                 type="button"
