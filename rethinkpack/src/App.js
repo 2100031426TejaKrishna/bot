@@ -43,7 +43,6 @@ const AppContent = () => {
         if (response.ok) {
           const data = await response.json();
           setTitles(data);
-          console.log('Fetched titles:', data);
         }
       } catch (error) {
         console.error('Error fetching titles:', error);
@@ -109,15 +108,11 @@ const AppContent = () => {
                     <a className={`nav-link ${activeTab === title?.title?.titleLabel ? 'active' : ''}`} 
                       href="#"
                       onClick={() => {
-                        if (title?.title?.titleLabel) {
-                          setActiveTab(title.title.titleLabel)
-                          setTitleTab(title.title.titleLabel);
-                        } else {
-                          console.error('Undefined title or titleLabel:', title);
-                        }
+                        setActiveTab(title?.title?.titleLabel)
+                        setTitleTab(title?.title?.titleLabel);
                       }} 
                     >
-                      {title?.title?.titleLabel?.toString() || 'Undefined title'}
+                      {title?.title?.titleLabel?.toString()}
                     </a>
                   </li>
                 ))}
@@ -127,26 +122,22 @@ const AppContent = () => {
                   {titles
                     .filter(title => title?.title?.titleLabel === activeTab)
                     .map((title, index) => (
-                      title?.title?.subTitle?.map((subTitle, subIndex) => (
+                      title?.title?.subTitle.map((subTitle, subIndex) => (
                         <li key={subIndex} className="nav-item">
                           <a
-                            className={`nav-link ${activeTab === subTitle?.subTitleLabel ? 'active' : ''}`}
+                            className={`nav-link ${activeTab === subTitle.subTitleLabel ? 'active' : ''}`}
                             href="#"
                             onClick={() => {
-                              if (subTitle?.subTitleLabel) {
-                                setSubTitleTab(subTitle.subTitleLabel);
-                                setActiveTab(subTitle.subTitleLabel);
-                                setActiveSubTitle(subTitle.subTitleLabel);
-                                setSelectedSubtitle(subTitle._id?.toString() || 'Undefined subtitle ID');
-                                document.getElementById('btBackSub').style.display = 'inline';
-                                document.getElementById('btBackNested').style.display = 'none';
-                                console.log('Selected Subtitle:', subTitle._id?.toString());
-                              } else {
-                                console.error('Undefined subTitle or subTitleLabel:', subTitle);
-                              }
+                              setSubTitleTab(subTitle.subTitleLabel);
+                              setActiveTab(subTitle.subTitleLabel)
+                              setActiveSubTitle(subTitle.subTitleLabel)
+                              setSelectedSubtitle(subTitle._id.toString());
+                              document.getElementById('btBackSub').style.display = 'inline';
+                              document.getElementById('btBackNested').style.display = 'none';
+                              console.log('Selected Subtitle:', subTitle._id.toString());
                             }}
                           >
-                            {subTitle?.subTitleLabel?.toString() || 'Undefined subtitle'}
+                            {subTitle.subTitleLabel.toString()}
                           </a>
                         </li>
                       ))
@@ -182,31 +173,27 @@ const AppContent = () => {
                     >Back</a>
                   )}
                   {titles
-                    .filter(title => title?.title?.subTitle?.some(subTitle => subTitle?.subTitleLabel === activeTab))
+                    .filter(title => title?.title?.subTitle.some(subTitle => subTitle.subTitleLabel === activeTab))
                     .map((title, index) => (
                       title?.title?.subTitle
-                        .filter(subTitle => subTitle?.subTitleLabel === activeTab)
+                        .filter(subTitle => subTitle.subTitleLabel === activeTab)
                         .map((subTitle, subIndex) => (
-                          subTitle?.nestedTitle?.map((nestedTitle, nestedIndex) => (
+                          subTitle?.nestedTitle.map((nestedTitle, nestedIndex) => (
                             <li key={nestedIndex} className="nav-item">
                               <a
-                                className={`nav-link ${activeTab === nestedTitle?.nestedTitleLabel ? 'active' : ''}`}
+                                className={`nav-link ${activeTab === nestedTitle.nestedTitleLabel ? 'active' : ''}`}
                                 href="#"
                                 onClick={() => {
-                                  if (nestedTitle?.nestedTitleLabel) {
-                                    setNestedTitleTab(nestedTitle.nestedTitleLabel);
-                                    setActiveTab(nestedTitle.nestedTitleLabel);
-                                    setActiveNestedTitle(nestedTitle.nestedTitleLabel);
-                                    setSelectedNestedtitle(nestedTitle._id?.toString() || 'Undefined nested title ID');
-                                    document.getElementById('btBackSub').style.display = 'none';
-                                    document.getElementById('btBackNested').style.display = 'inline';
-                                    console.log('Selected Nestedtitle:', nestedTitle._id?.toString());
-                                  } else {
-                                    console.error('Undefined nestedTitle or nestedTitleLabel:', nestedTitle);
-                                  }
+                                  setNestedTitleTab(nestedTitle.nestedTitleLabel);
+                                  setActiveTab(nestedTitle.nestedTitleLabel)
+                                  setActiveNestedTitle(nestedTitle.nestedTitleLabel)
+                                  setSelectedNestedtitle(nestedTitle._id.toString());
+                                  document.getElementById('btBackSub').style.display = 'none';
+                                  document.getElementById('btBackNested').style.display = 'inline';
+                                  console.log('Selected Nestedtitle:', nestedTitle._id.toString());
                                 }}
                               >
-                                {nestedTitle?.nestedTitleLabel?.toString() || 'Undefined nested title'}
+                                {nestedTitle.nestedTitleLabel.toString()}
                               </a>
                             </li>
                           ))
