@@ -17,6 +17,7 @@ const Questions = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [answers, setAnswers] = useState({});
     const [navigationHistory, setNavigationHistory] = useState([]);
+    const [questionFlow, setQuestionFlow] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [showCountrySelectionModal, setShowCountrySelectionModal] = useState(false);
     const [selectedCountries, setSelectedCountries] = useState([]);
@@ -27,9 +28,12 @@ const Questions = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [recommendations, setRecommendations] = useState({});
     const [currentTitle, setCurrentTitle] = useState('');
-    const [questionOrder, setQuestionOrder] = useState([]);
     const [countryQuestions, setCountryQuestions] = useState([]);
     const [titles, setTitles] = useState({});
+    const [nextQuestionId, setNextQuestionId] = useState(null);
+    const [currentSeriesSet, setCurrentSeriesSet] = useState(new Set());
+    const [dynamicQuestions, setDynamicQuestions] = useState({});
+    const [addedQuestions, setAddedQuestions] = useState({});
 
     const countries = [
         "Afghanistan", "Albania", "Algeria", "Andorra", "Angola",
@@ -73,129 +77,164 @@ const Questions = () => {
         "Vanuatu", "Vatican City", "Venezuela", "Vietnam", "Yemen",
         "Zambia", "Zimbabwe"
     ];
+
     const countryRefs = useRef(countries.reduce((acc, country) => {
         acc[country] = React.createRef();
         return acc;
     }, {}));
+
     const navigate = useNavigate();
     const destination = "localhost:5000";
-    // const destination = "rtp.dusky.bond:5000";
 
     useEffect(() => {
-        const fetchGeneralQuestions = async () => {
+        const fetchQuestions = async () => {
             try {
-                const response = await fetch(`http://${destination}/api/fetchGeneralQuestions`);
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                const generalQuestions = await response.json();
-                setGeneralQuestions(generalQuestions);
-                setQuestions(generalQuestions);
+                const response = await fetch(`http://${destination}/api/fetchQuestionsSeries`);
+                const data = await response.json();
+                const { independentQuestions } = data;
+
+                setQuestions(independentQuestions);
+                setQuestionFlow(independentQuestions.map(question => ({ ...question, isVisible: true })));
                 setIsLoading(false);
             } catch (error) {
-                console.error("Error fetching general questions:", error);
+                console.error("Error fetching questions:", error);
                 setIsLoading(false);
             }
         };
-        fetchGeneralQuestions();
+
+        fetchQuestions();
     }, [destination]);
 
     useEffect(() => {
-        const fetchTitles = async () => {
-            try {
-                const titlesMap = {};
-                for (const question of questions) {
-                    const response = await fetch(`http://${destination}/api/fetchTitleForQuestion/${question._id}`);
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                    const { title } = await response.json();
-                    titlesMap[question._id] = title;
-                }
-                setTitles(titlesMap);
-                const sortedQuestions = questions.sort((a, b) => {
-                    const titleA = titlesMap[a._id].toLowerCase();
-                    const titleB = titlesMap[b._id].toLowerCase();
-                    return titleA.localeCompare(titleB);
-                });
-                setQuestionOrder(sortedQuestions);
-            } catch (error) {
-                console.error("Error fetching titles:", error);
-            }
-        };
-
         if (questions.length > 0) {
-            fetchTitles();
-        }
-    }, [questions]);
-
-    useEffect(() => {
-        if (questionOrder.length === 0) return;
-        const currentQuestion = questionOrder[currentQuestionIndex];
-        if (!currentQuestion) {
-            setCurrentTitle('');
-            return;
-        }
-
-        const prevAnswer = answers[currentQuestion._id];
-        if (prevAnswer) {
-            if (Array.isArray(prevAnswer)) {
-                setSelectedOptions(prevAnswer);
-                setCanProceed(prevAnswer.length > 0);
-            } else if (typeof prevAnswer === 'object' && prevAnswer !== null) {
-                setGridAnswers(prevAnswer);
-                const isValid = validateGridAnswersWithTempAnswers(prevAnswer, currentQuestion);
-                setCanProceed(isValid);
-            } else {
-                setCurrentAnswer(prevAnswer);
-                setCanProceed(prevAnswer.trim() !== '');
+            const currentQuestion = questions[currentQuestionIndex];
+            if (!currentQuestion) {
+                setCurrentTitle('');
+                return;
             }
-        } else if (currentQuestion.optionType === 'openEnded') {
-            setOpenEndedText(prevAnswer || '');
-            setCanProceed(!!prevAnswer && prevAnswer.trim().length > 0);
-        } else {
-            setCurrentAnswer('');
-            setSelectedOptions([]);
-            setGridAnswers({});
-            setCanProceed(false);
-        }
 
-        if (currentQuestion.options) {
-            currentQuestion.options.forEach(async (option) => {
-                try {
-                    const response = await fetch(`http://${destination}/api/recommendationText/${option._id}`);
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                    const { recommendations } = await response.json();
-                    setRecommendations((prevRecommendations) => ({
-                        ...prevRecommendations,
-                        [option._id]: recommendations
-                    }));
-                } catch (error) {
-                    console.error("Error fetching recommendation:", error);
+            const prevAnswer = answers[currentQuestion._id];
+            if (prevAnswer) {
+                if (Array.isArray(prevAnswer)) {
+                    setSelectedOptions(prevAnswer);
+                    setCanProceed(prevAnswer.length > 0);
+                } else if (typeof prevAnswer === 'object' && prevAnswer !== null) {
+                    setGridAnswers(prevAnswer);
+                    const isValid = validateGridAnswersWithTempAnswers(prevAnswer, currentQuestion);
+                    setCanProceed(isValid);
+                } else {
+                    setCurrentAnswer(prevAnswer);
+                    setOpenEndedText(prevAnswer);
+                    setCanProceed(prevAnswer?.trim() !== '');
                 }
-            });
-        }
+            } else if (currentQuestion.optionType === 'openEnded') {
+                setOpenEndedText(prevAnswer || '');
+                setCanProceed(!!prevAnswer && prevAnswer.trim().length > 0);
+            } else {
+                setCurrentAnswer('');
+                setSelectedOptions([]);
+                setGridAnswers({});
+                setOpenEndedText('');
+                setCanProceed(false);
+            }
 
-        setCurrentTitle(titles[currentQuestion._id] || '');
-    }, [currentQuestionIndex, answers, questionOrder, titles]);
+            if (currentQuestion.options) {
+                currentQuestion.options.forEach(async (option) => {
+                    try {
+                        const response = await fetch(`http://${destination}/api/recommendationText/${option._id}`);
+                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                        const { recommendations } = await response.json();
+                        setRecommendations((prevRecommendations) => ({
+                            ...prevRecommendations,
+                            [option._id]: recommendations
+                        }));
+                    } catch (error) {
+                        console.error("Error fetching recommendation:", error);
+                    }
+                });
+            }
+
+            setCurrentTitle(titles[currentQuestion._id] || '');
+        }
+    }, [currentQuestionIndex, answers, questions, titles]);
 
     const handleAnswerChange = async (event, optionType) => {
+        let updatedOptions = selectedOptions;
+        let updatedAnswer = currentAnswer;
+
         if (optionType === 'checkbox') {
-            const updatedOptions = event.target.checked
+            updatedOptions = event.target.checked
                 ? [...selectedOptions, event.target.value]
                 : selectedOptions.filter(option => option !== event.target.value);
             setSelectedOptions(updatedOptions);
             setCanProceed(updatedOptions.length > 0);
+            updateAnswers(updatedOptions, questions[currentQuestionIndex]._id);
         } else if (optionType === 'openEnded') {
             const newText = event.target.value;
             setOpenEndedText(newText);
             const wordCount = getWordCount(newText);
             setIsWordCountExceeded(wordCount > openEndedWordLimit);
             setCanProceed(wordCount <= openEndedWordLimit && newText.trim().length > 0);
+            updateAnswers(newText, questions[currentQuestionIndex]._id);
         } else {
-            setCurrentAnswer(event.target.value);
-            setCanProceed(event.target.value.trim() !== '');
+            updatedAnswer = event.target.value;
+            setCurrentAnswer(updatedAnswer);
+            setCanProceed(updatedAnswer.trim() !== '');
+            updateAnswers(updatedAnswer, questions[currentQuestionIndex]._id);
+        }
+
+        if (optionType === 'multipleChoice' || optionType === 'dropdown') {
+            const selectedOption = questions[currentQuestionIndex].options.find(option => option.text === event.target.value);
+            if (selectedOption && selectedOption.optionsNextQuestion) {
+                const nextQuestion = await fetchQuestionById(selectedOption.optionsNextQuestion);
+                if (nextQuestion) {
+                    const nextQuestionId = selectedOption.optionsNextQuestion;
+                    setDynamicQuestions((prevDynamicQuestions) => {
+                        const newDynamicQuestions = { ...prevDynamicQuestions, [nextQuestionId]: nextQuestion };
+                        setAddedQuestions((prevAddedQuestions) => {
+                            const newAddedQuestions = { ...prevAddedQuestions, [nextQuestionId]: nextQuestion };
+                            setQuestionFlow((prevFlow) => [...prevFlow.slice(0, currentQuestionIndex + 1), nextQuestion, ...prevFlow.slice(currentQuestionIndex + 1)]);
+                            return newAddedQuestions;
+                        });
+                        return newDynamicQuestions;
+                    });
+                    setQuestions(prevQuestions => {
+                        const newQuestions = [...prevQuestions];
+                        newQuestions.splice(currentQuestionIndex + 1, 0, nextQuestion);
+                        return newQuestions;
+                    });
+                }
+            } else {
+                setNextQuestionId(null);
+            }
+        }
+
+        if (optionType === 'checkbox' || optionType === 'multipleChoice') {
+            const nextQuestionIds = [...updatedOptions.map(optionText => {
+                const selectedOption = questions[currentQuestionIndex].options.find(option => option.text === optionText);
+                return selectedOption?.optionsNextQuestion;
+            }).filter(Boolean)];
+
+            if (nextQuestionIds.length > 0) {
+                const nextQuestionPromises = nextQuestionIds.map(id => fetchQuestionById(id));
+                const nextQuestions = await Promise.all(nextQuestionPromises);
+                const nextQuestionsMap = nextQuestions.reduce((acc, question) => ({ ...acc, [question._id]: question }), {});
+                setDynamicQuestions((prevDynamicQuestions) => {
+                    const newDynamicQuestions = { ...prevDynamicQuestions, ...nextQuestionsMap };
+                    setAddedQuestions((prevAddedQuestions) => {
+                        const newAddedQuestions = { ...prevAddedQuestions, ...nextQuestionsMap };
+                        setQuestionFlow((prevFlow) => [...prevFlow.slice(0, currentQuestionIndex + 1), ...Object.values(newAddedQuestions).map(question => ({ ...question, isVisible: true }))]);
+                        return newAddedQuestions;
+                    });
+                    return newDynamicQuestions;
+                });
+                setQuestions(prevQuestions => [...prevQuestions, ...nextQuestions]);
+            }
         }
     };
 
     const handleGridAnswerChange = (rowIndex, colIndex, optionType) => {
-        const currentQuestion = questionOrder[currentQuestionIndex];
+        const currentQuestion = questions[currentQuestionIndex];
         setGridAnswers((prevGridAnswers) => {
             const newGridAnswers = { ...prevGridAnswers };
 
@@ -237,77 +276,129 @@ const Questions = () => {
             ...prevAnswers,
             [questionId]: newAnswer
         }));
+        console.log("Updated Answers:", { ...answers, [questionId]: newAnswer }); // Logging for debugging
+        localStorage.setItem('surveyResponses', JSON.stringify({ ...answers, [questionId]: newAnswer }));
     };
 
     const getWordCount = (text) => {
         return text.trim().split(/\s+/).filter(Boolean).length;
     };
 
-    const handleNextQuestion = () => {
-        const currentQuestion = questionOrder[currentQuestionIndex];
+    const fetchQuestionById = async (questionId) => {
+        try {
+            const response = await fetch(`http://${destination}/api/fetchQuestionById/${questionId}`);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const question = await response.json();
+            console.log("Fetched Question by ID:", question); // Logging for debugging
+            return question;
+        } catch (error) {
+            console.error("Error fetching question by ID:", error);
+            return null;
+        }
+    };
+
+    const handleNextQuestion = async () => {
+        const currentQuestion = questions[currentQuestionIndex];
         let newAnswer;
 
-        if (currentQuestion.optionType === 'openEnded' && !canProceed) {
+        if (currentQuestion?.optionType === 'openEnded' && !canProceed) {
             alert("Please enter some text for the open-ended question before proceeding.");
             return;
         }
 
-        if (currentQuestion.optionType === 'checkbox') {
+        if (currentQuestion?.optionType === 'checkbox') {
             newAnswer = selectedOptions;
-        } else if (currentQuestion.optionType.includes('Grid')) {
+        } else if (currentQuestion?.optionType.includes('Grid')) {
             newAnswer = gridAnswers;
-        } else if (currentQuestion.optionType === 'openEnded') {
+        } else if (currentQuestion?.optionType === 'openEnded') {
             newAnswer = openEndedText;
         } else {
             newAnswer = currentAnswer;
         }
 
-        updateAnswers(newAnswer, currentQuestion._id);
+        updateAnswers(newAnswer, currentQuestion?._id);
 
         setNavigationHistory((prevHistory) => [...prevHistory, currentQuestionIndex]);
 
-        if (currentQuestionIndex < questionOrder.length - 1) {
-            setCurrentQuestionIndex(currentQuestionIndex + 1);
-            setRecommendations({}); // Clear recommendations when moving to next question
-        } else if (currentStage === 'general') {
-            setShowCountrySelection(true);
+        if (nextQuestionId) {
+            const nextQuestion = await fetchQuestionById(nextQuestionId);
+            if (nextQuestion) {
+                setDynamicQuestions((prevDynamicQuestions) => {
+                    const newDynamicQuestions = { ...prevDynamicQuestions, [nextQuestion._id]: nextQuestion };
+                    setAddedQuestions((prevAddedQuestions) => {
+                        const newAddedQuestions = { ...prevAddedQuestions, [nextQuestion._id]: nextQuestion };
+                        setQuestionFlow((prevFlow) => [...prevFlow, ...Object.values(newAddedQuestions).map(question => ({ ...question, isVisible: true }))]);
+                        return newAddedQuestions;
+                    });
+                    return newDynamicQuestions;
+                });
+                setQuestions((prevQuestions) => {
+                    const updatedQuestions = [...prevQuestions, nextQuestion];
+                    return updatedQuestions;
+                });
+                setCurrentQuestionIndex(currentQuestionIndex + 1);
+                setRecommendations({});
+            } else {
+                alert("Next question not found");
+            }
+        } else {
+            if (currentQuestionIndex < questions.length - 1) {
+                setCurrentQuestionIndex(currentQuestionIndex + 1);
+                setRecommendations({});
+            } else if (currentStage === 'general') {
+                handleGoToCountrySelection();
+            }
         }
     };
 
     const handlePreviousQuestion = () => {
         if (currentQuestionIndex > 0) {
-            setCurrentQuestionIndex(currentQuestionIndex - 1);
-            setRecommendations({}); // Clear recommendations when moving to previous question
+            const prevIndex = navigationHistory.pop();
+            setCurrentQuestionIndex(prevIndex);
+            setRecommendations({});
 
-            const prevQuestionAnswers = answers[questionOrder[currentQuestionIndex - 1]._id];
+            const prevQuestion = questions[prevIndex];
+            const prevQuestionAnswers = answers[prevQuestion._id];
+
             if (Array.isArray(prevQuestionAnswers)) {
                 setSelectedOptions(prevQuestionAnswers);
+                setCanProceed(prevQuestionAnswers.length > 0);
             } else if (typeof prevQuestionAnswers === 'object' && prevQuestionAnswers !== null) {
                 setGridAnswers(prevQuestionAnswers);
+                const isValid = validateGridAnswersWithTempAnswers(prevQuestionAnswers, prevQuestion);
+                setCanProceed(isValid);
             } else {
                 setCurrentAnswer(prevQuestionAnswers || '');
+                setOpenEndedText(prevQuestionAnswers || '');
+                setCanProceed(prevQuestionAnswers?.trim() !== '');
             }
 
-            setCanProceed(true);
+            setQuestionFlow(questionFlow.map((question, index) => ({
+                ...question,
+                isVisible: index <= prevIndex
+            })));
         }
     };
 
     const handleClearSelection = () => {
-        const currentQuestion = questionOrder[currentQuestionIndex];
+        const currentQuestion = questions[currentQuestionIndex];
 
-        if (currentQuestion.optionType === 'checkboxGrid' || currentQuestion.optionType === 'multipleChoiceGrid') {
+        if (currentQuestion?.optionType === 'checkboxGrid' || currentQuestion?.optionType === 'multipleChoiceGrid') {
             const resetGridAnswers = {};
             currentQuestion.grid.rows.forEach((_, rowIndex) => {
                 resetGridAnswers[rowIndex] = [];
             });
             setGridAnswers(resetGridAnswers);
-            updateAnswers(resetGridAnswers, currentQuestion._id);
-        } else if (currentQuestion.optionType === 'checkbox') {
+            updateAnswers(resetGridAnswers, currentQuestion?._id);
+        } else if (currentQuestion?.optionType === 'checkbox') {
             setSelectedOptions([]);
-            updateAnswers([], currentQuestion._id);
+            updateAnswers([], currentQuestion?._id);
+        } else if (currentQuestion?.optionType === 'openEnded') {
+            setOpenEndedText('');
+            updateAnswers('', currentQuestion?._id);
         } else {
             setCurrentAnswer('');
-            updateAnswers('', currentQuestion._id);
+            updateAnswers('', currentQuestion?._id);
         }
 
         setCanProceed(false);
@@ -322,20 +413,20 @@ const Questions = () => {
     };
 
     const handleCountrySelectionConfirm = () => {
-        const currentQuestion = questionOrder[currentQuestionIndex];
+        const currentQuestion = questions[currentQuestionIndex];
         let newAnswer;
 
-        if (currentQuestion.optionType === 'checkbox') {
+        if (currentQuestion?.optionType === 'checkbox') {
             newAnswer = selectedOptions;
-        } else if (currentQuestion.optionType.includes('Grid')) {
+        } else if (currentQuestion?.optionType.includes('Grid')) {
             newAnswer = gridAnswers;
-        } else if (currentQuestion.optionType === 'openEnded') {
+        } else if (currentQuestion?.optionType === 'openEnded') {
             newAnswer = openEndedText;
         } else {
             newAnswer = currentAnswer;
         }
 
-        updateAnswers(newAnswer, currentQuestion._id);
+        updateAnswers(newAnswer, currentQuestion?._id);
         setShowCountrySelectionModal(true);
     };
 
@@ -365,9 +456,10 @@ const Questions = () => {
                     return;
                 }
 
-                setCountryQuestions(countrySpecificQuestions); // Set only country-specific questions
-                setQuestions(countrySpecificQuestions); // Include only country-specific questions
-                setCurrentQuestionIndex(0); // Start from the first country-specific question
+                setCountryQuestions(countrySpecificQuestions);
+                setQuestions(countrySpecificQuestions);
+                setQuestionFlow(countrySpecificQuestions.map(question => ({ ...question, isVisible: true })));
+                setCurrentQuestionIndex(0);
                 setCurrentStage('country');
                 setIsLoading(false);
 
@@ -402,49 +494,56 @@ const Questions = () => {
     };
 
     const handleSubmit = () => {
-        const currentQuestion = questionOrder[currentQuestionIndex];
+        const currentQuestion = questions[currentQuestionIndex];
         let newAnswer;
 
-        if (currentQuestion.optionType === 'checkbox') {
+        if (currentQuestion?.optionType === 'checkbox') {
             newAnswer = selectedOptions;
-        } else if (currentQuestion.optionType.includes('Grid')) {
+        } else if (currentQuestion?.optionType.includes('Grid')) {
             newAnswer = gridAnswers;
-        } else if (currentQuestion.optionType === 'openEnded') {
+        } else if (currentQuestion?.optionType === 'openEnded') {
             newAnswer = openEndedText;
         } else {
             newAnswer = currentAnswer;
         }
 
-        updateAnswers(newAnswer, currentQuestion._id);
+        updateAnswers(newAnswer, currentQuestion?._id);
         setShowModal(true);
     };
 
     const handleConfirmSubmit = () => {
-        const currentQuestion = questionOrder[currentQuestionIndex];
-        const lastAnswer = currentQuestion.optionType.includes('Grid') ? gridAnswers : currentQuestion.optionType === 'checkbox' ? selectedOptions : currentAnswer;
-        updateAnswers(lastAnswer, currentQuestion._id);
+        const currentQuestion = questions[currentQuestionIndex];
+        const lastAnswer = currentQuestion?.optionType.includes('Grid') ? gridAnswers : currentQuestion?.optionType === 'checkbox' ? selectedOptions : currentAnswer;
+        updateAnswers(lastAnswer, currentQuestion?._id);
 
-        const answeredQuestions = [...generalQuestions, ...countryQuestions].map((question) => {
-            const answer = answers[question._id];
+        const allAnswers = JSON.parse(localStorage.getItem('surveyResponses')) || {};
+        const answeredQuestions = Object.keys(allAnswers).map((questionId) => {
+            const question = questions.find(q => q._id === questionId);
+            const answer = allAnswers[questionId];
             return {
-                questionId: question._id,
-                question: question.question,
+                questionId,
+                question: question ? question.question : 'Unknown Question',
                 answer: answer,
             };
         });
 
         console.log("Submitted Answers:", answeredQuestions);
 
-        localStorage.setItem('surveyResponses', JSON.stringify(answeredQuestions));
+        localStorage.setItem('submittedResponses', JSON.stringify(answeredQuestions));
 
         navigate('/responses');
+    };
+
+    const handleGoToCountrySelection = () => {
+        handleCountrySelectionConfirm();
+        setShowCountrySelection(true);
     };
 
     if (isLoading) {
         return <div>Loading questions...</div>;
     }
 
-    const showCountrySelectionButton = currentStage === 'general' && currentQuestionIndex === questionOrder.length - 1;
+    const showCountrySelectionButton = currentStage === 'general' && currentQuestionIndex === questions.length - 1;
 
     const renderOptions = (question) => {
         if (!question) return null;
@@ -492,7 +591,7 @@ const Questions = () => {
                     <select
                         className="form-select"
                         aria-label="Dropdown select example"
-                        onChange={handleAnswerChange}
+                        onChange={(e) => handleAnswerChange(e, 'dropdown')}
                         value={currentAnswer || "placeholder"}
                     >
                         <option value="placeholder" disabled hidden>Select an option</option>
@@ -643,13 +742,13 @@ const Questions = () => {
     return (
         <div className="survey-questions-container">
             {isLoading && <div>Loading questions...</div>}
-            {!isLoading && !questionOrder.length && <div>Sorting questions</div>}
-            {!isLoading && questionOrder.length > 0 && (
+            {!isLoading && !questions.length && <div>No questions available</div>}
+            {!isLoading && questions.length > 0 && (
                 <div className="survey-questions-card">
                     {currentTitle && <h5 className="survey-questions-title">{currentTitle}</h5>}
-                    <h4>{currentStage === 'general' ? currentQuestionIndex + 1 : currentQuestionIndex + 1}. {questionOrder[currentQuestionIndex]?.question || 'Select Country'}</h4>
+                    <h4>{currentStage === 'general' ? currentQuestionIndex + 1 : currentQuestionIndex + 1}. {questions[currentQuestionIndex]?.question || 'Select Country'}</h4>
                     <div className="options-container">
-                        {renderOptions(questionOrder[currentQuestionIndex])}
+                        {renderOptions(questions[currentQuestionIndex])}
                     </div>
                     <footer className="survey-questions-footer">
                         <div className="survey-questions-navigation-buttons">
@@ -658,8 +757,8 @@ const Questions = () => {
                                 <button className="survey-questions-button" onClick={handlePreviousQuestion}>Back</button>
                             ) : null}
                             {showCountrySelectionButton ? (
-                                <button className="survey-questions-button" onClick={() => setShowCountrySelection(true)}>Go to Country Selection</button>
-                            ) : currentQuestionIndex < questionOrder.length - 1 ? (
+                                <button className="survey-questions-button" onClick={handleGoToCountrySelection}>Go to Country Selection</button>
+                            ) : currentQuestionIndex < questions.length - 1 ? (
                                 <button className="survey-questions-button" onClick={handleNextQuestion} disabled={!canProceed || isWordCountExceeded}>Next</button>
                             ) : (
                                 <button className="survey-questions-button" onClick={handleSubmit} disabled={!canProceed || isWordCountExceeded}>Submit</button>
