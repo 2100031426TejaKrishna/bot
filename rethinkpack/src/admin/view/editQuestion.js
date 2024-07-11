@@ -2469,25 +2469,25 @@ fetchCountries = async () => {
         {allTitles.map((titleObject) => (
           <optgroup key={titleObject.title.titleLabel} label={"Title: " + titleObject.title.titleLabel}>
             {/* Render subTitleLabel as options */}
-            {titleObject.title.subTitle.map((subTitleObject) => (
+            {titleObject.title?.subTitle?.map((subTitleObject) => (
               <React.Fragment key={subTitleObject._id}>
                 <option value={subTitleObject._id}>   {/*not necessary adding key*/}
                   {"Sub Title: " + subTitleObject.subTitleLabel}
                 </option>
                 {/* Render nestedTitleLabel as options */}
-                {subTitleObject.nestedTitle.map((nestedTitleObject) => (
+                {subTitleObject.nestedTitle?.map((nestedTitleObject) => (
                   <React.Fragment key={nestedTitleObject._id}>
                     <option value={nestedTitleObject._id}>
                       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{nestedTitleObject.nestedTitleLabel}
                     </option>
                     {/* Render subNestedTitleLabel as options */}
-                    {nestedTitleObject.subNestedTitle.map((subNestedTitleObject) => (
+                    {nestedTitleObject.subNestedTitle?.map((subNestedTitleObject) => (
                       <React.Fragment key={subNestedTitleObject._id}>
                         <option value={subNestedTitleObject._id}>
                           &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{subNestedTitleObject.subNestedTitleLabel}
                         </option>
                         {/* Render subSubNestedTitleLabel as options */}
-                        {subNestedTitleObject.subSubNestedTitle.map((subSubNestedTitleObject) => (
+                        {subNestedTitleObject.subSubNestedTitle?.map((subSubNestedTitleObject) => (
                           <option key={subSubNestedTitleObject._id} value={subSubNestedTitleObject._id}>
                             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{subSubNestedTitleObject.subSubNestedTitleLabel}
                           </option>
