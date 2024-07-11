@@ -16,19 +16,13 @@ class CreateTitle extends Component {
           {
             subTitleLabel: '',
             nestedTitle: [
-              {
+              { 
                 nestedTitleLabel: '',
                 subNestedTitle: [
-                  { subNestedTitleLabel: '',
-                    subSubNestedTitle: [
-                      { subSubNestedTitleLabel: '' } // New addition for sub-sub nested titles
-                    ]
-                   }
-                ],
-                
-                
+                  { subNestedTitleLabel: '' }
+                ]
               }
-            ],
+            ]
           }
         ],
       },
@@ -36,12 +30,10 @@ class CreateTitle extends Component {
         titleLabel: '',
         subTitleLabel: '',
         nestedTitleLabel: '',
-        subNestedTitleLabel: '',
-        subSubNestedTitleLabel: '' // Validation error for sub-sub nested titles
+        subNestedTitleLabel: ''
       },
       showModal: false,
     };
-    
 
     this.initialState = { ...this.state };
     this.resetState = this.resetState.bind(this);
@@ -60,9 +52,7 @@ class CreateTitle extends Component {
     this.setState({ showModal: true });
   };
 
-  
   insertTitle = async (dataToInsert) => {
-    console.log(dataToInsert);
     try {
       const response = await fetch(`http://${destination}/api/insertTitle`, {
         method: 'POST',
@@ -99,7 +89,7 @@ class CreateTitle extends Component {
     this.setState((prevState) => ({
       title: {
         ...prevState.title,
-        subTitle: title?.subTitle?.map((subTitleElem, i) =>
+        subTitle: title.subTitle.map((subTitleElem, i) =>
           i === index ? { ...subTitleElem, subTitleLabel: value } : subTitleElem
         ),
       },
@@ -110,7 +100,7 @@ class CreateTitle extends Component {
     this.setState((prevState) => ({
       title: {
         ...prevState.title,
-        subTitle: prevState.title?.subTitle?.map((subTitleElem, i) =>
+        subTitle: prevState.title.subTitle.map((subTitleElem, i) =>
           i === index_sub
             ? {
               ...subTitleElem,
@@ -128,15 +118,15 @@ class CreateTitle extends Component {
     this.setState((prevState) => ({
       title: {
         ...prevState.title,
-        subTitle: prevState.title?.subTitle?.map((subTitleElem, i) =>
+        subTitle: prevState.title.subTitle.map((subTitleElem, i) =>
           i === index_sub
             ? {
               ...subTitleElem,
-              nestedTitle: subTitleElem.nestedTitle?.map((nestedTitleElem, j) =>
+              nestedTitle: subTitleElem.nestedTitle.map((nestedTitleElem, j) =>
                 j === index_nest
                   ? {
                     ...nestedTitleElem,
-                    subNestedTitle: nestedTitleElem.subNestedTitle?.map((subNestedTitleElem, k) =>
+                    subNestedTitle: nestedTitleElem.subNestedTitle.map((subNestedTitleElem, k) =>
                       k === index_sub_nest ? { ...subNestedTitleElem, subNestedTitleLabel: value } : subNestedTitleElem
                     )
                   }
@@ -148,139 +138,6 @@ class CreateTitle extends Component {
       },
     }));
   };
-
-  handleSubSubNestedTitleLabel = (index_sub, index_nest, index_sub_nest, index_sub_sub_nest, value) => {
-    this.setState((prevState) => ({
-      title: {
-        ...prevState.title,
-        subTitle: prevState.title?.subTitle?.map((subTitleElem, subTitleIndex) =>
-          subTitleIndex === index_sub
-            ? {
-              ...subTitleElem,
-              nestedTitle: subTitleElem.nestedTitle?.map((nestedTitleElem, nestedTitleIndex) =>
-                nestedTitleIndex === index_nest
-                  ? {
-                    ...nestedTitleElem,
-                    subNestedTitle: nestedTitleElem.subNestedTitle?.map((subNestedTitleElem, subNestedTitleIndex) =>
-                      subNestedTitleIndex === index_sub_nest
-                        ? {
-                          ...subNestedTitleElem,
-                          subSubNestedTitle: subNestedTitleElem.subSubNestedTitle?.map((subSubNestedTitleElem, subSubNestedTitleIndex) =>
-                            subSubNestedTitleIndex === index_sub_sub_nest
-                              ? {
-                                 ...subSubNestedTitleElem, subSubNestedTitleLabel: value }
-                              : subSubNestedTitleElem
-                          )
-                        }
-                        : subNestedTitleElem
-                    )
-                  }
-                  : nestedTitleElem
-              )
-            }
-            : subTitleElem
-        )
-      }
-    }));
-  };
-  
-  
-  
-  addSubSubNestedTitle = (subtitleIndex, nestedTitleIndex, subnesttitleIndex, e) => {
-    e.preventDefault();
-    this.setState((prevState) => ({
-      title: {
-        ...prevState.title,
-        subTitle: prevState.title?.subTitle?.map((subTitleElem, i) =>
-          i === subtitleIndex
-            ? {
-              ...subTitleElem,
-              nestedTitle: subTitleElem.nestedTitle?.map((nestedTitleElem, j) =>
-                j === nestedTitleIndex
-                  ? {
-                    ...nestedTitleElem,
-                    subNestedTitle: nestedTitleElem.subNestedTitle?.map((subNestedTitleElem, k) =>
-                      k === subnesttitleIndex
-                        ? {
-                          ...subNestedTitleElem,
-                          subSubNestedTitle: [
-                            ...(subNestedTitleElem.subSubNestedTitle || []),
-                            { subSubNestedTitleLabel: '' }
-                          ]
-                        }
-                        : subNestedTitleElem
-                    )
-                  }
-                  : nestedTitleElem
-              )
-            }
-            : subTitleElem
-        )
-      }
-    }));
-  };
-  
-  // addSubSubNestedTitle = (subtitleIndex, nestedTitleIndex,subnesttitleIndex e) => {
-  //   e.preventDefault();
-  //   this.setState((prevState) => ({
-  //     title: {
-  //       ...prevState.title,
-  //       subTitle: prevState.title.subTitle.map((subTitleElem, i) =>
-  //         i === subtitleIndex
-  //           ? {
-  //             ...subTitleElem,
-  //             nestedTitle: subTitleElem.nestedTitle.map((nestedTitleElem, j) =>
-  //               j === nestedTitleIndex
-  //                 ? {
-  //                   ...nestedTitleElem,
-  //                   subNestedTitle: nestedTitleElem.subNestedTitle.map((subNestedTitleElem, k)=>
-  //                     k===subnesttitleIndex ?{
-  //                       ...subNestedTitleElem,
-  //                       subSubNestedTitle: [
-  //                         ...nestedTitleElem.subSubNestedTitle,
-  //                         { subSubNestedTitleLabel: '' }
-  //                       ]
-  //                     }:subNestedTitleElem
-  //                     }
-  //                 : nestedTitleElem
-  //             )
-  //           }
-  //           : subTitleElem
-  //       )
-  //     }
-  //   }));
-  // };
-  
-  deleteSubSubNestedTitle = (subtitleIndex, nestedTitleIndex, subNestedTitleIndex, subSubNestedTitleIndex) => {
-    this.setState((prevState) => ({
-      title: {
-        ...prevState.title,
-        subTitle: prevState.title?.subTitle?.map((subTitleElem, i) =>
-          i === subtitleIndex
-            ? {
-              ...subTitleElem,
-              nestedTitle: subTitleElem.nestedTitle?.map((nestedTitleElem, j) =>
-                j === nestedTitleIndex
-                  ? {
-                    ...nestedTitleElem,
-                    subNestedTitle: nestedTitleElem.subNestedTitle?.map((subNestedTitleElem, k) =>
-                      k === subNestedTitleIndex
-                        ? {
-                          ...subNestedTitleElem,
-                          subSubNestedTitle: subNestedTitleElem.subSubNestedTitle.filter((_, l) => l !== subSubNestedTitleIndex)
-                        }
-                        : subNestedTitleElem
-                    )
-                  }
-                  : nestedTitleElem
-              )
-            }
-            : subTitleElem
-        )
-      }
-    }));
-  };
-  
 
   addSubTitle = (e) => {
     e.preventDefault();
@@ -307,7 +164,7 @@ class CreateTitle extends Component {
     this.setState((prevState) => ({
       title: {
         ...prevState.title,
-        subTitle: prevState.title?.subTitle?.map((subTitleElem, i) =>
+        subTitle: prevState.title.subTitle.map((subTitleElem, i) =>
           i === subtitleIndex
             ? {
               ...subTitleElem,
@@ -326,7 +183,7 @@ class CreateTitle extends Component {
     this.setState((prevState) => ({
       title: {
         ...prevState.title,
-        subTitle: prevState.title?.subTitle?.map((subTitleElem, i) =>
+        subTitle: prevState.title.subTitle.map((subTitleElem, i) =>
           i === subtitleIndex
             ? {
               ...subTitleElem,
@@ -343,11 +200,11 @@ class CreateTitle extends Component {
     this.setState((prevState) => ({
       title: {
         ...prevState.title,
-        subTitle: prevState.title?.subTitle?.map((subTitleElem, i) =>
+        subTitle: prevState.title.subTitle.map((subTitleElem, i) =>
           i === subtitleIndex
             ? {
               ...subTitleElem,
-              nestedTitle: subTitleElem.nestedTitle?.map((nestedTitleElem, j) =>
+              nestedTitle: subTitleElem.nestedTitle.map((nestedTitleElem, j) =>
                 j === nestedTitleIndex
                   ? {
                     ...nestedTitleElem,
@@ -369,11 +226,11 @@ class CreateTitle extends Component {
     this.setState((prevState) => ({
       title: {
         ...prevState.title,
-        subTitle: prevState.title?.subTitle?.map((subTitleElem, i) =>
+        subTitle: prevState.title.subTitle.map((subTitleElem, i) =>
           i === subtitleIndex
             ? {
               ...subTitleElem,
-              nestedTitle: subTitleElem.nestedTitle?.map((nestedTitleElem, j) =>
+              nestedTitle: subTitleElem.nestedTitle.map((nestedTitleElem, j) =>
                 j === nestedTitleIndex
                   ? {
                     ...nestedTitleElem,
@@ -429,23 +286,6 @@ class CreateTitle extends Component {
     return true;
   };
 
-  validateSubSubNestedTitleLabel = () => {
-    const { title } = this.state;
-    for (let i = 0; i < title.subTitle.length; i++) {
-      for (let j = 0; j < title.subTitle[i].nestedTitle.length; j++) {
-        for(let l=0;l<<title.subTitle[i].nestedTitle[j].subNestedTitle.length;l++){
-        for (let k = 0; k < title.subTitle[i].nestedTitle[j].subNestedTitle[l].subSubNestedTitle.length; k++) {
-          if (title.subTitle[i].nestedTitle[j].subNestedTitle[l].subSubNestedTitle[k].subSubNestedTitleLabel.trim() === '') {
-            return false;
-          }
-        }
-      }
-      }
-    }
-    return true;
-  };
-  
-
   renderToast() {
     if (this.state.showToast) {
       return (
@@ -471,20 +311,17 @@ class CreateTitle extends Component {
     const isSubTitleLabelValid = this.validateSubTitleLabel();
     const isNestedTitleLabelValid = this.validateNestedTitleLabel();
     const isSubNestedTitleLabelValid = this.validateSubNestedTitleLabel();
-    const isSubSubNestedTitleLabelValid = this.validateSubSubNestedTitleLabel();
 
     this.setState({
       validationErrors: {
         titleLabel: isTitleLabelValid ? '' : 'Enter the title',
         subTitleLabel: isSubTitleLabelValid ? '' : 'Enter all subtitles',
         nestedTitleLabel: isNestedTitleLabelValid ? '' : 'Enter all nested titles',
-        subNestedTitleLabel: isSubNestedTitleLabelValid ? '' : 'Enter all sub nested titles',
-        subSubNestedTitleLabel: isSubSubNestedTitleLabelValid ? '' : 'Enter all sub sub nested titles'
-        
+        subNestedTitleLabel: isSubNestedTitleLabelValid ? '' : 'Enter all sub nested titles'
       },
     });
 
-    if (!isTitleLabelValid || !isSubTitleLabelValid || !isNestedTitleLabelValid || !isSubNestedTitleLabelValid || !isSubSubNestedTitleLabelValid) {
+    if (!isTitleLabelValid || !isSubTitleLabelValid || !isNestedTitleLabelValid || !isSubNestedTitleLabelValid) {
       return;
     }
 
@@ -539,12 +376,10 @@ class CreateTitle extends Component {
                   </div>
                 )}
               </div>
-              
-
-    {this.state.title?.subTitle?.map((subTitleElem, index) => (
-  <ul key={`sub_${index}`}>
-    <li>
-     <div className="mb-3 d-flex align-items-center mb-2">
+              {this.state.title.subTitle.map((subTitleElem, index) => (
+                <ul key={`sub_${index}`}>
+                  <li>
+                    <div className="mb-3 d-flex align-items-center mb-2">
                       <label htmlFor="question" className="col-form-label">
                         Subtitle:
                       </label>
@@ -567,11 +402,11 @@ class CreateTitle extends Component {
                         </button>
                       )}
                     </div>
-    </li>
-    {subTitleElem.nestedTitle?.map((nestedTitleElem, index_nest) => (
-      <ul key={`nest_${index}_${index_nest}`}>
-        <li>
-          <div className="mb-3 d-flex align-items-center mb-2">
+                  </li>
+                  {subTitleElem.nestedTitle && subTitleElem.nestedTitle.map((nestedTitleElem, index_nest) => (
+                    <ul key={`nest_${index}_${index_nest}`}>
+                      <li>
+                        <div className="mb-3 d-flex align-items-center mb-2">
                           <label htmlFor="question" className="col-form-label">
                             Nested Title:
                           </label>
@@ -594,11 +429,11 @@ class CreateTitle extends Component {
                             </button>
                           )}
                         </div>
-        </li>
-        {nestedTitleElem.subNestedTitle?.map((subNestedTitleElem, index_sub_nest) => (
-          <ul key={`sub_nest_${index}_${index_nest}_${index_sub_nest}`}>
-            <li>
-              <div className="mb-3 d-flex align-items-center mb-2">
+                      </li>
+                      {nestedTitleElem.subNestedTitle && nestedTitleElem.subNestedTitle.map((subNestedTitleElem, index_sub_nest) => (
+                        <ul key={`sub_nest_${index}_${index_nest}_${index_sub_nest}`}>
+                          <li>
+                            <div className="mb-3 d-flex align-items-center mb-2">
                               <label htmlFor="question" className="col-form-label">
                                 Sub Nested Title:
                               </label>
@@ -621,68 +456,34 @@ class CreateTitle extends Component {
                                 </button>
                               )}
                             </div>
-            </li>
-            {subNestedTitleElem.subSubNestedTitle?.map((subSubNestedTitleElem, index_sub_sub_nest) => (
-          <ul key={`sub_sub_nest_${index}_${index_nest}_${index_sub_nest}_${index_sub_sub_nest}`}>
-            <li>
-              <div className="mb-3 d-flex align-items-center mb-2">
-                <label htmlFor="question" className="col-form-label">
-                  Sub Sub Nested Title:
-                </label>
-                <div className="d-flex flex-grow-1 mx-2">
-                  <input
-                    type="text"
-                    className="form-control mx-2"
-                    id="formSubSubNestedTitle"
-                    value={title.subTitle[index].nestedTitle[index_nest].subNestedTitle[index_sub_nest].subSubNestedTitle[index_sub_sub_nest].subSubNestedTitleLabel}
-                    onChange={(e) => this.handleSubSubNestedTitleLabel(index, index_nest,index_sub_nest, index_sub_sub_nest, e.target.value)}
-                  />
-                </div>
-                {title.subTitle[index].nestedTitle[index_nest].subNestedTitle[index_sub_nest].subSubNestedTitle.length > 1 && (
-                  <button
-                    className="btn btn-outline-secondary"
-                    type="button"
-                    onClick={() => this.deleteSubSubNestedTitle(index, index_nest,index_sub_nest, index_sub_sub_nest)}
-                  >
-                    &times;
-                  </button>
-                )}
+                          </li>
+                        </ul>
+                      ))}
+                      <div className="d-flex align-items-center">
+                        <button
+                          className="btn btn-outline-dark"
+                          onClick={(e) => this.addSubNestedTitle(index, index_nest, e)}
+                        >
+                          Add sub nested title
+                        </button>
+                      </div>
+                    </ul>
+                  ))}
+                  <div className="d-flex align-items-center">
+                    <button
+                      className="btn btn-outline-dark"
+                      onClick={(e) => this.addNestedTitle(index, e)}
+                    >
+                      Add nested title
+                    </button>
+                  </div>
+                </ul>
+              ))}
+              <div className="d-flex align-items-center">
+                <button className="btn btn-outline-dark" onClick={this.addSubTitle}>
+                  Add subtitle
+                </button>
               </div>
-            </li>
-          </ul>
-        ))}
-        <div className="d-flex align-items-center">
-          <button
-            className="btn btn-outline-dark"
-            onClick={(e) => this.addSubSubNestedTitle(index, index_nest,index_sub_nest ,e)}
-          >
-            Add sub sub nested title
-          </button>
-        </div>
-          </ul>
-        ))}
-        {/* New UI for Sub-Sub Nested Titles */}
-        
-      </ul>
-    ))}
-    {/* Add Nested Title Button */}
-    <div className="d-flex align-items-center">
-      <button
-        className="btn btn-outline-dark"
-        onClick={(e) => this.addNestedTitle(index, e)}
-      >
-        Add nested title
-      </button>
-    </div>
-  </ul>
-))}
-{/* Add Subtitle Button */}
-<div className="d-flex align-items-center">
-  <button className="btn btn-outline-dark" onClick={this.addSubTitle}>
-    Add subtitle
-  </button>
-</div>
-
             </form>
           </Modal.Body>
           <Modal.Footer>
@@ -692,7 +493,6 @@ class CreateTitle extends Component {
                 Submit
               </button>
             </div>
-
             {validationErrors.subTitleLabel && (
               <div style={{ color: 'red', fontSize: 12 }}>
                 {validationErrors.subTitleLabel}
@@ -712,8 +512,8 @@ class CreateTitle extends Component {
         </Modal>
         {this.renderToast()}
       </div>
-    );}
-  
+    );
+  }
 }
 
 export default CreateTitle;

@@ -13,12 +13,7 @@ const titlesSchema = new mongoose.Schema({
                         nestedTitleLabel: String,
                         subNestedTitle: [
                             {
-                                subNestedTitleLabel: String,
-                                subSubNestedTitle:[
-                                    {
-                                        subSubNestedTitleLabel: String
-                                    }
-                                ]
+                                subNestedTitleLabel: String
                             }
                         ]
                     }
@@ -36,7 +31,6 @@ const Titles = mongoose.model('titles', titlesSchema);
 Titles.createIndexes();
 
 router.post('/insertTitle', async (req, res) => {
-    console.log(req.body);
     try {
         let titleData = req.body;
         // console.log(JSON.parse(titleData));
@@ -220,71 +214,6 @@ router.post('/insertSubNestedTitle/:titleId/:subtitleId/:nestedTitleId', async (
     }
 });
 
-// Route to insert a new sub-sub-nested title
-router.post('/insertSubSubNestedTitle/:titleId/:subtitleId/:nestedTitleId/:subNestedTitleId', async (req, res) => {
-    console.log(req.params);
-    try {
-        const { subSubNestedTitle } = req.body;
-        const titleId = req.params.titleId;
-        const subtitleId = req.params.subtitleId;
-        const nestedTitleId = req.params.nestedTitleId;
-        const subNestedTitleId = req.params.subNestedTitleId;
-
-        // Log the received payload and IDs for debugging
-        console.log("Received payload:", req.body);
-        console.log("Received titleId:", titleId);
-        console.log("Received subtitleId:", subtitleId);
-        console.log("Received nestedTitleId:", nestedTitleId);
-        console.log("Received subNestedTitleId:", subNestedTitleId);
-
-        // Fetch the title document
-        const existingTitle = await Titles.findById(titleId);
-
-        if (!existingTitle) {
-            console.error("Title not found for ID:", titleId);
-            return res.status(404).json({ error: 'Title not found' });
-        }
-
-        // Find the correct subtitle by its _id
-        const selectedSubtitle = existingTitle.title.subTitle.find(subtitle => subtitle._id == subtitleId);
-
-        if (!selectedSubtitle) {
-            console.error("Subtitle not found for ID:", subtitleId);
-            return res.status(404).json({ error: 'Subtitle not found' });
-        }
-
-        // Find the correct nested title by its _id
-        const selectedNestedTitle = selectedSubtitle.nestedTitle.find(nestedTitle => nestedTitle._id == nestedTitleId);
-
-        if (!selectedNestedTitle) {
-            console.error("Nested title not found for ID:", nestedTitleId);
-            return res.status(404).json({ error: 'Nested title not found' });
-        }
-
-        // Find the correct sub-nested title by its _id
-        const selectedSubNestedTitle = selectedNestedTitle.subNestedTitle.find(subNestedTitle => subNestedTitle._id == subNestedTitleId);
-
-        if (!selectedSubNestedTitle) {
-            console.error("Sub-nested title not found for ID:", subNestedTitleId);
-            return res.status(404).json({ error: 'Sub-nested title not found' });
-        }
-
-        // Push the new sub-sub-nested title into the selected sub-nested title's subSubNestedTitle array
-        selectedSubNestedTitle.subSubNestedTitle.push({ subSubNestedTitleLabel: subSubNestedTitle });
-
-        // Save the updated title with the new sub-sub-nested title
-        const updatedTitle = await existingTitle.save();
-
-        // Respond with the updated title
-        res.json(updatedTitle);
-    } catch (error) {
-        console.error("Error inserting sub-sub-nested title:", error);
-        res.status(500).send("Error inserting sub-sub-nested title");
-    }
-});
-
 
 
 module.exports = router;
-
-

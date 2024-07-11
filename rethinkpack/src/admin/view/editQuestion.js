@@ -125,36 +125,20 @@ class EditQuestion extends Component {
         id: '',
         firstQuestion: false
       },
-      subSubNestedTitle: {
-        id: '',
-        firstQuestion: false
-      },
       subTitleLabel: '',
       nestedTitleLabel: '',
       subNestedTitleLabel: '',
-      subSubNestedTitleLabel:'',
-
       showFirstQuestionNestedTitleOption: false,
       showFirstQuestionSubTitleOption: false,
-
-      subTitleFirstQuestionRender: false,
-      subTitleFirstQuestionId: '',
-      subTitleFirstQuestionValue: '',
-
-
       nestedTitleFirstQuestionRender: false,
       nestedTitleFirstQuestionId: '',
       nestedTitleFirstQuestionValue: '',
-
       subNestedTitleFirstQuestionRender: false,
       subNestedTitleFirstQuestionId: '',
       subNestedTitleFirstQuestionValue: '',
-
-      
-      subSubNestedTitleFirstQuestionRender: false,
-      subSubNestedTitleFirstQuestionId: '',
-      subSubNestedTitleFirstQuestionValue: '',
-
+      subTitleFirstQuestionRender: false,
+      subTitleFirstQuestionId: '',
+      subTitleFirstQuestionValue: '',
       openEndedWordLimit: 500,
       openEndedWordCount: 0,
       stateQuestionId: '',
@@ -188,7 +172,6 @@ class EditQuestion extends Component {
   firstQuestionModalOnHide = () => {
     this.setState( {
       // countryFirstQuestionRender: false,
-      subSubNestedTitleFirstQuestionRender: false,
       subNestedTitleFirstQuestionRender: false,
       nestedTitleFirstQuestionRender: false,
       subTitleFirstQuestionRender: false
@@ -480,7 +463,6 @@ fetchCountries = async () => {
     };
     return nestedTitlesArray;
   };
-
   fetchSubNestedTitles = () => {
     const { allTitles } = this.state;
   
@@ -503,33 +485,6 @@ fetchCountries = async () => {
       }
     }
     return subNestedTitlesArray;
-  };
-
-  fetchSubSubNestedTitles = () => {
-    const { allTitles } = this.state;
-  
-    // Determine sub sub nested titles
-    let subSubNestedTitlesArray = [];
-    // Loops through main titles
-    for (let i = 0; i < allTitles.length; i++) {
-      // Loops through subtitles
-      for (let j = 0; j < allTitles[i].title.subTitle.length; j++) {
-        // Loops through nested titles
-        for (let k = 0; k < allTitles[i].title.subTitle[j].nestedTitle.length; k++) {
-          // Loops through sub nested titles
-          for (let l = 0; l < allTitles[i].title.subTitle[j].nestedTitle[k].subNestedTitle.length; l++) {
-            // Loops through sub sub nested titles
-            for (let m = 0; m < allTitles[i].title.subTitle[j].nestedTitle[k].subNestedTitle[l].subSubNestedTitle.length; m++) {
-              subSubNestedTitlesArray.push({
-                subSubNestedTitleLabel: allTitles[i].title.subTitle[j].nestedTitle[k].subNestedTitle[l].subSubNestedTitle[m].subSubNestedTitleLabel,
-                id: allTitles[i].title.subTitle[j].nestedTitle[k].subNestedTitle[l].subSubNestedTitle[m]._id
-              });
-            }
-          }
-        }
-      }
-    }
-    return subSubNestedTitlesArray;
   };
   
 
@@ -2339,7 +2294,6 @@ fetchCountries = async () => {
       showFirstQuestionSubTitleOption,
       nestedTitle,
       subNestedTitle,
-      subSubNestedTitle,
       subTitle
     } = this.state;
 
@@ -2362,7 +2316,6 @@ fetchCountries = async () => {
       nextQuestion: isLeadingQuestion ? undefined : questionList.nextQuestion,
       nestedTitle: nestedTitle,
       subNestedTitle: subNestedTitle,
-      subSubNestedTitle: subSubNestedTitle,
       subTitle: subTitle
     };
 
@@ -2415,7 +2368,7 @@ fetchCountries = async () => {
 
   render() {
 
-    const { questionList,selectedTitle, selectedTitleQuestions,selectedCountries,showCountry, countries, isLeadingQuestion, showExplanation, validationErrors, questionId, questionIndex, allQuestions, allTitles, showModal, showFirstQuestionNestedTitleOption,showFirstQuestionSubTitleOption,subTitle, nestedTitle,subNestedTitle,subSubNestedTitle,nextQuestion,showNextQuestion,nestedTitleFirstQuestionRender,subTitleFirstQuestionRender, country } = this.state;
+    const { questionList,selectedTitle, selectedTitleQuestions,selectedCountries,showCountry, countries, isLeadingQuestion, showExplanation, validationErrors, questionId, questionIndex, allQuestions, allTitles, showModal, showFirstQuestionNestedTitleOption,showFirstQuestionSubTitleOption,subTitle, nestedTitle,subNestedTitle,nextQuestion,showNextQuestion,nestedTitleFirstQuestionRender,subTitleFirstQuestionRender, country } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
     const { filteredQuestions } = this.state;
     // const { recommendation } = this.state;
@@ -2452,64 +2405,56 @@ fetchCountries = async () => {
           <Modal.Body>
             <form>
             {/* Select title dropdown */}
-<div className="mb-3">
-  <label className="col-form-label">
-    Select title:
-  </label>
-  <div className="d-flex align-items-left">
-    <div className="d-flex flex-grow-1">
-      <select
-        className="form-select"
-        style={{ flex: '1' }}
-        value={this.state.selectedTitle}
-        onChange={(e) => this.handleTitleSelect(e.target.value)}
-      >
-        <option value="">Select Title</option>
-        {/* title loop */}
-        {allTitles.map((titleObject) => (
-          <optgroup key={titleObject.title.titleLabel} label={"Title: " + titleObject.title.titleLabel}>
-            {/* Render subTitleLabel as options */}
-            {titleObject.title?.subTitle?.map((subTitleObject) => (
-              <React.Fragment key={subTitleObject._id}>
-                <option value={subTitleObject._id}>   {/*not necessary adding key*/}
-                  {"Sub Title: " + subTitleObject.subTitleLabel}
-                </option>
-                {/* Render nestedTitleLabel as options */}
-                {subTitleObject.nestedTitle?.map((nestedTitleObject) => (
-                  <React.Fragment key={nestedTitleObject._id}>
-                    <option value={nestedTitleObject._id}>
-                      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{nestedTitleObject.nestedTitleLabel}
-                    </option>
-                    {/* Render subNestedTitleLabel as options */}
-                    {nestedTitleObject.subNestedTitle?.map((subNestedTitleObject) => (
-                      <React.Fragment key={subNestedTitleObject._id}>
-                        <option value={subNestedTitleObject._id}>
-                          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{subNestedTitleObject.subNestedTitleLabel}
-                        </option>
-                        {/* Render subSubNestedTitleLabel as options */}
-                        {subNestedTitleObject.subSubNestedTitle?.map((subSubNestedTitleObject) => (
-                          <option key={subSubNestedTitleObject._id} value={subSubNestedTitleObject._id}>
-                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{subSubNestedTitleObject.subSubNestedTitleLabel}
-                          </option>
-                        ))}
-                      </React.Fragment>
-                    ))}
-                  </React.Fragment>
-                ))}
-              </React.Fragment>
-            ))}
-          </optgroup>
-        ))}
-      </select>
-    </div>
-  </div>
-  {validationErrors.title && (
-    <div style={{ color: 'red', fontSize: 12 }}>
-      {validationErrors.title}
-    </div>
-  )}
-</div>
+            <div className="mb-3">
+                <label className="col-form-label">
+                    Select title:
+                </label>
+                  <div className="d-flex align-items-left">
+                    <div className="d-flex flex-grow-1">
+                    <select
+                      className="form-select"
+                      style={{ flex: '1' }}
+                      value={this.state.selectedTitle}
+                      onChange={(e) => this.handleTitleSelect(e.target.value)}
+                    >
+                      <option value="">Select Title</option>
+                      {/* title loop */}
+                      {allTitles.map((titleObject) => (
+                        <optgroup key={titleObject.title.titleLabel} label={"Title: " + titleObject.title.titleLabel}>
+                          {/* Render subTitleLabel as options */}
+                          {titleObject.title.subTitle.map((subTitleObject) => (
+                            <React.Fragment key={subTitleObject._id}>
+                              <option value={subTitleObject._id}>   {/*not necessary adding key*/}
+                                {"Sub Title: " + subTitleObject.subTitleLabel}
+                              </option>
+                              {/* Render nestedTitleLabel as options */}
+        {subTitleObject.nestedTitle.map((nestedTitleObject) => (
+          <React.Fragment key={nestedTitleObject._id}>
+            <option value={nestedTitleObject._id}>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{nestedTitleObject.nestedTitleLabel}
+            </option>
 
+            {/* Render subNestedTitleLabel as options */}
+            {nestedTitleObject.subNestedTitle.map((subNestedTitleObject) => (
+              <option key={subNestedTitleObject._id} value={subNestedTitleObject._id}>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{subNestedTitleObject.subNestedTitleLabel}
+              </option>
+            ))}
+          </React.Fragment>
+        ))}
+                            </React.Fragment>
+                          ))}
+                        </optgroup>
+                      ))}
+                    </select>
+                    </div>
+                  </div>
+              {validationErrors.title && (
+                <div style={{ color: 'red', fontSize: 12 }}>
+                  {validationErrors.title}
+                </div>
+              )}
+            </div>
              {/* First Question Sub Title */}
              {/* {showFirstQuestionSubTitleOption && (
               <div className="form-check form-switch form-check-inline">
