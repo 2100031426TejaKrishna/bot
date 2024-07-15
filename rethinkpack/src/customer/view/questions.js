@@ -34,6 +34,7 @@ const Questions = () => {
     const [currentSeriesSet, setCurrentSeriesSet] = useState(new Set());
     const [dynamicQuestions, setDynamicQuestions] = useState({});
     const [addedQuestions, setAddedQuestions] = useState({});
+    const [isTitleLoading, setIsTitleLoading] = useState(false);
 
     const countries = [
         "Afghanistan", "Albania", "Algeria", "Andorra", "Angola",
@@ -106,6 +107,22 @@ const Questions = () => {
     }, [destination]);
 
     useEffect(() => {
+        const fetchTitle = async (questionId) => {
+            setIsTitleLoading(true);
+            try {
+                const response = await fetch(`http://${destination}/api/fetchTitleForQuestion/${questionId}`);
+                const data = await response.json();
+                setTitles((prevTitles) => ({
+                    ...prevTitles,
+                    [questionId]: data
+                }));
+            } catch (error) {
+                console.error("Error fetching title:", error);
+            } finally {
+                setIsTitleLoading(false);
+            }
+        };
+
         if (questions.length > 0) {
             const currentQuestion = questions[currentQuestionIndex];
             if (!currentQuestion) {
@@ -155,6 +172,9 @@ const Questions = () => {
             }
 
             setCurrentTitle(titles[currentQuestion._id] || '');
+            if (!titles[currentQuestion._id]) {
+                fetchTitle(currentQuestion._id); // Fetch the title for the current question
+            }
         }
     }, [currentQuestionIndex, answers, questions, titles]);
 
@@ -739,13 +759,24 @@ const Questions = () => {
         );
     };
 
+    const renderTitle = (questionId) => {
+        const titleData = titles[questionId];
+        if (!titleData) return isTitleLoading ? <div>Loading title...</div> : null;
+
+        return (
+            <div className="question-title">
+                {titleData.title && <h4>{titleData.title}</h4>}
+            </div>
+        );
+    };
+
     return (
         <div className="survey-questions-container">
             {isLoading && <div>Loading questions...</div>}
             {!isLoading && !questions.length && <div>No questions available</div>}
             {!isLoading && questions.length > 0 && (
                 <div className="survey-questions-card">
-                    {currentTitle && <h5 className="survey-questions-title">{currentTitle}</h5>}
+                    {renderTitle(questions[currentQuestionIndex]?._id)}
                     <h4>{currentStage === 'general' ? currentQuestionIndex + 1 : currentQuestionIndex + 1}. {questions[currentQuestionIndex]?.question || 'Select Country'}</h4>
                     <div className="options-container">
                         {renderOptions(questions[currentQuestionIndex])}
