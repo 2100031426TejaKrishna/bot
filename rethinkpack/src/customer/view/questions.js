@@ -85,7 +85,7 @@ const Questions = () => {
     }, {}));
 
     const navigate = useNavigate();
-    const destination = "localhost:5000";
+    const destination = "localhost:5000"; // Ensure this is the correct backend URL
 
     useEffect(() => {
         const fetchQuestions = async () => {
@@ -531,7 +531,7 @@ const Questions = () => {
         setShowModal(true);
     };
 
-    const handleConfirmSubmit = () => {
+    const handleConfirmSubmit = async () => {
         const currentQuestion = questions[currentQuestionIndex];
         const lastAnswer = currentQuestion?.optionType.includes('Grid') ? gridAnswers : currentQuestion?.optionType === 'checkbox' ? selectedOptions : currentAnswer;
         updateAnswers(lastAnswer, currentQuestion?._id);
@@ -551,7 +551,32 @@ const Questions = () => {
 
         localStorage.setItem('submittedResponses', JSON.stringify(answeredQuestions));
 
-        navigate('/responses');
+        // Get userId (assume you have a way to get the logged-in user's ID)
+        const userId = "exampleUserId"; // Replace with actual user ID retrieval logic
+
+        // Collect data for submission
+        const dataToSubmit = {
+            userId,
+            responses: answeredQuestions,
+            selectedCountries,
+        };
+
+        try {
+            const response = await fetch(`http://${destination}/api/submitResponse`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dataToSubmit),
+            });
+
+            if (response.ok) {
+                console.log("Response submitted successfully.");
+                navigate('/responses');
+            } else {
+                console.error("Error submitting response.");
+            }
+        } catch (error) {
+            console.error("Error submitting response:", error);
+        }
     };
 
     const handleGoToCountrySelection = () => {
@@ -841,6 +866,5 @@ const Questions = () => {
         </div>
     );
 };
-
 
 export default Questions;
