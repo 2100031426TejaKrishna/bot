@@ -3,8 +3,8 @@ import './questions.css';
 import axios from 'axios'; // Import Axios for making HTTP requests
 
 // Switch URLs between Server and Local hosting here
-const destination = "localhost:5000";
-// const destination = "rtp.dusky.bond:5000";
+// const destination = "localhost:5000";
+const destination = "rtp.dusky.bond:5000";
 
 const TitleTab = ({ triggerRefresh }) => {
     const [titles, setTitles] = useState([]);

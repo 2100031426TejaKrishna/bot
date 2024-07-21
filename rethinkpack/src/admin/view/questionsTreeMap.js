@@ -4,8 +4,8 @@ import { toPng, toJpeg, toSvg } from 'html-to-image';
 import jsPDF from 'jspdf';
 import './questionsTreeMap.css';
 
-const destination = "localhost:5000";
-//const destination = "rtp.dusky.bond:5000";
+// const destination = "localhost:5000";
+const destination = "rtp.dusky.bond:5000";
 
 const QuestionsTreeMap = () => {
   const [data, setData] = useState(null);
