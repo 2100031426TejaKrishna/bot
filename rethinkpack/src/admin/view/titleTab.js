@@ -65,8 +65,9 @@ const TitleTab = ({ triggerRefresh }) => {
         const nestedtitleData = {
             nestedTitle: newNestedtitle
         };
+        //for server -https and change to http  for local machine
 
-        axios.post(`http://${destination}/api/insertNestedtitle/${titleId}/${selectedSubtitleId}`, nestedtitleData)
+        axios.post(`https://${destination}/api/insertNestedtitle/${titleId}/${selectedSubtitleId}`, nestedtitleData)
             .then(response => {
                 console.log('New nestedtitle added:', response.data);
                 setShowAddNestedtitleModal(false); // Close the modal after saving
@@ -83,8 +84,9 @@ const TitleTab = ({ triggerRefresh }) => {
         const subNestedTitleData = {
             subNestedTitle: newSubNestedtitle
         };
-    
-        axios.post(`http://${destination}/api/insertSubNestedTitle/${titleId}/${selectedSubtitleId}/${selectedNestedtitleId}`, subNestedTitleData)
+    //for server -https and change to http  for local machine
+
+        axios.post(`https://${destination}/api/insertSubNestedTitle/${titleId}/${selectedSubtitleId}/${selectedNestedtitleId}`, subNestedTitleData)
             .then(response => {
                 console.log('New subNestedTitle added:', response.data);
                 setShowAddSubNestedtitleModal(false); // Close the modal after saving
@@ -113,8 +115,9 @@ const TitleTab = ({ triggerRefresh }) => {
         const subtitleData = {
             subtitle: newSubtitle
         };
+       //for server -https and change to http  for local machine
 
-        axios.post(`http://${destination}/api/insertSubtitle/${titleId}`, subtitleData)
+        axios.post(`https://${destination}/api/insertSubtitle/${titleId}`, subtitleData)
             .then(response => {
                 console.log('New subtitle added:', response.data);
                 setShowAddSubtitleModal(false); // Close the modal after saving
@@ -148,7 +151,9 @@ const TitleTab = ({ triggerRefresh }) => {
     };
     const handleDeleteNestedTitle = (titleId, subTitleId) => {
         // Implement deletion logic here, e.g., using axios.delete
-        axios.delete(`http://${destination}/api/deleteSubtitle/${titleId}/${subTitleId}`)
+        //for server -https and change to http  for local machine
+
+        axios.delete(`https://${destination}/api/deleteSubtitle/${titleId}/${subTitleId}`)
             .then(response => {
                 console.log('Subtitle deleted:', response.data);
                 // Optionally, update state or trigger a refresh
@@ -160,7 +165,9 @@ const TitleTab = ({ triggerRefresh }) => {
     };
     const handleDeleteSubNestedTitle = (titleId, subTitleId, nestedTitleId, subNestedTitleId) => {
     // Implement deletion logic here, e.g., using axios.delete
-    axios.delete(`http://${destination}/api/deleteSubNestedtitle/${titleId}/${subTitleId}/${nestedTitleId}/${subNestedTitleId}`)
+    //for server -https and change to http  for local machine
+
+    axios.delete(`https://${destination}/api/deleteSubNestedtitle/${titleId}/${subTitleId}/${nestedTitleId}/${subNestedTitleId}`)
         .then(response => {
             console.log('Sub-Nestedtitle deleted:', response.data);
             // Optionally, update state or trigger a refresh
@@ -199,7 +206,9 @@ const TitleTab = ({ triggerRefresh }) => {
 
 
         // Send the updatedData object to the backend API using Axios or your preferred method
-        axios.put(`http://${destination}/api/updateTitle/${titleId}`, updatedData)
+        //for server -https and change to http  for local machine
+
+        axios.put(`https://${destination}/api/updateTitle/${titleId}`, updatedData)
             .then(response => {
                 // Handle success
                 console.log('Title updated:', response.data);
@@ -217,7 +226,9 @@ const TitleTab = ({ triggerRefresh }) => {
         if (titleToDelete) {
             console.log('Title to delete:', titleToDelete); // Log titleToDelete variable
             try {
-                const response = await axios.delete(`http://${destination}/api/deleteTitle/${titleToDelete}`);
+                //for server -https and change to http  for local machine
+
+                const response = await axios.delete(`https://${destination}/api/deleteTitle/${titleToDelete}`);
                 if (response.status === 200) {
                     setTitles(titles.filter(title => title._id !== titleToDelete));
                     setTitleToDelete('');
@@ -240,7 +251,9 @@ const TitleTab = ({ triggerRefresh }) => {
     useEffect(() => {
         const fetchTitles = async () => {
             try {
-                const response = await axios.get(`http://${destination}/api/displayTitles`); // Assuming the endpoint is available at /api/displayAllTitles
+                //for server -https and change to http  for local machine
+
+                const response = await axios.get(`https://${destination}/api/displayTitles`); // Assuming the endpoint is available at /api/displayAllTitles
                 setTitles(response.data); // Set titles from the response
                 console.log(response.data); // Log the titles data to the console
             } catch (error) {

@@ -54,7 +54,9 @@ class CreateTitle extends Component {
 
   insertTitle = async (dataToInsert) => {
     try {
-      const response = await fetch(`http://${destination}/api/insertTitle`, {
+//for server -https and change to http  for local machine
+
+      const response = await fetch(`https://${destination}/api/insertTitle`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

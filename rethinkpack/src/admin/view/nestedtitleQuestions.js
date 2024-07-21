@@ -30,7 +30,9 @@ const Questions = ({ triggerRefresh, selectedNestedtitle }) => {
     const deleteAction = async () => {
         if (questionToDelete) {
             try {
-                const response = await fetch(`http://${destination}/api/deleteQuestion/${questionToDelete}`, { method: 'DELETE' });
+                //for server -https and change to http  for local machine
+
+                const response = await fetch(`https://${destination}/api/deleteQuestion/${questionToDelete}`, { method: 'DELETE' });
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
@@ -63,7 +65,9 @@ const Questions = ({ triggerRefresh, selectedNestedtitle }) => {
             // UPDATE request
             const updateClearNextQuestion = async (dataToClear) => {
             try {
-                const response = await fetch(`http://${destination}/api/clearNextQuestion`, {
+                //for server -https and change to http  for local machine
+
+                const response = await fetch(`https://${destination}/api/clearNextQuestion`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -165,7 +169,9 @@ const Questions = ({ triggerRefresh, selectedNestedtitle }) => {
 
     const fetchQuestionById = async (id) => {
         try {
-            const response = await fetch(`http://${destination}/api/question/${id}`);
+            //for server -https and change to http  for local machine
+
+            const response = await fetch(`https://${destination}/api/question/${id}`);
             if (!response.ok) {
                 if (response.status === 404) {
                     console.log(`Question with ID ${id} not found.`);
@@ -187,7 +193,9 @@ const Questions = ({ triggerRefresh, selectedNestedtitle }) => {
             try {
                 // Assuming you receive selectedNestedtitle from props
                 const nestedtitleId = selectedNestedtitle; // Use the selectedNestedtitle from props
-                const response = await fetch(`http://${destination}/api/questionsByNestedtitleId/${nestedtitleId}`);
+                //for server -https and change to http  for local machine
+
+                const response = await fetch(`https://${destination}/api/questionsByNestedtitleId/${nestedtitleId}`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }

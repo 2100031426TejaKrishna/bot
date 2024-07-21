@@ -43,7 +43,9 @@ const CustomerLogin = () => {
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/customerLogin?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
+      //for server -https and change to http  for local machine
+
+      const response = await fetch(`https://localhost:5000/api/customerLogin?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
       const result = await response.json();
 
       if (result.success) {
@@ -66,7 +68,9 @@ const CustomerLogin = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/customerSignup', {
+      //for server -https and change to http  for local machine
+
+      const response = await fetch('https://localhost:5000/api/customerSignup', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

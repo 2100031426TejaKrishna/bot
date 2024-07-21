@@ -164,7 +164,11 @@ class CreateQuestion extends Component {
 
   fetchQuestions = async () => {
     try {
-      const response = await fetch(`http://${destination}/api/displayAllQuestions`);
+      // for local machine
+      // const response = await fetch(`http://${destination}/api/displayAllQuestions`);
+      //for server
+      const response = await fetch(`https://${destination}/api/displayAllQuestions`);
+
       const questions = await response.json();
       this.setState({ allQuestions: questions });
     } catch (error) {
@@ -174,7 +178,11 @@ class CreateQuestion extends Component {
 
   fetchTitles = async () => {
     try {
-      const response = await fetch(`http://${destination}/api/displayTitles`);
+            // for local machine
+      // const response = await fetch(`http://${destination}/api/displayTitles`);
+            //for server
+       const response = await fetch(`https://${destination}/api/displayTitles`);
+
       const titles = await response.json();
       this.setState({ allTitles: titles });
     } catch (error) {
@@ -1623,9 +1631,9 @@ class CreateQuestion extends Component {
     if (showFirstQuestionNestedTitleOption === true) {
       dataToInsert.nestedTitle = nestedTitle;
     }
-
+//for server -https and change to http  for local machine
     try {
-      const response = await fetch(`http://${destination}/api/insertQuestion`, {
+      const response = await fetch(`https://${destination}/api/insertQuestion`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

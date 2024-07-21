@@ -39,7 +39,9 @@ const AppContent = () => {
   useEffect(() => {
     const fetchTitles = async () => {
       try {
-        const response = await fetch(`http://${destination}/api/displayTitles`);
+        //for server -https and change to http  for local machine
+
+        const response = await fetch(`https://${destination}/api/displayTitles`);
         if (response.ok) {
           const data = await response.json();
           setTitles(data);

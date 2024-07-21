@@ -259,7 +259,9 @@ class EditQuestion extends Component {
   
   fetchQuestion = async (questionId) => {
     try {
-      const response = await fetch(`http://${destination}/api/read/${questionId}`);
+      //for server -https and change to http  for local machine
+
+      const response = await fetch(`https://${destination}/api/read/${questionId}`);
       const data = await response.json();
       if (data) {
         // Check if selectedCountry field is present and has a value
@@ -291,8 +293,9 @@ class EditQuestion extends Component {
   fetchQuestions = async () => {
     try {
       // const selectedCountries = this.state.selectedCountries; // Assuming this.state.selectedCountries contains the selected countries
+       //for server -https and change to http  for local machine
 
-      const response = await fetch(`http://${destination}/api/displayAllQuestions`);
+      const response = await fetch(`https://${destination}/api/displayAllQuestions`);
      
       const questions = await response.json();
       this.setState({ allQuestions: questions });
@@ -303,7 +306,9 @@ class EditQuestion extends Component {
  
   updateQuestion = async(questionId, dataToUpdate) => {
     try {
-      const response = await fetch(`http://${destination}/api/update/${questionId}`, {
+      //for server -https and change to http  for local machine
+
+      const response = await fetch(`https://${destination}/api/update/${questionId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -336,7 +341,9 @@ class EditQuestion extends Component {
   // Add this method to fetch filtered questions
   async fetchFilteredQuestions() {
     try {
-      const response = await fetch(`http://${destination}/api/filtered-questions`);
+      //for server -https and change to http  for local machine
+
+      const response = await fetch(`https://${destination}/api/filtered-questions`);
       const filteredQuestions = await response.json();
   
       this.setState({ filteredQuestions }); // Update state with fetched questions
@@ -347,7 +354,9 @@ class EditQuestion extends Component {
 
   fetchTitles = async () => {
     try {
-      const response = await fetch(`http://${destination}/api/displayTitles`);
+      //for server -https and change to http  for local machine
+
+      const response = await fetch(`https://${destination}/api/displayTitles`);
       const titles = await response.json();
       this.setState({ allTitles: titles });
     } catch (error) {
@@ -372,7 +381,9 @@ class EditQuestion extends Component {
 
 fetchRecommendationText = async (optionId) => {
   try {
-    const response = await fetch(`http://${destination}/api/recommendationText/${optionId}`);
+    //for server -https and change to http  for local machine
+
+    const response = await fetch(`https://${destination}/api/recommendationText/${optionId}`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -384,7 +395,9 @@ fetchRecommendationText = async (optionId) => {
 };
 fetchCountries = async () => {
   try {
-    const response = await fetch(`http://${destination}/api/displayCountries`);
+    //for server -https and change to http  for local machine
+
+    const response = await fetch(`https://${destination}/api/displayCountries`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }

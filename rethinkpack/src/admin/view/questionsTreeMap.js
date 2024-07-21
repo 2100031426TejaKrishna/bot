@@ -15,7 +15,9 @@ const QuestionsTreeMap = () => {
   const fetchQuestions = async () => {
     try {
       console.log("Fetching all questions...");
-      const response = await fetch(`http://${destination}/api/displayQuestions`);
+      //for server -https and change to http  for local machine
+
+      const response = await fetch(`https://${destination}/api/displayQuestions`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }

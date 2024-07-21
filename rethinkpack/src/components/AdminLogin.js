@@ -1,8 +1,11 @@
 // src/components/AdminLogin.js
 import React, { useState } from 'react';
+
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import './AdminLogin.css';
+
+
 
 const AdminLogin = () => {
   const [email, setEmail] = useState('');
@@ -22,7 +25,9 @@ const AdminLogin = () => {
     }
 
     try {
-      const response = await fetch(`https://rtp.dusky.bond/api/adminLogin?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
+      //for server -https and change to http  for local machine
+
+      const response = await fetch(`https://localhost:5000/api/adminLogin?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
       const result = await response.json();
 
       if (result.success) {

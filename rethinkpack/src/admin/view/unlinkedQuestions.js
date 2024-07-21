@@ -30,7 +30,9 @@ const Questions = ({ triggerRefresh }) => {
     const deleteAction = async () => {
         if (questionToDelete) {
             try {
-                const response = await fetch(`http://${destination}/api/deleteQuestion/${questionToDelete}`, { method: 'DELETE' });
+                //for server -https and change to http  for local machine
+
+                const response = await fetch(`https://${destination}/api/deleteQuestion/${questionToDelete}`, { method: 'DELETE' });
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
@@ -63,7 +65,9 @@ const Questions = ({ triggerRefresh }) => {
             // UPDATE request
             const updateClearNextQuestion = async (dataToClear) => {
             try {
-                const response = await fetch(`http://${destination}/api/clearNextQuestion`, {
+                //for server -https and change to http  for local machine
+
+                const response = await fetch(`https://${destination}/api/clearNextQuestion`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -164,7 +168,9 @@ const Questions = ({ triggerRefresh }) => {
 
     const fetchQuestionById = async (id) => {
         try {
-            const response = await fetch(`http://${destination}/api/question/${id}`);
+            //for server -https and change to http  for local machine
+
+            const response = await fetch(`https://${destination}/api/question/${id}`);
             if (!response.ok) {
                 if (response.status === 404) {
                     console.log(`Question with ID ${id} not found.`);
@@ -184,7 +190,9 @@ const Questions = ({ triggerRefresh }) => {
     useEffect(() => {
         const fetchQuestions = async () => {
             try {
-                const response = await fetch(`http://${destination}/api/displayQuestions`);
+                //for server -https and change to http  for local machine
+
+                const response = await fetch(`https://${destination}/api/displayQuestions`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
