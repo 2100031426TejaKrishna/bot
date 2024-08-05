@@ -5,8 +5,8 @@ import duplicateQuestion from './duplicateQuestion'; // Import the duplicate fun
 
 
 // Switch URLs between Server and Local hosting here
-// const destination = "localhost:5000";
-const destination = "rtp.dusky.bond:5000";
+ const destination = "localhost:5000";
+//const destination = "rtp.dusky.bond:5000";
 
 
 const Questions = (triggerRefresh ) => {       //
@@ -225,7 +225,7 @@ const handleLinearScaleChange = (event) => {
             // console.log(JSON.stringify({question}));
            //for server -https and change to http  for local machine
 
-            const response = await fetch(`https://${destination}/api/duplicateQuestion`, {
+            const response = await fetch(`http://${destination}/api/duplicateQuestion`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -269,7 +269,7 @@ const handleLinearScaleChange = (event) => {
             try {
                 //for server -https and change to http  for local machine
 
-                const response = await fetch(`https://${destination}/api/deleteQuestion/${questionToDelete}`, { method: 'DELETE' });
+                const response = await fetch(`http://${destination}/api/deleteQuestion/${questionToDelete}`, { method: 'DELETE' });
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
@@ -307,7 +307,7 @@ const handleLinearScaleChange = (event) => {
             try {
                 //for server -https and change to http  for local machine
 
-                const response = await fetch(`https://${destination}/api/clearNextQuestion`, {
+                const response = await fetch(`http://${destination}/api/clearNextQuestion`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -430,7 +430,7 @@ const handleLinearScaleChange = (event) => {
         try {
             //for server -https and change to http  for local machine
 
-             const response = await fetch(`https://${destination}/api/question/${id}`);
+            const response = await fetch(`http://${destination}/api/question/${id}`);
              //const response = await fetch(`https://rtp.dusky.bond/api/question/${id}`);
 
             if (!response.ok) {
@@ -454,7 +454,7 @@ const handleLinearScaleChange = (event) => {
             try {
                 //for server -https and change to http  for local machine
 
-                const response = await fetch(`https://${destination}/api/displayQuestions`);
+                const response = await fetch(`http://${destination}/api/displayQuestions`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }

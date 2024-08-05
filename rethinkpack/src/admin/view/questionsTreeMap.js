@@ -4,8 +4,8 @@ import { toPng, toJpeg, toSvg } from 'html-to-image';
 import jsPDF from 'jspdf';
 import './questionsTreeMap.css';
 
-// const destination = "localhost:5000";
-const destination = "rtp.dusky.bond:5000";
+const destination = "localhost:5000";
+//const destination = "rtp.dusky.bond:5000";
 
 const QuestionsTreeMap = () => {
   const [data, setData] = useState(null);
@@ -17,7 +17,7 @@ const QuestionsTreeMap = () => {
       console.log("Fetching all questions...");
       //for server -https and change to http  for local machine
 
-      const response = await fetch(`https://${destination}/api/displayQuestions`);
+      const response = await fetch(`http://${destination}/api/displayQuestions`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }

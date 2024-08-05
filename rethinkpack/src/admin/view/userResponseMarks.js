@@ -21,7 +21,7 @@ const UserResponseMarks = () => {
                 try {
                     //for server -https and change to http  for local machine
 
-                    const allQuestionsResponse = await fetch('https://localhost:5000/api/fetchAllQuestions');
+                    const allQuestionsResponse = await fetch('http://localhost:5000/api/fetchAllQuestions');
                     if (!allQuestionsResponse.ok) throw new Error(`HTTP error! status: ${allQuestionsResponse.status}`);
                     const allQuestionsData = await allQuestionsResponse.json();
                     setQuestions(allQuestionsData);
@@ -96,7 +96,7 @@ const UserResponseMarks = () => {
         try {
             //for server -https and change to http  for local machine
 
-            const response = await fetch(`https://localhost:5000/api/fetchTitleForQuestion/${questionId}`);
+            const response = await fetch(`http://localhost:5000/api/fetchTitleForQuestion/${questionId}`);
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const { title, subtitle, nestedTitle } = await response.json();
             const fullTitle = `${title}`;

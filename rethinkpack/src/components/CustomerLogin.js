@@ -45,7 +45,7 @@ const CustomerLogin = () => {
     try {
       //for server -https and change to http  for local machine
 
-      const response = await fetch(`https://localhost:5000/api/customerLogin?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
+      const response = await fetch(`http://localhost:5000/api/customerLogin?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
       const result = await response.json();
 
       if (result.success) {

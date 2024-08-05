@@ -4,8 +4,8 @@ import { AuthProvider } from './AuthContext';
 import PrivateRoute from './PrivateRoute';
 import Login from './components/Login';
 import AdminLogin from './components/AdminLogin';
-import CustomerLogin from './components/CustomerLogin';
 //import Responses from './customer/view/responses';
+import CustomerLogin from './components/CustomerLogin';
 import CreateQuestion from './admin/view/createQuestion';
 import Questions from './admin/view/questions';
 import QuestionsTreeMap from './admin/view/questionsTreeMap';
@@ -14,9 +14,9 @@ import UnlinkedQuestions from './admin/view/unlinkedQuestions';
 import SubtitleQuestions from './admin/view/subtitleQuestions';
 import NestedtitleQuestions from './admin/view/nestedtitleQuestions';
 import TitleTab from './admin/view/titleTab';
+import DetailsTab from './admin/view/DetailsTab'; // Import the new component
 
-// const destination = "localhost:5000";
-const destination = "rtp.dusky.bond:5000";
+const destination = "localhost:5000"; // Ensure this matches your server configuration
 
 const AppContent = () => {
   const [triggerRefresh, setTriggerRefresh] = useState(false);
@@ -33,15 +33,13 @@ const AppContent = () => {
   const navigate = useNavigate();
 
   const refreshQuestions = useCallback(() => {
-    setTriggerRefresh(prev => !prev); 
+    setTriggerRefresh(prev => !prev);
   }, []);
 
   useEffect(() => {
     const fetchTitles = async () => {
       try {
-        //for server -https and change to http  for local machine
-
-        const response = await fetch(`https://${destination}/api/displayTitles`);
+        const response = await fetch(`http://${destination}/api/displayTitles`); // Use http for local development
         if (response.ok) {
           const data = await response.json();
           setTitles(data);
@@ -105,108 +103,22 @@ const AppContent = () => {
                     Title
                   </a>
                 </li>
-                {titles.map((title, index) => (
-                  <li key={index} className="nav-item">
-                    <a className={`nav-link ${activeTab === title?.title?.titleLabel ? 'active' : ''}`} 
-                      href="#"
-                      onClick={() => {
-                        setActiveTab(title?.title?.titleLabel)
-                        setTitleTab(title?.title?.titleLabel);
-                      }} 
-                    >
-                      {title?.title?.titleLabel?.toString()}
-                    </a>
-                  </li>
-                ))}
+                <li className="nav-item">
+                  <a
+                    className={`nav-link ${activeTab === 'details' ? 'active' : ''}`}
+                    href="#"
+                    onClick={() => setActiveTab('details')}
+                  >
+                    Details
+                  </a>
+                </li>
               </ul>
-              {activeTab !== 'list' && (
-                <ul className="nav nav-tabs" style={{ paddingLeft: '80px' }}>
-                  {titles
-                    .filter(title => title?.title?.titleLabel === activeTab)
-                    .map((title, index) => (
-                      title?.title?.subTitle.map((subTitle, subIndex) => (
-                        <li key={subIndex} className="nav-item">
-                          <a
-                            className={`nav-link ${activeTab === subTitle.subTitleLabel ? 'active' : ''}`}
-                            href="#"
-                            onClick={() => {
-                              setSubTitleTab(subTitle.subTitleLabel);
-                              setActiveTab(subTitle.subTitleLabel)
-                              setActiveSubTitle(subTitle.subTitleLabel)
-                              setSelectedSubtitle(subTitle._id.toString());
-                              document.getElementById('btBackSub').style.display = 'inline';
-                              document.getElementById('btBackNested').style.display = 'none';
-                              console.log('Selected Subtitle:', subTitle._id.toString());
-                            }}
-                          >
-                            {subTitle.subTitleLabel.toString()}
-                          </a>
-                        </li>
-                      ))
-                    ))}
-                </ul>
-              )}
-              {activeTab !== 'list' && (
-                <ul className="nav nav-tabs" style={{ paddingLeft: '80px' }}>
-                  {activeTab !== 'list' && (
-                    <a 
-                      className='nav-link'
-                      href='#'
-                      id='btBackSub' 
-                      style={{ display: 'none' }} 
-                      onClick={() =>{
-                        document.getElementById('btBackSub').style.display = 'none';
-                        document.getElementById('btBackNested').style.display = 'none';
-                        setActiveTab(titleTab)
-                      }} 
-                    >Back</a>
-                  )}
-                  {activeTab !== 'list' && (
-                    <a 
-                      className='nav-link'
-                      href='#'
-                      id='btBackNested' 
-                      style={{ display: 'none' }} 
-                      onClick={() =>{
-                        setActiveTab(subtitleTab)
-                        document.getElementById('btBackSub').style.display = 'inline';
-                        document.getElementById('btBackNested').style.display = 'none';
-                      }} 
-                    >Back</a>
-                  )}
-                  {titles
-                    .filter(title => title?.title?.subTitle.some(subTitle => subTitle.subTitleLabel === activeTab))
-                    .map((title, index) => (
-                      title?.title?.subTitle
-                        .filter(subTitle => subTitle.subTitleLabel === activeTab)
-                        .map((subTitle, subIndex) => (
-                          subTitle?.nestedTitle.map((nestedTitle, nestedIndex) => (
-                            <li key={nestedIndex} className="nav-item">
-                              <a
-                                className={`nav-link ${activeTab === nestedTitle.nestedTitleLabel ? 'active' : ''}`}
-                                href="#"
-                                onClick={() => {
-                                  setNestedTitleTab(nestedTitle.nestedTitleLabel);
-                                  setActiveTab(nestedTitle.nestedTitleLabel)
-                                  setActiveNestedTitle(nestedTitle.nestedTitleLabel)
-                                  setSelectedNestedtitle(nestedTitle._id.toString());
-                                  document.getElementById('btBackSub').style.display = 'none';
-                                  document.getElementById('btBackNested').style.display = 'inline';
-                                  console.log('Selected Nestedtitle:', nestedTitle._id.toString());
-                                }}
-                              >
-                                {nestedTitle.nestedTitleLabel.toString()}
-                              </a>
-                            </li>
-                          ))
-                        ))
-                    ))}
-                </ul>
-              )}
+              
               {activeTab === 'list' && <Questions triggerRefresh={triggerRefresh} />}
               {activeTab === 'treeMap' && <QuestionsTreeMap />}
               {activeTab === 'unlinked' && <UnlinkedQuestions />}
               {activeTab === 'title' && <TitleTab />}
+              {activeTab === 'details' && <DetailsTab />}
               {activeTab === activeSubTitle && <SubtitleQuestions selectedSubtitle={selectedSubtitle} />}
               {activeTab === activeNestedTitle && <NestedtitleQuestions selectedNestedtitle={selectedNestedtitle} />}
             </div>

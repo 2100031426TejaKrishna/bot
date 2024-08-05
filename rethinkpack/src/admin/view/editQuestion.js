@@ -8,8 +8,8 @@ import FirstQuestionModal from './firstQuestionModal';
 // import RecommendationComponent from './recommendationComponent';
 
 // import Questions from './questions';
-// const destination = "localhost:5000";
-const destination = "rtp.dusky.bond:5000";
+ const destination = "localhost:5000";
+//const destination = "rtp.dusky.bond:5000";
 
 class EditQuestion extends Component {
   constructor(props) {
@@ -261,7 +261,7 @@ class EditQuestion extends Component {
     try {
       //for server -https and change to http  for local machine
 
-      const response = await fetch(`https://${destination}/api/read/${questionId}`);
+      const response = await fetch(`http://${destination}/api/read/${questionId}`);
       const data = await response.json();
       if (data) {
         // Check if selectedCountry field is present and has a value
@@ -295,7 +295,7 @@ class EditQuestion extends Component {
       // const selectedCountries = this.state.selectedCountries; // Assuming this.state.selectedCountries contains the selected countries
        //for server -https and change to http  for local machine
 
-      const response = await fetch(`https://${destination}/api/displayAllQuestions`);
+      const response = await fetch(`http://${destination}/api/displayAllQuestions`);
      
       const questions = await response.json();
       this.setState({ allQuestions: questions });
@@ -308,7 +308,7 @@ class EditQuestion extends Component {
     try {
       //for server -https and change to http  for local machine
 
-      const response = await fetch(`https://${destination}/api/update/${questionId}`, {
+      const response = await fetch(`http://${destination}/api/update/${questionId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -343,7 +343,7 @@ class EditQuestion extends Component {
     try {
       //for server -https and change to http  for local machine
 
-      const response = await fetch(`https://${destination}/api/filtered-questions`);
+      const response = await fetch(`http://${destination}/api/filtered-questions`);
       const filteredQuestions = await response.json();
   
       this.setState({ filteredQuestions }); // Update state with fetched questions
@@ -356,7 +356,7 @@ class EditQuestion extends Component {
     try {
       //for server -https and change to http  for local machine
 
-      const response = await fetch(`https://${destination}/api/displayTitles`);
+      const response = await fetch(`http://${destination}/api/displayTitles`);
       const titles = await response.json();
       this.setState({ allTitles: titles });
     } catch (error) {
@@ -383,7 +383,7 @@ fetchRecommendationText = async (optionId) => {
   try {
     //for server -https and change to http  for local machine
 
-    const response = await fetch(`https://${destination}/api/recommendationText/${optionId}`);
+    const response = await fetch(`http://${destination}/api/recommendationText/${optionId}`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -397,7 +397,7 @@ fetchCountries = async () => {
   try {
     //for server -https and change to http  for local machine
 
-    const response = await fetch(`https://${destination}/api/displayCountries`);
+    const response = await fetch(`http://${destination}/api/displayCountries`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }

@@ -3,19 +3,22 @@ import './questions.css';
 import axios from 'axios'; // Import Axios for making HTTP requests
 
 // Switch URLs between Server and Local hosting here
-// const destination = "localhost:5000";
-const destination = "rtp.dusky.bond:5000";
+const destination = "localhost:5000";
+// const destination = "rtp.dusky.bond:5000";
+
 
 const TitleTab = ({ triggerRefresh }) => {
     const [titles, setTitles] = useState([]);
     const [titleToDelete, setTitleToDelete] = useState('');
     const [showDeleteToast, setShowDeleteToast] = useState(false);
     const [error, setError] = useState(null);
-    // Define state variables to hold the updated data
+
     const [editedTitle, setEditedTitle] = useState('');
     const [editedSubTitle, setEditedSubTitle] = useState('');
     const [editedNestedTitle, setEditedNestedTitle] = useState('');
     const [editedSubNestedTitle, setEditedSubNestedTitle] = useState('');
+    const [editedSubSubNestedTitle, setEditedSubSubNestedTitle] = useState('');
+
     const [titleId, setTitleId] = useState('');
     const [showAddSubtitleModal, setShowAddSubtitleModal] = useState(false);
     const [newSubtitle, setNewSubtitle] = useState('');
@@ -23,14 +26,19 @@ const TitleTab = ({ triggerRefresh }) => {
     const [newNestedtitle, setNewNestedtitle] = useState('');
     const [showAddSubNestedtitleModal, setShowAddSubNestedtitleModal] = useState(false);
     const [newSubNestedtitle, setNewSubNestedtitle] = useState('');
+    const [showAddSubSubNestedtitleModal, setShowAddSubSubNestedtitleModal] = useState(false);
+    const [newSubSubNestedtitle, setNewSubSubNestedtitle] = useState('');
+
     const [selectedSubtitleId, setSelectedSubtitleId] = useState('');
     const [selectedNestedtitleId, setSelectedNestedtitleId] = useState('');
+    const [selectedSubNestedtitleId, setSelectedSubNestedtitleId] = useState('');
+    const [selectedSubSubNestedtitleId, setSelectedSubSubNestedtitleId] = useState('');
 
-    // State variables for toast message
     const [showEditSuccessToast, setShowEditSuccessToast] = useState(false);
     const [showAddSubtitleToast, setShowAddSubtitleToast] = useState(false);
     const [showAddNestedtitleToast, setShowAddNestedtitleToast] = useState(false);
     const [showAddSubNestedtitleToast, setShowAddSubNestedtitleToast] = useState(false);
+    const [showAddSubSubNestedtitleToast, setShowAddSubSubNestedtitleToast] = useState(false);
 
 
     const handleAddNestedtitle = (titleId, subtitleId) => {
@@ -38,6 +46,7 @@ const TitleTab = ({ triggerRefresh }) => {
         setSelectedSubtitleId(subtitleId); // Set the selected subtitle _id
         setShowAddNestedtitleModal(true);
     };
+
     const handleAddSubNestedTitle = (titleId, subtitleId, nestedTitleId) => {
         setTitleId(titleId);
         setSelectedSubtitleId(subtitleId); // Set the selected subtitle _id
@@ -45,6 +54,13 @@ const TitleTab = ({ triggerRefresh }) => {
         setShowAddSubNestedtitleModal(true);
     };
 
+    const handleAddSubSubNestedTitle = (titleId, subtitleId, nestedTitleId,subNestedTitleId) => {
+        setTitleId(titleId);
+        setSelectedSubtitleId(subtitleId); // Set the selected subtitle _id
+        setSelectedNestedtitleId(nestedTitleId); // Set the selected nested title _id
+        setSelectedSubNestedtitleId(subNestedTitleId); // Set the selected sub nested title _id
+        setShowAddSubSubNestedtitleModal(true);
+    };
     
 
     const handleCloseAddNestedtitleModal = () => {
@@ -58,6 +74,14 @@ const TitleTab = ({ triggerRefresh }) => {
     setSelectedSubtitleId(''); // Clear the selected subtitle _id
     setSelectedNestedtitleId(''); // Clear the selected nested title _id
 };
+ 
+    const handleCloseAddSubSubNestedTitleModal = () => {
+    setShowAddSubSubNestedtitleModal(false);
+    setNewSubSubNestedtitle('');
+    setSelectedSubtitleId(''); // Clear the selected subtitle _id
+    setSelectedSubNestedtitleId(''); // Clear the selected subtitle _id
+    setSelectedNestedtitleId(''); // Clear the selected nested title _id
+};
 
   
     const handleSaveNestedtitle = () => {
@@ -65,9 +89,8 @@ const TitleTab = ({ triggerRefresh }) => {
         const nestedtitleData = {
             nestedTitle: newNestedtitle
         };
-        //for server -https and change to http  for local machine
 
-        axios.post(`https://${destination}/api/insertNestedtitle/${titleId}/${selectedSubtitleId}`, nestedtitleData)
+        axios.post(`http://${destination}/api/insertNestedtitle/${titleId}/${selectedSubtitleId}`, nestedtitleData)
             .then(response => {
                 console.log('New nestedtitle added:', response.data);
                 setShowAddNestedtitleModal(false); // Close the modal after saving
@@ -84,9 +107,17 @@ const TitleTab = ({ triggerRefresh }) => {
         const subNestedTitleData = {
             subNestedTitle: newSubNestedtitle
         };
-    //for server -https and change to http  for local machine
+         // Log the IDs to check their values
+    console.log('titleId:', titleId);
+    console.log('selectedSubtitleId:', selectedSubtitleId);
+    console.log('selectedNestedtitleId:', selectedNestedtitleId);
 
-        axios.post(`https://${destination}/api/insertSubNestedTitle/${titleId}/${selectedSubtitleId}/${selectedNestedtitleId}`, subNestedTitleData)
+    if (!selectedSubtitleId) {
+        console.error('selectedSubtitleId is undefined.');
+        return; // Exit early if the selectedSubtitleId is not set
+    }
+    
+        axios.post(`http://${destination}/api/insertSubNestedTitle/${titleId}/${selectedSubtitleId}/${selectedNestedtitleId}`, subNestedTitleData)
             .then(response => {
                 console.log('New subNestedTitle added:', response.data);
                 setShowAddSubNestedtitleModal(false); // Close the modal after saving
@@ -96,6 +127,31 @@ const TitleTab = ({ triggerRefresh }) => {
             })
             .catch(error => {
                 console.error('Error adding subNestedTitle:', error);
+            });
+    };
+
+    const handleSaveSubSubNestedTitle = () => {
+        // Assuming the subNestedTitle needs to be sent in an object with a key 'subNestedTitle'
+        const subSubNestedTitleData = {
+            subSubNestedTitle: newSubSubNestedtitle
+        };
+        if (!selectedSubtitleId || !selectedNestedtitleId || !selectedSubNestedtitleId || !newSubSubNestedtitle) {
+            alert("Please fill in all fields");
+            return;
+          }
+    
+        axios.post(`http://${destination}/api/insertSubSubNestedTitle/${titleId}/${selectedSubtitleId}/${selectedNestedtitleId}/${selectedSubNestedtitleId}`, subSubNestedTitleData)
+            .then(response => {
+                console.log('New subSubNestedTitle added:', response.data);
+                setShowAddSubSubNestedtitleModal(false); // Close the modal after saving
+                setShowAddSubSubNestedtitleToast(true);
+                setTimeout(() => setShowAddSubSubNestedtitleToast(false), 5000);
+                triggerRefresh();
+
+                
+            })
+            .catch(error => {
+                console.error('Error adding subSubNestedTitle:', error);
             });
     };
     
@@ -115,9 +171,8 @@ const TitleTab = ({ triggerRefresh }) => {
         const subtitleData = {
             subtitle: newSubtitle
         };
-       //for server -https and change to http  for local machine
 
-        axios.post(`https://${destination}/api/insertSubtitle/${titleId}`, subtitleData)
+        axios.post(`http://${destination}/api/insertSubtitle/${titleId}`, subtitleData)
             .then(response => {
                 console.log('New subtitle added:', response.data);
                 setShowAddSubtitleModal(false); // Close the modal after saving
@@ -130,30 +185,38 @@ const TitleTab = ({ triggerRefresh }) => {
             });
     };
 
-    const handleEditClick = (titleId) => {
+    const handleEditClick = (titleId, subtitleId, nestedTitleId, subNestedTitleId, subSubNestedTitleId) => {
         setTitleId(titleId);
+        setSelectedSubtitleId(subtitleId || '');
+        setSelectedNestedtitleId(nestedTitleId || '');
+        setSelectedSubNestedtitleId(subNestedTitleId || '');
+        setSelectedSubSubNestedtitleId(subSubNestedTitleId || '');
     };
+    
 
-    // Event handler to update the editedTitle state when the user types in the input field
     const handleTitleChange = (event) => {
-        setEditedTitle(event.target.value);
-    };
+    setEditedTitle(event.target.value);
+};
 
-    const handleSubTitleChange = (event) => {
-        setEditedSubTitle(event.target.value);
-    };
+const handleSubTitleChange = (event) => {
+    setEditedSubTitle(event.target.value);
+};
 
-    const handleNestedTitleChange = (event) => {
-        setEditedNestedTitle(event.target.value);
-    };
-    const handleSubNestedTitleChange = (event) => {
-        setEditedSubNestedTitle(event.target.value);
-    };
-    const handleDeleteNestedTitle = (titleId, subTitleId) => {
+const handleNestedTitleChange = (event) => {
+    setEditedNestedTitle(event.target.value);
+};
+
+const handleSubNestedTitleChange = (event) => {
+    setEditedSubNestedTitle(event.target.value);
+};
+
+const handleSubSubNestedTitleChange = (event) => {
+    setEditedSubSubNestedTitle(event.target.value);
+};
+
+    const handleDeleteNestedTitle = (titleId, subTitleId,nestedTitleId) => {
         // Implement deletion logic here, e.g., using axios.delete
-        //for server -https and change to http  for local machine
-
-        axios.delete(`https://${destination}/api/deleteSubtitle/${titleId}/${subTitleId}`)
+        axios.delete(`http://${destination}/api/deleteSubtitle/${titleId}/${subTitleId}/${nestedTitleId}`)
             .then(response => {
                 console.log('Subtitle deleted:', response.data);
                 // Optionally, update state or trigger a refresh
@@ -165,9 +228,7 @@ const TitleTab = ({ triggerRefresh }) => {
     };
     const handleDeleteSubNestedTitle = (titleId, subTitleId, nestedTitleId, subNestedTitleId) => {
     // Implement deletion logic here, e.g., using axios.delete
-    //for server -https and change to http  for local machine
-
-    axios.delete(`https://${destination}/api/deleteSubNestedtitle/${titleId}/${subTitleId}/${nestedTitleId}/${subNestedTitleId}`)
+    axios.delete(`http://${destination}/api/deleteSubNestedtitle/${titleId}/${subTitleId}/${nestedTitleId}/${subNestedTitleId}`)
         .then(response => {
             console.log('Sub-Nestedtitle deleted:', response.data);
             // Optionally, update state or trigger a refresh
@@ -177,58 +238,57 @@ const TitleTab = ({ triggerRefresh }) => {
             console.error('Error deleting sub-nestedtitle:', error);
         });
 };
-
-
+    const handleDeleteSubSubNestedTitle = (titleId, subTitleId, nestedTitleId, subNestedTitleId,subSubNestedTitleId) => {
+    // Implement deletion logic here, e.g., using axios.delete
+    axios.delete(`http://${destination}/api/deleteSubSubNestedtitle/${titleId}/${subTitleId}/${nestedTitleId}/${subNestedTitleId}/${subSubNestedTitleId}`)
+        .then(response => {
+            console.log('Sub-Sub Nestedtitle deleted:', response.data);
+            // Optionally, update state or trigger a refresh
+            triggerRefresh();
+        })
+        .catch(error => {
+            console.error('Error deleting sub-sub nestedtitle:', error);
+        });
+};
 
     // Event handler to handle form submission
     const handleFormSubmit = () => {
-        // Create the updatedData object
+        const existingTitle = titles.find(title => title._id === titleId);
         const updatedData = {
             title: {
-                titleLabel: editedTitle,
-                subTitle: [
-                    {
-                        subTitleLabel: editedSubTitle,
-                        nestedTitle: [
-                            {
-                                nestedTitleLabel: editedNestedTitle,
-                                subNestedTitle: [
-                                    {
-                                        subNestedTitleLabel: editedSubNestedTitle
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
+                titleLabel: editedTitle || existingTitle?.title?.titleLabel,
+                subTitle: existingTitle?.title?.subTitle.map(subTitle => ({
+                    subTitleLabel: editedSubTitle || subTitle.subTitleLabel,
+                    nestedTitle: subTitle.nestedTitle.map(nestedTitle => ({
+                        nestedTitleLabel: editedNestedTitle || nestedTitle.nestedTitleLabel,
+                        subNestedTitle: nestedTitle.subNestedTitle.map(subNestedTitle => ({
+                            subNestedTitleLabel: editedSubNestedTitle || subNestedTitle.subNestedTitleLabel,
+                            subSubNestedTitle: subNestedTitle.subSubNestedTitle.map(subSubNestedTitle => ({
+                                subSubNestedTitleLabel: editedSubSubNestedTitle || subSubNestedTitle.subSubNestedTitleLabel
+                            }))
+                        }))
+                    }))
+                }))
             }
         };
-
-
-        // Send the updatedData object to the backend API using Axios or your preferred method
-        //for server -https and change to http  for local machine
-
-        axios.put(`https://${destination}/api/updateTitle/${titleId}`, updatedData)
+    
+        axios.put(`http://${destination}/api/updateTitle/${titleId}`, updatedData)
             .then(response => {
-                // Handle success
                 console.log('Title updated:', response.data);
-                setShowEditSuccessToast(true); // Show the success toast
-                setTimeout(() => setShowEditSuccessToast(false), 5000); // Hide the toast after 5 seconds
+                setShowEditSuccessToast(true);
+                setTimeout(() => setShowEditSuccessToast(false), 5000);
             })
             .catch(error => {
-                // Handle error
                 console.error('Error updating title:', error);
             });
     };
-
+    
 
     const deleteTitle = async () => {
         if (titleToDelete) {
             console.log('Title to delete:', titleToDelete); // Log titleToDelete variable
             try {
-                //for server -https and change to http  for local machine
-
-                const response = await axios.delete(`https://${destination}/api/deleteTitle/${titleToDelete}`);
+                const response = await axios.delete(`http://${destination}/api/deleteTitle/${titleToDelete}`);
                 if (response.status === 200) {
                     setTitles(titles.filter(title => title._id !== titleToDelete));
                     setTitleToDelete('');
@@ -245,15 +305,11 @@ const TitleTab = ({ triggerRefresh }) => {
         }
     };
 
-
-
     // Fetch titles when component mounts
     useEffect(() => {
         const fetchTitles = async () => {
             try {
-                //for server -https and change to http  for local machine
-
-                const response = await axios.get(`https://${destination}/api/displayTitles`); // Assuming the endpoint is available at /api/displayAllTitles
+                const response = await axios.get(`http://${destination}/api/displayTitles`); // Assuming the endpoint is available at /api/displayAllTitles
                 setTitles(response.data); // Set titles from the response
                 console.log(response.data); // Log the titles data to the console
             } catch (error) {
@@ -340,6 +396,19 @@ const TitleTab = ({ triggerRefresh }) => {
                     </div>
                 </div>
             )}
+            {/* AddSubSubNestedtitle Toast notification */}
+            {showAddSubSubNestedtitleToast && (
+                <div className="toast-container position-fixed bottom-0 end-0 p-3">
+                    <div className="toast show bg-success text-white">
+                        <div className="d-flex justify-content-between">
+                            <div className="toast-body">
+                                SubSubNestedtitle added successfully!
+                            </div>
+                            <button type="button" className="btn-close btn-close-white me-2 m-auto" onClick={() => setShowAddSubSubNestedtitleToast(false)}></button>
+                        </div>
+                    </div>
+                </div>
+            )}
             {/* Render titles within the component */}
             {titles.map((title, index) => (
                 <div key={index} className="question-card">
@@ -354,14 +423,22 @@ const TitleTab = ({ triggerRefresh }) => {
                             {subTitle?.nestedTitle?.map((nestedTitle, nestedIndex) => (
                                 <div key={nestedIndex}>
                                     <p>NestedTitle: {nestedTitle?.nestedTitleLabel?.toString() ?? 'No nested title'}</p>
+                                   
                                     {/* Check if subNestedTitle exists */}
-                        {nestedTitle?.subNestedTitle?.map((subNestedTitle, subNestedIndex) => (
-                            <div key={subNestedIndex}>
-                                <p>SubNestedTitle: {subNestedTitle?.subNestedTitleLabel?.toString() ?? 'No sub-nested title'}</p>
-                            </div>
-                        ))}
+                                   {nestedTitle?.subNestedTitle?.map((subNestedTitle, subNestedIndex) => (
+                                        <div key={subNestedIndex}>
+                                            <p>SubNestedTitle: {subNestedTitle?.subNestedTitleLabel?.toString() ?? 'No sub-nested title'}</p>
+
+                                                    {/* Check if subSubNestedTitle exists */}
+                                                          {subNestedTitle?.subSubNestedTitle?.map((subSubNestedTitle, subSubNestedIndex) => (
+                                                          <div key={subSubNestedIndex}>
+                                                         <p>SubSubNestedTitle: {subSubNestedTitle?.subSubNestedTitleLabel?.toString() ?? 'No sub-subnested title'}</p>
+                                            </div>
+                                          ))}
+                                       </div>
+                                       ))}
                                 </div>
-                            ))}
+                             ))}
                         </div>
                     ))}
 
@@ -438,19 +515,30 @@ const TitleTab = ({ triggerRefresh }) => {
                                 </div>
                             </div>
                         </div>
-                       {/* Add button to add new sub-nested title */}
-<button className="btn btn-secondary" onClick={() => handleAddSubNestedTitle(title._id)}>Add Sub-Nested Title</button>
 
-{/* Modal for adding new sub-nested title */}
-<div className={`modal ${showAddSubNestedtitleModal ? 'show' : ''}`} tabIndex="-1" role="dialog" style={{ display: showAddSubNestedtitleModal ? 'block' : 'none' }}>
-    <div className="modal-dialog" role="document">
-        <div className="modal-content">
-            <div className="modal-header">
+                       {/* Add button to add new sub-nested title */}
+                         <button className="btn btn-secondary" onClick={() => handleAddSubNestedTitle(title._id)}>Add Sub-Nested Title</button>
+
+                          {/* Modal for adding new sub-nested title */}
+             <div className={`modal ${showAddSubNestedtitleModal ? 'show' : ''}`} tabIndex="-1" role="dialog" style={{ display: showAddSubNestedtitleModal ? 'block' : 'none' }}>
+              <div className="modal-dialog" role="document">
+              <div className="modal-content">
+             <div className="modal-header">
                 <h5 className="modal-title">Add New Sub-Nested Title</h5>
-            </div>
-            <div className="modal-body">
+             </div>
+             <div className="modal-body">
                 <div className="form-group">
                     {/* Dropdown menu to select subtitle and nested title */}
+                    <label htmlFor="subtitleDropdown">Select Subtitle:</label>
+                    <select className="form-control" id="subtitleDropdown" value={selectedSubtitleId} onChange={(e) => setSelectedSubtitleId(e.target.value)}>
+                        {titles.map((title, index) => (
+                            title.title.subTitle.map(subTitle => (
+                                <option key={subTitle._id} value={subTitle._id}>{subTitle.subTitleLabel}</option>
+                            ))
+                        ))}
+                    </select>
+                </div>
+                <div className="form-group">
                     <label htmlFor="nestedtitleDropdown">Select Nested Title:</label>
                     <select className="form-control" id="nestedtitleDropdown" value={selectedNestedtitleId} onChange={(e) => setSelectedNestedtitleId(e.target.value)}>
                         {titles.map((title,index) => (
@@ -471,16 +559,84 @@ const TitleTab = ({ triggerRefresh }) => {
                         value={newSubNestedtitle}
                         onChange={(e) => setNewSubNestedtitle(e.target.value)}
                     />
+                       </div>
+                    </div>
+                  <div className="modal-footer">
+                   <button type="button" className="btn btn-secondary" onClick={handleCloseAddSubNestedTitleModal}>Close</button>
+                  <button type="button" className="btn btn-primary" onClick={handleSaveSubNestedTitle}>Save</button>
+               </div>
+               </div>
                 </div>
-            </div>
-            <div className="modal-footer">
-                <button type="button" className="btn btn-secondary" onClick={handleCloseAddSubNestedTitleModal}>Close</button>
-                <button type="button" className="btn btn-primary" onClick={handleSaveSubNestedTitle}>Save</button>
-            </div>
-        </div>
-    </div>
-</div>
+             </div>
 
+            {/* Add button to add new sub-sub nested title */}
+            <button className="btn btn-secondary" onClick={() => handleAddSubSubNestedTitle(title._id)}>Add Sub-Sub Nested Title</button>
+
+            {/* Modal for adding new sub-sub nested title */}
+            <div className={`modal ${showAddSubSubNestedtitleModal ? 'show' : ''}`} tabIndex="-1" role="dialog" style={{ display: showAddSubSubNestedtitleModal ? 'block' : 'none' }}>
+  <div className="modal-dialog" role="document">
+    <div className="modal-content">
+      <div className="modal-header">
+        <h5 className="modal-title">Add New Sub-Sub-Nested Title</h5>
+      </div>
+      <div className="modal-body">
+        <div className="form-group">
+          {/* Dropdown menu to select subtitle */}
+          <label htmlFor="subtitleDropdown">Select Subtitle:</label>
+          <select className="form-control" id="subtitleDropdown" value={selectedSubtitleId} onChange={(e) => setSelectedSubtitleId(e.target.value)}>
+            {titles.map((title, index) => (
+              title.title.subTitle.map(subTitle => (
+                <option key={subTitle._id} value={subTitle._id}>{subTitle.subTitleLabel}</option>
+              ))
+            ))}
+          </select>
+        </div>
+        <div className="form-group">
+          {/* Dropdown menu to select nested title */}
+          <label htmlFor="nestedtitleDropdown">Select Nested Title:</label>
+          <select className="form-control" id="nestedtitleDropdown" value={selectedNestedtitleId} onChange={(e) => setSelectedNestedtitleId(e.target.value)}>
+            {titles.map((title, index) => (
+              title.title.subTitle.map(subTitle => (
+                subTitle.nestedTitle.map(nestedTitle => (
+                  <option key={nestedTitle._id} value={nestedTitle._id}>{nestedTitle.nestedTitleLabel}</option>
+                ))
+              ))
+            ))}
+          </select>
+        </div>
+        <div className="form-group">
+          {/* Dropdown menu to select sub-nested title */}
+          <label htmlFor="subNestedtitleDropdown">Select Sub-Nested Title:</label>
+          <select className="form-control" id="subNestedtitleDropdown" value={selectedSubNestedtitleId} onChange={(e) => setSelectedSubNestedtitleId(e.target.value)}>
+            {titles.map((title, index) => (
+              title.title.subTitle.map(subTitle => (
+                subTitle.nestedTitle.map(nestedTitle => (
+                  nestedTitle.subNestedTitle.map(subNestedTitle => (
+                    <option key={subNestedTitle._id} value={subNestedTitle._id}>{subNestedTitle.subNestedTitleLabel}</option>
+                  ))
+                ))
+              ))
+            ))}
+          </select>
+        </div>
+        <div className="form-group">
+          <label htmlFor="subSubNestedtitleInput">Sub-Sub-Nested Title:</label>
+          <input
+                            type="text"
+            className="form-control"
+                                      id="subSubNestedtitleInput"
+                                 value={newSubSubNestedtitle}
+                                               onChange={(e) => setNewSubSubNestedtitle(e.target.value)}
+                                             />
+                                                    </div>
+                                                 </div>
+                                  <div className="modal-footer">
+                                           <button type="button" className="btn btn-secondary" onClick={handleCloseAddSubSubNestedTitleModal}>Close</button>
+                                  <button type="button" className="btn btn-primary" onClick={handleSaveSubSubNestedTitle}>Save</button>
+                                             </div>
+                                        </div>
+                                           </div>
+                                                </div>
 
                         {/* Edit button */}
                         <button
@@ -492,119 +648,139 @@ const TitleTab = ({ triggerRefresh }) => {
                             Edit
                         </button>
 
-                     {/* Edit Modal */}
-<div className="modal fade" id={`editModal${index}`} tabIndex="-1" aria-labelledby={`editModalLabel${index}`} aria-hidden="true">
-    <div className="modal-dialog modal-lg">
-        <div className="modal-content">
-            <div className="modal-header">
-                <h5 className="modal-title" id={`editModalLabel${index}`}>Edit Title</h5>
-                <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div className="modal-body">
-                {/* Display default title */}
-                <div className="mb-3">
-                    <label htmlFor={`defaultTitle${index}`} className="form-label"><strong>Default Title:</strong></label>
-                    <div id={`defaultTitle${index}`}><em>{title?.title?.titleLabel ?? 'No title'}</em></div>
-                </div>
-
-                {/* Form fields for editing title */}
-                <form>
-                    <div className="mb-3">
-                        <label htmlFor={`titleInput${index}`} className="form-label"><strong>Edit Title:</strong></label>
-                        <input type="text" className="form-control" id={`titleInput${index}`} value={editedTitle} onChange={handleTitleChange} />
-                    </div>
-                </form>
-
-                {/* Display default subtitles and form fields for editing */}
-                {title?.title?.subTitle?.map((subTitle, subIndex) => (
-                    <div key={subIndex}>
-                        <div className="mb-3">
-                            <label htmlFor={`defaultSubTitle${index}_${subIndex}`} className="form-label"><strong>Default SubTitle:</strong></label>
-                            <div id={`defaultSubTitle${index}_${subIndex}`}><em>{subTitle?.subTitleLabel ?? 'No subtitle'}</em></div>
-                        </div>
-                        {Array.isArray(subTitle?.nestedTitle) && subTitle?.nestedTitle.length > 1 && (
-                            <button
-                                className="btn btn-outline-secondary delete-button"
-                                type="button"
-                                onClick={() => handleDeleteNestedTitle(title._id, subTitle._id)}
-                            >
-                                Delete Subtitle
-                            </button>
-                        )}
-
-                        {/* Form fields for editing subtitle */}
-                        <form>
-                            <div className="mb-3">
-                                <label htmlFor={`subtitleInput${index}_${subIndex}`} className="form-label"><strong>Edit SubTitle:</strong></label>
-                                <input type="text" className="form-control" id={`subtitleInput${index}_${subIndex}`} value={editedSubTitle} onChange={handleSubTitleChange} />
-                            </div>
-                        </form>
-
-                        {/* Display default nested titles and form fields for editing */}
-                        {subTitle?.nestedTitle?.map((nestedTitle, nestedIndex) => (
-                            <div key={nestedIndex}>
-                                <div className="mb-3">
-                                    <label htmlFor={`defaultNestedTitle${index}_${subIndex}_${nestedIndex}`} className="form-label"><strong>Default NestedTitle:</strong></label>
-                                    <div id={`defaultNestedTitle${index}_${subIndex}_${nestedIndex}`}><em>{nestedTitle?.nestedTitleLabel ?? 'No nested title'}</em></div>
-                                </div>
-                                {Array.isArray(nestedTitle?.subNestedTitle) && nestedTitle?.subNestedTitle.length > 1 && (
-                                    <button
-                                        className="btn btn-outline-secondary delete-button"
-                                        type="button"
-                                        onClick={() => handleDeleteSubNestedTitle(title._id, subTitle._id, nestedTitle._id)}
-                                    >
-                                        Delete Sub-Nestedtitle
-                                    </button>
-                                )}
-
-                                {/* Form fields for editing nested title */}
-                                <form>
-                                    <div className="mb-3">
-                                        <label htmlFor={`nestedTitleInput${index}_${subIndex}_${nestedIndex}`} className="form-label"><strong>Edit NestedTitle:</strong></label>
-                                        <input type="text" className="form-control" id={`nestedTitleInput${index}_${subIndex}_${nestedIndex}`} value={editedNestedTitle} onChange={handleNestedTitleChange} />
+                        {/* Edit Modal */}
+                        <div className="modal fade" id={`editModal${index}`} tabIndex="-1" aria-labelledby={`editModalLabel${index}`} aria-hidden="true">
+                            <div className="modal-dialog modal-lg">
+                                <div className="modal-content">
+                                    <div className="modal-header">
+                                        <h5 className="modal-title" id={`editModalLabel${index}`}>Edit Title</h5>
+                                        <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                     </div>
-                                </form>
-
-                                {/* Display default subNested titles and form fields for editing */}
-                                {nestedTitle?.subNestedTitle?.map((subNestedTitle, subNestedIndex) => (
-                                    <div key={subNestedIndex}>
+                                    <div className="modal-body">
+                                        {/* Display default title */}
                                         <div className="mb-3">
-                                            <label htmlFor={`defaultSubNestedTitle${index}_${subIndex}_${nestedIndex}_${subNestedIndex}`} className="form-label"><strong>Default Sub-NestedTitle:</strong></label>
-                                            <div id={`defaultSubNestedTitle${index}_${subIndex}_${nestedIndex}_${subNestedIndex}`}><em>{subNestedTitle?.subNestedTitleLabel ?? 'No sub-nested title'}</em></div>
+                                            <label htmlFor={`defaultTitle${index}`} className="form-label"><strong>Default Title:</strong></label>
+                                            <div id={`defaultTitle${index}`}><em>{title?.title?.titleLabel ?? 'No title'}</em></div>
                                         </div>
-                                        {Array.isArray(nestedTitle?.subNestedTitle) && nestedTitle?.subNestedTitle.length > 1 && (
-                                            <button
-                                                className="btn btn-outline-secondary delete-button"
-                                                type="button"
-                                                onClick={() => handleDeleteSubNestedTitle(title._id, subTitle._id, nestedTitle._id, subNestedTitle._id)}
-                                            >
-                                                Delete Sub-Nestedtitle
-                                            </button>
-                                        )}
 
-                                        {/* Form fields for editing sub-nested title */}
+                                        {/* Form fields for editing title */}
                                         <form>
                                             <div className="mb-3">
-                                                <label htmlFor={`subNestedTitleInput${index}_${subIndex}_${nestedIndex}_${subNestedIndex}`} className="form-label"><strong>Edit Sub-NestedTitle:</strong></label>
-                                                <input type="text" className="form-control" id={`subNestedTitleInput${index}_${subIndex}_${nestedIndex}_${subNestedIndex}`} value={editedSubNestedTitle} onChange={handleSubNestedTitleChange} />
+                                                <label htmlFor={`titleInput${index}`} className="form-label"><strong>Edit Title:</strong></label>
+                                                <input type="text" className="form-control" id={`titleInput${index}`} value={editedTitle} onChange={handleTitleChange} />
                                             </div>
                                         </form>
-                                    </div>
-                                ))}
-                            </div>
-                        ))}
-                    </div>
-                ))}
-            </div>
 
-            {/* Modal footer with buttons */}
-            <div className="modal-footer">
-                <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" className="btn btn-primary" onClick={handleFormSubmit}>Save changes</button>
-            </div>
-        </div>
-    </div>
-</div>
+                                        {/* Display default subtitles and form fields for editing */}
+                                        {title?.title?.subTitle?.map((subTitle, subIndex) => (
+                                            <div key={subIndex}>
+                                                <div className="mb-3">
+                                                    <label htmlFor={`defaultSubTitle${index}_${subIndex}`} className="form-label"><strong>Default SubTitle:</strong></label>
+                                                    <div id={`defaultSubTitle${index}_${subIndex}`}><em>{subTitle?.subTitleLabel ?? 'No subtitle'}</em></div>
+                                                </div>
+                                                {Array.isArray(subTitle?.nestedTitle) && subTitle?.nestedTitle.length > 1 && (
+                                                  <button
+                                                     className="btn btn-outline-secondary delete-button"
+                                                       type="button"
+                                                         onClick={() => handleDeleteNestedTitle(title._id, subTitle._id)}
+                                                                >
+                                                                       Delete Subtitle
+                                                                   </button>
+                                                              )}                    
+
+
+                                                {/* Form fields for editing subtitle */}
+                                                <form>
+                                                    <div className="mb-3">
+                                                        <label htmlFor={`subtitleInput${index}_${subIndex}`} className="form-label"><strong>Edit SubTitle:</strong></label>
+                                                        <input type="text" className="form-control" id={`subtitleInput${index}_${subIndex}`} value={editedSubTitle} onChange={handleSubTitleChange} />
+                                                    </div>
+                                                </form>
+
+                                                {/* Display default nested titles and form fields for editing */}
+                                                {subTitle?.nestedTitle?.map((nestedTitle, nestedIndex) => (
+                                                    <div key={nestedIndex}>
+                                                        <div className="mb-3">
+                                                            <label htmlFor={`defaultNestedTitle${index}_${subIndex}_${nestedIndex}`} className="form-label"><strong>Default NestedTitle:</strong></label>
+                                                            <div id={`defaultNestedTitle${index}_${subIndex}_${nestedIndex}`}><em>{nestedTitle?.nestedTitleLabel ?? 'No nested title'}</em></div>
+                                                        </div>
+                                                        {Array.isArray(nestedTitle?.subNestedTitle) && nestedTitle?.subNestedTitle.length > 1 && (
+                                                      <button
+                                                         className="btn btn-outline-secondary delete-button"
+                                                                    type="button"
+                                                               onClick={() => handleDeleteSubNestedTitle(title._id, subTitle._id, nestedTitle._id)}
+                                                            >
+                                                             Delete Nestedtitle
+                                                             </button>
+                                                                       )}
+
+
+                                                        {/* Form fields for editing nested title */}
+                                                        <form>
+                                                            <div className="mb-3">
+                                                                <label htmlFor={`nestedTitleInput${index}_${subIndex}_${nestedIndex}`} className="form-label"><strong>Edit NestedTitle:</strong></label>
+                                                                <input type="text" className="form-control" id={`nestedTitleInput${index}_${subIndex}_${nestedIndex}`} value={editedNestedTitle} onChange={handleNestedTitleChange} />
+                                                            </div>
+                                                        </form>
+
+                                                        {/* Display default subNested titles and form fields for editing */}
+                                                        {nestedTitle?.subNestedTitle?.map((subNestedTitle, subNestedIndex) => (
+                                                            <div key={subNestedIndex}>
+                                                                <div className="mb-3">
+                                                                    <label htmlFor={`defaultSubNestedTitle${index}_${subIndex}_${nestedIndex}_${subNestedIndex}`} className="form-label"><strong>Default SubNestedTitle:</strong></label>
+                                                                    <div id={`defaultSubNestedTitle${index}_${subIndex}_${nestedIndex}_${subNestedIndex}`}><em>{subNestedTitle?.subNestedTitleLabel ?? 'No sub-nested title'}</em></div>
+                                                                </div>
+                                                                {Array.isArray(nestedTitle?.subNestedTitle) && nestedTitle?.subNestedTitle.length > 1 && (
+                                                                <button
+                                                                     className="btn btn-outline-secondary delete-button"
+                                                                    type="button"
+                                                                  onClick={() => handleDeleteSubNestedTitle(title._id, subTitle._id, nestedTitle._id, subNestedTitle._id)}
+                                                                       >
+                                                                    Delete Sub-Nestedtitle
+                                                                      </button>
+                                                                              )}
+
+
+                                                                {/* Form fields for editing sub-nested title */}
+                                                                <form>
+                                                                    <div className="mb-3">
+                                                                        <label htmlFor={`subNestedTitleInput${index}_${subIndex}_${nestedIndex}_${subNestedIndex}`} className="form-label"><strong>Edit SubNestedTitle:</strong></label>
+                                                                        <input type="text" className="form-control" id={`subNestedTitleInput${index}_${subIndex}_${nestedIndex}_${subNestedIndex}`} value={editedSubNestedTitle} onChange={handleSubNestedTitleChange} />
+                                                                    </div>
+                                                                </form>
+
+                                                                {/* Display default subSubNested titles and form fields for editing */}
+                                                                {subNestedTitle?.subSubNestedTitle?.map((subSubNestedTitle, subSubNestedIndex) => (
+                                                                    <div key={subSubNestedIndex}>
+                                                                        <div className="mb-3">
+                                                                            <label htmlFor={`defaultSubSubNestedTitle${index}_${subIndex}_${nestedIndex}_${subNestedIndex}_${subSubNestedIndex}`} className="form-label"><strong>Default SubSubNestedTitle:</strong></label>
+                                                                            <div id={`defaultSubSubNestedTitle${index}_${subIndex}_${nestedIndex}_${subNestedIndex}_${subSubNestedIndex}`}><em>{subSubNestedTitle?.subSubNestedTitleLabel ?? 'No sub-subnested title'}</em></div>
+                                                                        </div>
+
+                                                                        {/* Form fields for editing sub-sub-nested title */}
+                                                                        <form>
+                                                                            <div className="mb-3">
+                                                                                <label htmlFor={`subSubNestedTitleInput${index}_${subIndex}_${nestedIndex}_${subNestedIndex}_${subSubNestedIndex}`} className="form-label"><strong>Edit SubSubNestedTitle:</strong></label>
+                                                                                <input type="text" className="form-control" id={`subSubNestedTitleInput${index}_${subIndex}_${nestedIndex}_${subNestedIndex}_${subSubNestedIndex}`} value={editedSubSubNestedTitle} onChange={handleSubSubNestedTitleChange} />
+                                                                            </div>
+                                                                        </form>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ))}
+                                    </div>
+                                    {/* Modal footer with buttons */}
+                                    <div className="modal-footer">
+                                        <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                        <button type="button" className="btn btn-primary" onClick={handleFormSubmit}>Save changes</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
                         <button
                             className="btn btn-danger"
@@ -644,11 +820,8 @@ const TitleTab = ({ triggerRefresh }) => {
                     </div>
                 </div>
             ))}
-
-
         </div>
     );
 };
-
 
 export default TitleTab;

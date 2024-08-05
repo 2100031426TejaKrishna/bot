@@ -32,17 +32,24 @@ const questionSchema = new mongoose.Schema({
             marks: Number
         }]
     },
-    requireResponse: Boolean,  
+    requireResponse: Boolean,
     marks: Number,
     country: {
         selectedCountry: String,
         countryFirstQuestion: Boolean
     },
     explanation: String,
-    // recommendation: String,
     previousQuestion: String,
     nextQuestion: String,
     nestedTitle: {
+        id: String,
+        firstQuestion: Boolean
+    },
+    subNestedTitle: {
+        id: String,
+        firstQuestion: Boolean
+    },
+    subSubNestedTitle: {
         id: String,
         firstQuestion: Boolean
     },
@@ -63,10 +70,8 @@ router.post('/insertQuestion', async (req, res) => {
     try {
         let questionData = req.body;
 
-          
         if (questionData.isLeadingQuestion) {
             questionData.recommendation = questionData.explanation;
-
             delete questionData.explanation;
             delete questionData.marks;
             if (questionData.optionType !== 'multipleChoiceGrid' && questionData.optionType !== 'checkboxGrid') {
@@ -97,6 +102,17 @@ router.post('/insertQuestion', async (req, res) => {
         } else {
             delete questionData.grid;
             delete questionData.requireResponse;
+        }
+
+        // Remove empty nested title objects if not provided
+        if (!questionData.nestedTitle || !questionData.nestedTitle.id) {
+            delete questionData.nestedTitle;
+        }
+        if (!questionData.subNestedTitle || !questionData.subNestedTitle.id) {
+            delete questionData.subNestedTitle;
+        }
+        if (!questionData.subSubNestedTitle || !questionData.subSubNestedTitle.id) {
+            delete questionData.subSubNestedTitle;
         }
         
         questionData.date = new Date();

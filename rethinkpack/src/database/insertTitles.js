@@ -13,7 +13,12 @@ const titlesSchema = new mongoose.Schema({
                         nestedTitleLabel: String,
                         subNestedTitle: [
                             {
-                                subNestedTitleLabel: String
+                                subNestedTitleLabel: String,
+                                subSubNestedTitle:[
+                                    {
+                                        subSubNestedTitleLabel: String
+                                    }
+                                ]
                             }
                         ]
                     }
@@ -31,6 +36,7 @@ const Titles = mongoose.model('titles', titlesSchema);
 Titles.createIndexes();
 
 router.post('/insertTitle', async (req, res) => {
+    console.log(req.body);
     try {
         let titleData = req.body;
         // console.log(JSON.parse(titleData));
@@ -51,7 +57,7 @@ router.put('/updateTitle/:id', async (req, res) => {
     try {
         const titleId = req.params.id;
         const updatedData = req.body;
-        
+
         // Fetch the existing title data from the database
         const existingTitle = await Titles.findById(titleId);
 
@@ -61,10 +67,37 @@ router.put('/updateTitle/:id', async (req, res) => {
         }
 
         // Update only the fields that are present and not empty in the updatedData
-        for (const key in updatedData) {
-            if (updatedData[key] !== undefined && updatedData[key] !== null && updatedData[key] !== '') {
-                existingTitle[key] = updatedData[key];
-            }
+        if (updatedData.title && updatedData.title.titleLabel) {
+            existingTitle.title.titleLabel = updatedData.title.titleLabel;
+        }
+
+        if (updatedData.title && Array.isArray(updatedData.title.subTitle)) {
+            updatedData.title.subTitle.forEach((updatedSubTitle, subIndex) => {
+                if (updatedSubTitle.subTitleLabel) {
+                    existingTitle.title.subTitle[subIndex].subTitleLabel = updatedSubTitle.subTitleLabel;
+                }
+                if (Array.isArray(updatedSubTitle.nestedTitle)) {
+                    updatedSubTitle.nestedTitle.forEach((updatedNestedTitle, nestedIndex) => {
+                        if (updatedNestedTitle.nestedTitleLabel) {
+                            existingTitle.title.subTitle[subIndex].nestedTitle[nestedIndex].nestedTitleLabel = updatedNestedTitle.nestedTitleLabel;
+                        }
+                        if (Array.isArray(updatedNestedTitle.subNestedTitle)) {
+                            updatedNestedTitle.subNestedTitle.forEach((updatedSubNestedTitle, subNestedIndex) => {
+                                if (updatedSubNestedTitle.subNestedTitleLabel) {
+                                    existingTitle.title.subTitle[subIndex].nestedTitle[nestedIndex].subNestedTitle[subNestedIndex].subNestedTitleLabel = updatedSubNestedTitle.subNestedTitleLabel;
+                                }
+                                if (Array.isArray(updatedSubNestedTitle.subSubNestedTitle)) {
+                                    updatedSubNestedTitle.subSubNestedTitle.forEach((updatedSubSubNestedTitle, subSubNestedIndex) => {
+                                        if (updatedSubSubNestedTitle.subSubNestedTitleLabel) {
+                                            existingTitle.title.subTitle[subIndex].nestedTitle[nestedIndex].subNestedTitle[subNestedIndex].subSubNestedTitle[subSubNestedIndex].subSubNestedTitleLabel = updatedSubSubNestedTitle.subSubNestedTitleLabel;
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    });
+                }
+            });
         }
 
         // Save the updated title
@@ -214,6 +247,71 @@ router.post('/insertSubNestedTitle/:titleId/:subtitleId/:nestedTitleId', async (
     }
 });
 
+// Route to insert a new sub-sub-nested title
+router.post('/insertSubSubNestedTitle/:titleId/:subtitleId/:nestedTitleId/:subNestedTitleId', async (req, res) => {
+    console.log(req.params);
+    try {
+        const { subSubNestedTitle } = req.body;
+        const titleId = req.params.titleId;
+        const subtitleId = req.params.subtitleId;
+        const nestedTitleId = req.params.nestedTitleId;
+        const subNestedTitleId = req.params.subNestedTitleId;
+
+        // Log the received payload and IDs for debugging
+        console.log("Received payload:", req.body);
+        console.log("Received titleId:", titleId);
+        console.log("Received subtitleId:", subtitleId);
+        console.log("Received nestedTitleId:", nestedTitleId);
+        console.log("Received subNestedTitleId:", subNestedTitleId);
+
+        // Fetch the title document
+        const existingTitle = await Titles.findById(titleId);
+
+        if (!existingTitle) {
+            console.error("Title not found for ID:", titleId);
+            return res.status(404).json({ error: 'Title not found' });
+        }
+
+        // Find the correct subtitle by its _id
+        const selectedSubtitle = existingTitle.title.subTitle.find(subtitle => subtitle._id == subtitleId);
+
+        if (!selectedSubtitle) {
+            console.error("Subtitle not found for ID:", subtitleId);
+            return res.status(404).json({ error: 'Subtitle not found' });
+        }
+
+        // Find the correct nested title by its _id
+        const selectedNestedTitle = selectedSubtitle.nestedTitle.find(nestedTitle => nestedTitle._id == nestedTitleId);
+
+        if (!selectedNestedTitle) {
+            console.error("Nested title not found for ID:", nestedTitleId);
+            return res.status(404).json({ error: 'Nested title not found' });
+        }
+
+        // Find the correct sub-nested title by its _id
+        const selectedSubNestedTitle = selectedNestedTitle.subNestedTitle.find(subNestedTitle => subNestedTitle._id == subNestedTitleId);
+
+        if (!selectedSubNestedTitle) {
+            console.error("Sub-nested title not found for ID:", subNestedTitleId);
+            return res.status(404).json({ error: 'Sub-nested title not found' });
+        }
+
+        // Push the new sub-sub-nested title into the selected sub-nested title's subSubNestedTitle array
+        selectedSubNestedTitle.subSubNestedTitle.push({ subSubNestedTitleLabel: subSubNestedTitle });
+
+        // Save the updated title with the new sub-sub-nested title
+        const updatedTitle = await existingTitle.save();
+
+        // Respond with the updated title
+        res.json(updatedTitle);
+    } catch (error) {
+        console.error("Error inserting sub-sub-nested title:", error);
+        res.status(500).send("Error inserting sub-sub-nested title");
+    }
+});
+
 
 
 module.exports = router;
+
+

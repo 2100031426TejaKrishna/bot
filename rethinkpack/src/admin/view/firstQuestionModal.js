@@ -307,8 +307,8 @@ import 'bootstrap/dist/js/bootstrap.bundle.min';
 import Modal from 'react-bootstrap/Modal';
 import './firstQuestionModal.css';
 
-// const destination = "localhost:5000";
-const destination = "rtp.dusky.bond:5000";
+ const destination = "localhost:5000";
+//const destination = "rtp.dusky.bond:5000";
 
 class FirstQuestionModal extends Component {
   constructor(props) {
@@ -353,7 +353,7 @@ class FirstQuestionModal extends Component {
     try {
       //for server -https and change to http  for local machine
 
-      const response = await fetch(`https://${destination}/api/update/${firstQuestionId}`, {
+      const response = await fetch(`http://${destination}/api/update/${firstQuestionId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -393,7 +393,7 @@ class FirstQuestionModal extends Component {
     try {
       //for server -https and change to http  for local machine
 
-      const response = await fetch(`https://${destination}/api/update/${firstQuestionId}`, {
+      const response = await fetch(`http://${destination}/api/update/${firstQuestionId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -432,7 +432,7 @@ class FirstQuestionModal extends Component {
     try {
       //for server -https and change to http  for local machine
 
-      const response = await fetch(`https://${destination}/api/update/${firstQuestionId}`, {
+      const response = await fetch(`http://${destination}/api/update/${firstQuestionId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

@@ -9,8 +9,8 @@ import CreateTitle from './createTitle';
 import FirstQuestionModal from './firstQuestionModal';
 
 // Switch URLs between Server and Local hosting here
-// const destination = "localhost:5000";
-const destination = "rtp.dusky.bond:5000";
+const destination = "localhost:5000";
+//const destination = "rtp.dusky.bond:5000";
 
 class CreateQuestion extends Component {
   constructor(props) {
@@ -109,22 +109,35 @@ class CreateQuestion extends Component {
         id: '',
         firstQuestion: false
       },
+      subSubNestedTitle: {
+        id: '',
+        firstQuestion: false
+      },
         nestedTitleLabel: '',
         subNestedTitleLabel: '',
+        subSubNestedTitleLabel: '',
       showMarks: true,
       showFirstQuestionNestedTitleOption: false,
+      showFirstQuestionSubNestedTitleOption:false,
       nestedTitleFirstQuestionRender: false,
       nestedTitleFirstQuestionId: '',
       nestedTitleFirstQuestionValue: '',
       subNestedTitleFirstQuestionRender: false,
       subNestedTitleFirstQuestionId: '',
-      subNestedTitleFirstQuestionValue: ''
+      subNestedTitleFirstQuestionValue: '',
+      subSubNestedTitleFirstQuestionRender: false,
+      subSubNestedTitleFirstQuestionId: '',
+      subSubNestedTitleFirstQuestionValue: ''
 
     };
 
     this.initialState = { ...this.state };
     this.resetState = this.resetState.bind(this);
     this.createQuestionModalRef = React.createRef();
+    this.state = {
+      ...this.state,
+      isLoadingTitles: false,
+    };
   }
 
   resetState() {
@@ -165,9 +178,9 @@ class CreateQuestion extends Component {
   fetchQuestions = async () => {
     try {
       // for local machine
-      // const response = await fetch(`http://${destination}/api/displayAllQuestions`);
+       const response = await fetch(`http://${destination}/api/displayAllQuestions`);
       //for server
-      const response = await fetch(`https://${destination}/api/displayAllQuestions`);
+      //const response = await fetch(`https://${destination}/api/displayAllQuestions`);
 
       const questions = await response.json();
       this.setState({ allQuestions: questions });
@@ -176,19 +189,23 @@ class CreateQuestion extends Component {
     }
   };
 
-  fetchTitles = async () => {
-    try {
-            // for local machine
-      // const response = await fetch(`http://${destination}/api/displayTitles`);
-            //for server
-       const response = await fetch(`https://${destination}/api/displayTitles`);
 
-      const titles = await response.json();
-      this.setState({ allTitles: titles });
-    } catch (error) {
-      console.error('Error fetching questions:', error);
-    }
-  };
+
+fetchTitles = async () => {
+  this.setState({ isLoadingTitles: true }); // Set loading state to true
+  try {
+    // for local machine
+    const response = await fetch(`http://${destination}/api/displayTitles`);
+    //for server
+   // const response = await fetch(`https://${destination}/api/displayTitles`);
+
+    const titles = await response.json();
+    this.setState({ allTitles: titles, isLoadingTitles: false }); // Set loading state to false
+  } catch (error) {
+    console.error('Error fetching titles:', error);
+    this.setState({ isLoadingTitles: false }); // Set loading state to false in case of error
+  }
+};
 
   componentWillUnmount() {
     const createQuestionModal = document.getElementById('createQuestion');
@@ -286,11 +303,44 @@ class CreateQuestion extends Component {
      }));
   };
   
+  updateSubSubNestedTitleFirstQuestion = () => {
+    // console.log(`prop updateSubSubNestedTitleFirstQuestion executed.`)
+  
+    const { allQuestions, subSubNestedTitleFirstQuestionId } = this.state;
+    const updatedQuestions = allQuestions.map(question => {
+      if (question._id === subSubNestedTitleFirstQuestionId) {
+        // console.log(`question._id === subSubNestedTitleFirstQuestionId`)
+        return {
+          ...question,
+          subSubNestedTitle: {
+            ...question.subSubNestedTitle,
+            id: subSubNestedTitleFirstQuestionId,
+            firstQuestion: false,
+          },
+        };
+      } else {
+        return question;
+      }
+    });
+    this.setState({ allQuestions: updatedQuestions });
+  
+    // Reset state value to false and update toggle to TRUE
+    this.setState(prevState => ({
+      subSubNestedTitleFirstQuestionRender: false,
+      subSubNestedTitle: {
+        ...prevState.subSubNestedTitle,
+        firstQuestion: true
+      },
+    }));
+  };
+
+  
   firstQuestionModalOnHide = () => {
     this.setState( {
       countryFirstQuestionRender: false,
       nestedTitleFirstQuestionRender: false,
-      subNestedTitleFirstQuestionRender: false
+      subNestedTitleFirstQuestionRender: false,
+      subSubNestedTitleFirstQuestionRender: false
     })
   };
 
@@ -333,6 +383,7 @@ class CreateQuestion extends Component {
     };
     return nestedTitlesArray;
   };
+
   fetchSubNestedTitles = () => {
     const { allTitles } = this.state;
   
@@ -357,7 +408,33 @@ class CreateQuestion extends Component {
     return subNestedTitlesArray;
   };
   
-
+  fetchSubSubNestedTitles = () => {
+    const { allTitles } = this.state;
+  
+    // Determine sub-sub nested titles
+    let subSubNestedTitlesArray = [];
+    // Loops through main titles
+    for (let i = 0; i < allTitles.length; i++) {
+      // Loops through subtitles
+      for (let j = 0; j < allTitles[i].title.subTitle.length; j++) {
+        // Loops through nested titles
+        for (let k = 0; k < allTitles[i].title.subTitle[j].nestedTitle.length; k++) {
+          // Loops through sub nested titles
+          for (let l = 0; l < allTitles[i].title.subTitle[j].nestedTitle[k].subNestedTitle.length; l++) {
+            // Loops through sub-sub nested titles
+            for (let m = 0; m < allTitles[i].title.subTitle[j].nestedTitle[k].subNestedTitle[l].subSubNestedTitle.length; m++) {
+              subSubNestedTitlesArray.push({
+                subSubNestedTitleLabel: allTitles[i].title.subTitle[j].nestedTitle[k].subNestedTitle[l].subSubNestedTitle[m].subSubNestedTitleLabel,
+                id: allTitles[i].title.subTitle[j].nestedTitle[k].subNestedTitle[l].subSubNestedTitle[m]._id
+              });
+            }
+          }
+        }
+      }
+    }
+    return subSubNestedTitlesArray;
+  };
+  
   handleFirstQuestionNestedTitleOption = (e) => {
     
     let nestedTitlesArray = this.fetchNestedTitles();
@@ -381,6 +458,7 @@ class CreateQuestion extends Component {
       }
     };
   };
+
   handleFirstQuestionSubNestedTitleOption = (e) => {
     let nestedTitlesArray = this.fetchNestedTitles();
     let subNestedTitlesArray = this.fetchSubNestedTitles();
@@ -422,6 +500,66 @@ class CreateQuestion extends Component {
     }
   };
   
+  handleFirstQuestionSubSubNestedTitleOption = (e) => {
+    let nestedTitlesArray = this.fetchNestedTitles();
+    let subNestedTitlesArray = this.fetchSubNestedTitles();
+    let subSubNestedTitlesArray = this.fetchSubSubNestedTitles();
+  
+    // Determine a match for nested title with the selected title
+    for (let i = 0; i < nestedTitlesArray.length; i++) {
+      if (e === nestedTitlesArray[i].id) {
+        this.setState({
+          showFirstQuestionNestedTitleOption: true,
+          nestedTitle: {
+            ...this.nestedTitle,
+            id: e,
+            firstQuestion: false,
+          },
+          nestedTitleLabel: nestedTitlesArray[i].nestedTitleLabel,
+        });
+        return;
+      } else {
+        this.setState({ showFirstQuestionNestedTitleOption: false });
+      }
+    }
+  
+    // Determine a match for sub nested title with the selected title
+    for (let i = 0; i < subNestedTitlesArray.length; i++) {
+      if (e === subNestedTitlesArray[i].id) {
+        this.setState({
+          showFirstQuestionSubNestedTitleOption: true,
+          subNestedTitle: {
+            ...this.subNestedTitle,
+            id: e,
+            firstQuestion: false,
+          },
+          subNestedTitleLabel: subNestedTitlesArray[i].subNestedTitleLabel,
+        });
+        return;
+      } else {
+        this.setState({ showFirstQuestionSubNestedTitleOption: false });
+      }
+    }
+  
+    // Determine a match for sub-sub nested title with the selected title
+    for (let i = 0; i < subSubNestedTitlesArray.length; i++) {
+      if (e === subSubNestedTitlesArray[i].id) {
+        this.setState({
+          showFirstQuestionSubSubNestedTitleOption: true,
+          subSubNestedTitle: {
+            ...this.subSubNestedTitle,
+            id: e,
+            firstQuestion: false,
+          },
+          subSubNestedTitleLabel: subSubNestedTitlesArray[i].subSubNestedTitleLabel,
+        });
+        return;
+      } else {
+        this.setState({ showFirstQuestionSubSubNestedTitleOption: false });
+      }
+    }
+  };
+  
 
   toggleFirstQuestionNestedTitle = () => {
     
@@ -442,6 +580,45 @@ class CreateQuestion extends Component {
       this.setState({ nestedTitleFirstQuestionRender: true });
     }
   };
+
+  toggleFirstQuestionSubNestedTitle = () => {
+    // Validate whether sub-nested title first question is vacant or not
+    const {
+      isSubNestedTitleFirstQuestionVacant,
+    } = this.validateFirstQuestionSubNestedTitle();
+    
+    if (isSubNestedTitleFirstQuestionVacant === true) {
+      this.setState(prevState => ({
+        subNestedTitle: {
+          ...prevState.subNestedTitle,
+          firstQuestion: !prevState.subNestedTitle.firstQuestion
+        }
+      }));
+    } else {
+      // Render the firstQuestionModal here
+      this.setState({ subNestedTitleFirstQuestionRender: true });
+    }
+  };
+  
+  toggleFirstQuestionSubSubNestedTitle = () => {
+    // Validate whether sub-sub-nested title first question is vacant or not
+    const {
+      isSubSubNestedTitleFirstQuestionVacant,
+    } = this.validateFirstQuestionSubSubNestedTitle();
+    
+    if (isSubSubNestedTitleFirstQuestionVacant === true) {
+      this.setState(prevState => ({
+        subSubNestedTitle: {
+          ...prevState.subSubNestedTitle,
+          firstQuestion: !prevState.subSubNestedTitle.firstQuestion
+        }
+      }));
+    } else {
+      // Render the firstQuestionModal here
+      this.setState({ subSubNestedTitleFirstQuestionRender: true });
+    }
+  };
+  
   
 
   addOption = (e) => {
@@ -1172,9 +1349,7 @@ class CreateQuestion extends Component {
   renderNestedTitleFirstQuestionModal = () => {
     const { 
       nestedTitle, 
-      subNestedTitle,
       nestedTitleLabel,
-      subNestedTitleLabel, 
       nestedTitleFirstQuestionId, 
       nestedTitleFirstQuestionValue
     } = this.state;
@@ -1193,6 +1368,31 @@ class CreateQuestion extends Component {
       </>
     );
   };
+
+  renderSubNestedTitleFirstQuestionModal = () => {
+    const { 
+      subNestedTitle, 
+      subNestedTitleLabel, 
+      subNestedTitleFirstQuestionId, 
+      subNestedTitleFirstQuestionValue 
+    } = this.state;
+  
+    return (
+      <>
+        <FirstQuestionModal
+          openFirstQuestionModal={true}
+          type={"subNestedTitle"}
+          firstQuestionId={subNestedTitleFirstQuestionId}
+          firstQuestionValue={subNestedTitleFirstQuestionValue}
+          nestedTitleId={subNestedTitle.id}
+          nestedTitleLabel={subNestedTitleLabel}
+          updateFirstQuestion={this.updateSubNestedTitleFirstQuestion}
+          firstQuestionModalOnHide={this.firstQuestionModalOnHide}
+        />
+      </>
+    );
+  };
+  
 
   toggleRequireResponse = () => {
     this.setState(prevState => ({
@@ -1326,6 +1526,81 @@ class CreateQuestion extends Component {
       nestedTitleId: ''
     };
   };
+
+  validateFirstQuestionSubNestedTitle = () => {
+    const { allQuestions, subNestedTitle } = this.state;
+  
+    for (let i = 0; i < allQuestions.length; i++) {
+      // Case: same sub-nested title AND first question is false
+      if (
+        subNestedTitle.id === allQuestions[i].subNestedTitle.id &&
+        allQuestions[i].subNestedTitle.firstQuestion === false
+      ) {
+        // Continue checking other questions
+      }
+  
+      // Case: same sub-nested title AND first question is true
+      else if (
+        subNestedTitle.id === allQuestions[i].subNestedTitle.id &&
+        allQuestions[i].subNestedTitle.firstQuestion === true
+      ) {
+        // record the matched question
+        this.setState({
+          subNestedTitleFirstQuestionId: allQuestions[i]._id,
+          subNestedTitleFirstQuestionValue: allQuestions[i].question
+        });
+        return {
+          isSubNestedTitleFirstQuestionVacant: false,
+          subNestedTitleId: allQuestions[i].subNestedTitle.id
+        };
+      }
+    }
+  
+    // Case: subNestedTitle.id doesn't match with any in the subNestedTitle object array
+    // return vacant status
+    return {
+      isSubNestedTitleFirstQuestionVacant: true,
+      subNestedTitleId: ''
+    };
+  };
+  
+  validateFirstQuestionSubSubNestedTitle = () => {
+    const { allQuestions, subSubNestedTitle } = this.state;
+  
+    for (let i = 0; i < allQuestions.length; i++) {
+      // Case: same sub-sub-nested title AND first question is false
+      if (
+        subSubNestedTitle.id === allQuestions[i].subSubNestedTitle.id &&
+        allQuestions[i].subSubNestedTitle.firstQuestion === false
+      ) {
+        // Continue checking other questions
+      }
+  
+      // Case: same sub-sub-nested title AND first question is true
+      else if (
+        subSubNestedTitle.id === allQuestions[i].subSubNestedTitle.id &&
+        allQuestions[i].subSubNestedTitle.firstQuestion === true
+      ) {
+        // record the matched question
+        this.setState({
+          subSubNestedTitleFirstQuestionId: allQuestions[i]._id,
+          subSubNestedTitleFirstQuestionValue: allQuestions[i].question
+        });
+        return {
+          isSubSubNestedTitleFirstQuestionVacant: false,
+          subSubNestedTitleId: allQuestions[i].subSubNestedTitle.id
+        };
+      }
+    }
+  
+    // Case: subSubNestedTitle.id doesn't match with any in the subSubNestedTitle object array
+    // return vacant status
+    return {
+      isSubSubNestedTitleFirstQuestionVacant: true,
+      subSubNestedTitleId: ''
+    };
+  };
+  
   
   validateQuestion = () => {
     const { question } = this.state;
@@ -1585,8 +1860,10 @@ class CreateQuestion extends Component {
       previousQuestion,
       nextQuestion,
       showFirstQuestionNestedTitleOption,
+      showFirstQuestionSubNestedTitleOption,
       nestedTitle,
-      subNestedTitle
+      subNestedTitle,
+      subSubNestedTitle
     } = this.state;
 
     const dataToInsert = {
@@ -1631,9 +1908,12 @@ class CreateQuestion extends Component {
     if (showFirstQuestionNestedTitleOption === true) {
       dataToInsert.nestedTitle = nestedTitle;
     }
+    if (showFirstQuestionSubNestedTitleOption === true) {
+      dataToInsert.subNestedTitle = subNestedTitle;
+      }
 //for server -https and change to http  for local machine
     try {
-      const response = await fetch(`https://${destination}/api/insertQuestion`, {
+      const response = await fetch(`http://${destination}/api/insertQuestion`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1683,10 +1963,10 @@ class CreateQuestion extends Component {
   };
 
   render() {
-    const { allTitles, selectedTitle, selectedTitleQuestions, selectedOption, options, showCountry, countries, country, isLeadingQuestion, showExplanation, countryFirstQuestionRender, validationErrors, allQuestions, nextQuestion, previousQuestion, showMarks, gridOptions, showFirstQuestionNestedTitleOption, nestedTitle,subNestedTitle, nestedTitleFirstQuestionRender } = this.state;
+    const { allTitles, isLoadingTitles, selectedTitle, selectedTitleQuestions, selectedOption, options, showCountry, countries, country, isLeadingQuestion, showExplanation, countryFirstQuestionRender, validationErrors, allQuestions, nextQuestion, previousQuestion, showMarks, gridOptions, showFirstQuestionNestedTitleOption,showFirstQuestionSubNestedTitleOption, nestedTitle,subNestedTitle,subSubNestedTitle, nestedTitleFirstQuestionRender,subNestedTitleFirstQuestionRender } = this.state;
     const explanationLabel = isLeadingQuestion ? 'Recommendation' : 'Explanation';
     const showNextQuestion = (isLeadingQuestion && (selectedOption === 'checkbox' || selectedOption === 'linear' || selectedOption === 'multipleChoiceGrid' || selectedOption === 'checkboxGrid')) || !isLeadingQuestion;
-
+  
     return (
       <div>
         <nav className="navbar navbar-expand-lg navbar-dark bg-dark justify-content-center">
@@ -1717,42 +1997,45 @@ class CreateQuestion extends Component {
               </div>
               <div className="modal-body">
                 <form>
-                {/* Select title dropdown */}
-                <div className="mb-3">
-                      <label className="col-form-label">
-                          Select a title to insert into:
-                      </label>
-                        <div className="d-flex align-items-left">
-                          <div className="d-flex flex-grow-1">
+                  <div className="mb-3">
+                    <label className="col-form-label">
+                      Select a title to insert into:
+                    </label>
+                    <div className="d-flex align-items-left">
+                      <div className="d-flex flex-grow-1">
+                        {isLoadingTitles ? (
+                          <p>Loading titles...</p>
+                        ) : (
                           <select
                             className="form-select"
                             style={{ flex: '1' }}
                             value={this.state.selectedTitle}
                             onChange={(e) => this.handleTitleSelect(e.target.value)}
                           >
-                         <option value="">Select Title</option>
-{/* title loop */}
+                            <option value="">Select Title</option>
 {allTitles.map((titleObject) => (
   <optgroup key={titleObject.title.titleLabel} label={titleObject.title.titleLabel}>
-    {/* Render subTitleLabel as options */}
     {titleObject.title.subTitle.map((subTitleObject) => (
       <React.Fragment key={subTitleObject._id}>
         <option value={subTitleObject._id}>
           {subTitleObject.subTitleLabel}
         </option>
-
-        {/* Render nestedTitleLabel as options */}
         {subTitleObject.nestedTitle.map((nestedTitleObject) => (
           <React.Fragment key={nestedTitleObject._id}>
             <option value={nestedTitleObject._id}>
               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{nestedTitleObject.nestedTitleLabel}
             </option>
-
-            {/* Render subNestedTitleLabel as options */}
             {nestedTitleObject.subNestedTitle.map((subNestedTitleObject) => (
-              <option key={subNestedTitleObject._id} value={subNestedTitleObject._id}>
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{subNestedTitleObject.subNestedTitleLabel}
-              </option>
+              <React.Fragment key={subNestedTitleObject._id}>
+                <option value={subNestedTitleObject._id}>
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{subNestedTitleObject.subNestedTitleLabel}
+                </option>
+                {subNestedTitleObject.subSubNestedTitle.map((subSubNestedTitleObject) => (
+                  <option key={subSubNestedTitleObject._id} value={subSubNestedTitleObject._id}>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{subSubNestedTitleObject.subSubNestedTitleLabel}
+                  </option>
+                ))}
+              </React.Fragment>
             ))}
           </React.Fragment>
         ))}
@@ -1760,31 +2043,31 @@ class CreateQuestion extends Component {
     ))}
   </optgroup>
 ))}
+</select>
 
-                          </select>
-                          </div>
-                        </div>
+                        )}
+                      </div>
+                    </div>
                     {validationErrors.title && (
                       <div style={{ color: 'red', fontSize: 12 }}>
                         {validationErrors.title}
                       </div>
                     )}
                   </div>
-
-                  {/* First Question Nested Title */}
+  
                   {showFirstQuestionNestedTitleOption && (
                     <div className="form-check form-switch form-check-inline">
-                    <input
-                      className="form-check-input"
-                      type="checkbox"
-                      role="switch"
-                      id="nestedTitleFirstQuestionCheck"
-                      checked={nestedTitle.firstQuestion}
-                      onChange={this.toggleFirstQuestionNestedTitle}
-                    />
-                    <label className="form-check-label" htmlFor="firstQuestionCheck">
-                      Nested Title's First Question
-                    </label>
+                      <input
+                        className="form-check-input"
+                        type="checkbox"
+                        role="switch"
+                        id="nestedTitleFirstQuestionCheck"
+                        checked={nestedTitle.firstQuestion}
+                        onChange={this.toggleFirstQuestionNestedTitle}
+                      />
+                      <label className="form-check-label" htmlFor="firstQuestionCheck">
+                        Nested Title's First Question
+                      </label>
                       {nestedTitleFirstQuestionRender && (
                         <div>
                           {this.renderNestedTitleFirstQuestionModal()}
@@ -1793,7 +2076,29 @@ class CreateQuestion extends Component {
                     </div>
                   )}
 
-                  {/* Question */}
+                    {showFirstQuestionSubNestedTitleOption && (
+                    <div className="form-check form-switch form-check-inline">
+                      <input
+                        className="form-check-input"
+                        type="checkbox"
+                        role="switch"
+                        id="subNestedTitleFirstQuestionCheck"
+                        checked={subNestedTitle.firstQuestion}
+                        onChange={this.toggleFirstQuestionSubNestedTitle}
+                      />
+                      <label className="form-check-label" htmlFor="firstQuestionCheck">
+                        Sub Nested Title's First Question
+                      </label>
+                      {subNestedTitleFirstQuestionRender && (
+                        <div>
+                          {this.renderSubNestedTitleFirstQuestionModal()}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  
+  
                   <div className="mb-3">
                     <label htmlFor="question" className="col-form-label">
                       Question:
@@ -1805,8 +2110,7 @@ class CreateQuestion extends Component {
                       </div>
                     )}
                   </div>
-                  
-                  {/* Option Types */}
+  
                   <div className="mb-3">
                     <label htmlFor="optionsType" className="col-form-label">
                       Options Types:
@@ -1817,7 +2121,7 @@ class CreateQuestion extends Component {
                       value={selectedOption}
                       onChange={
                         (e) => this.setState({ selectedOption: e.target.value }, () => {
-                          if (e.target.value === 'linear' || e.target.value === 'openEnded'){
+                          if (e.target.value === 'linear' || e.target.value === 'openEnded') {
                             this.setState({ showMarks: false });
                           } else {
                             this.setState({ showMarks: true });
@@ -1860,18 +2164,15 @@ class CreateQuestion extends Component {
                       )}
                     </div>
                   )}
-                  
-                  {/* MARKS */}
+  
                   {!isLeadingQuestion && showMarks && (
-                  <div className="mb-3">
-                    <label htmlFor="mark" className="col-form-label">
-                      Marks:
-                    </label>
-                  </div>
+                    <div className="mb-3">
+                      <label htmlFor="mark" className="col-form-label">
+                        Marks:
+                      </label>
+                    </div>
                   )}
-                  {/* Case: multiple choice and checkbox */}
                   {!isLeadingQuestion && showMarks && options.map((option, index) => (
-                    // Check if the option is correct, and only render if it is
                     option.isCorrect && (
                       <div className="mb-3" key={index}>
                         <a>{option.text}</a>
@@ -1883,21 +2184,17 @@ class CreateQuestion extends Component {
                           value={option.marks}
                           onChange={(e) => this.handleMarksChange(index, e.target.value)}
                         />
-                        
                       </div>
                     )
                   ))}
-                  {/* Case: multiple choice grid and checkbox grid */}
                   {!isLeadingQuestion && showMarks && gridOptions.answers.map((selection, index) => (
-                    // Check if the option is correct, and only render if it is
                     selection.isCorrect && (
                       <div className="mb-3" key={index}>
                         <a>{gridOptions.row[selection.rowIndex] ? gridOptions.row[selection.rowIndex].text : ''}  {gridOptions.column[selection.columnIndex] ? gridOptions.column[selection.columnIndex].text : ''}</a>
-                        
                         <input
                           type="text"
                           className="form-control"
-                          id={`marks-${index}`} // Use unique IDs for each input
+                          id={`marks-${index}`}
                           placeholder="Enter marks for this option"
                           value={selection.marks}
                           onChange={(e) => {
@@ -1908,16 +2205,13 @@ class CreateQuestion extends Component {
                               }
                               return answer;
                             });
-                          
                             this.setState(prevState => ({
                               gridOptions: {
                                 ...prevState.gridOptions,
                                 answers: updatedAnswers
                               }
                             }));
-                           
                           }}
-                          
                         />
                       </div>
                     )
@@ -1927,8 +2221,7 @@ class CreateQuestion extends Component {
                       {validationErrors.marks}
                     </div>
                   )}
-
-                  {/* Specific Country */}
+  
                   {showCountry && (
                     <div className="mb-3">
                       <label className="col-form-label">Country:</label>
@@ -1954,38 +2247,34 @@ class CreateQuestion extends Component {
                         <div style={{ color: 'red', fontSize: 12 }}>
                           {validationErrors.country}
                         </div>
-                      )} 
-
-                    {/* Country First Question */}
-                    <p></p>
-                    <div className="form-check form-switch form-check-inline">
-                    <input
-                      className="form-check-input"
-                      type="checkbox"
-                      role="switch"
-                      id="countryFirstQuestionCheck"
-                      checked={country.countryFirstQuestion}
-                      onChange={this.toggleCountryFirstQuestion}
-                    />
-                    <label className="form-check-label" htmlFor="firstQuestionCheck">
-                      First Question
-                    </label>
-                    {validationErrors.countryFirstQuestion && (
-                        <div style={{ color: 'red', fontSize: 12 }}>
-                          {validationErrors.countryFirstQuestion}
-                        </div>
                       )}
-                      {countryFirstQuestionRender && (
-                        <div>
-                          {this.renderCountryFirstQuestionModal()}
-                        </div>
-                      )} 
-                    </div>
-
+                      <p></p>
+                      <div className="form-check form-switch form-check-inline">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          role="switch"
+                          id="countryFirstQuestionCheck"
+                          checked={country.countryFirstQuestion}
+                          onChange={this.toggleCountryFirstQuestion}
+                        />
+                        <label className="form-check-label" htmlFor="firstQuestionCheck">
+                          First Question
+                        </label>
+                        {validationErrors.countryFirstQuestion && (
+                          <div style={{ color: 'red', fontSize: 12 }}>
+                            {validationErrors.countryFirstQuestion}
+                          </div>
+                        )}
+                        {countryFirstQuestionRender && (
+                          <div>
+                            {this.renderCountryFirstQuestionModal()}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
-                  
-                  {/* Previous Question */}
+  
                   {showNextQuestion && selectedTitle && (
                     <div className="mb-3">
                       <label htmlFor="previousQuestion" className="col-form-label">Previous Question:</label>
@@ -2004,8 +2293,6 @@ class CreateQuestion extends Component {
                           </option>
                         ))}
                       </select>
-                    
-                    {/* Next Question */}
                       <label htmlFor="nextQuestion" className="col-form-label">Next Question:</label>
                       <select
                         className="form-select"
@@ -2080,6 +2367,6 @@ class CreateQuestion extends Component {
       </div>
     );
   }
-}
-
+  
+}  
 export default CreateQuestion;

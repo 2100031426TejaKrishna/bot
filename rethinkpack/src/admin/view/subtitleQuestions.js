@@ -3,8 +3,8 @@ import './questions.css';
 import EditQuestion from './editQuestion';
 
 // Switch URLs between Server and Local hosting here
-// const destination = "localhost:5000";
-const destination = "rtp.dusky.bond:5000";
+ const destination = "localhost:5000";
+//const destination = "rtp.dusky.bond:5000";
 
 const Questions = ({ triggerRefresh, selectedSubtitle }) => {
     const [questions, setQuestions] = useState([]);
@@ -32,7 +32,7 @@ const Questions = ({ triggerRefresh, selectedSubtitle }) => {
             try {
                 //for server -https and change to http  for local machine
 
-                const response = await fetch(`https://${destination}/api/deleteQuestion/${questionToDelete}`, { method: 'DELETE' });
+                const response = await fetch(`http://${destination}/api/deleteQuestion/${questionToDelete}`, { method: 'DELETE' });
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
@@ -67,7 +67,7 @@ const Questions = ({ triggerRefresh, selectedSubtitle }) => {
             try {
                 //for server -https and change to http  for local machine
 
-                const response = await fetch(`https://${destination}/api/clearNextQuestion`, {
+                const response = await fetch(`http://${destination}/api/clearNextQuestion`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -170,7 +170,7 @@ const Questions = ({ triggerRefresh, selectedSubtitle }) => {
         try {
             //for server -https and change to http  for local machine
 
-            const response = await fetch(`https://${destination}/api/question/${id}`);
+            const response = await fetch(`http://${destination}/api/question/${id}`);
             if (!response.ok) {
                 if (response.status === 404) {
                     console.log(`Question with ID ${id} not found.`);
@@ -194,7 +194,7 @@ const Questions = ({ triggerRefresh, selectedSubtitle }) => {
                 const subtitleId = selectedSubtitle; // Use the selectedSubtitle from props
                 //for server -https and change to http  for local machine
 
-                const response = await fetch(`https://${destination}/api/questionsBySubtitleId/${subtitleId}`);
+                const response = await fetch(`http://${destination}/api/questionsBySubtitleId/${subtitleId}`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
