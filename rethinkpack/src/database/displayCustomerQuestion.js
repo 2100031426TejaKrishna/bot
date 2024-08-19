@@ -16,62 +16,97 @@ const fetchQuestionById = async (questionId) => {
     }
 };
 
+
 // Recursive function to gather all related questions in a series
-const gatherSeriesQuestions = async (questionId, seriesSet = new Set()) => {
+// Recursive function to gather all related questions in a series
+// Recursive function to gather all related questions in a series
+const gatherSeriesQuestions = async (questionId, seriesSet = new Set(), nextQuestionQueue = [], visitedQuestions = new Map(), mainQuestionId = null) => {
+    console.log(`Fetching question with ID: ${questionId}`);
     const question = await fetchQuestionById(questionId);
-    if (!question || seriesSet.has(questionId.toString())) return;
+    if (!question) {
+        console.log(`Question with ID ${questionId} not found.`);
+        return;
+    }
+    if (seriesSet.has(questionId.toString())) {
+        console.log(`Question with ID ${questionId} already processed.`);
+        return;
+    }
 
     seriesSet.add(questionId.toString());
+    visitedQuestions.set(questionId.toString(), question);
+    console.log(`Added question with ID ${questionId} to seriesSet and visitedQuestions.`);
+
+    let hasOptionsNextQuestion = false;
+
     if (question.options && question.options.length > 0) {
-        for (const option of question.options) {
+        question.options.forEach(option => {
             if (option.optionsNextQuestion) {
-                await gatherSeriesQuestions(option.optionsNextQuestion, seriesSet);
+                console.log(`Found optionsNextQuestion with ID ${option.optionsNextQuestion} for option in question ${questionId}`);
+                nextQuestionQueue.push(option.optionsNextQuestion);
+                hasOptionsNextQuestion = true;
             }
+        });
+    }
+
+    if (!hasOptionsNextQuestion && mainQuestionId === null) {
+        mainQuestionId = questionId;
+    }
+
+    if (nextQuestionQueue.length === 0 && !hasOptionsNextQuestion && mainQuestionId !== null) {
+        const mainQuestion = await fetchQuestionById(mainQuestionId);
+        if (mainQuestion && mainQuestion.nextQuestion && !seriesSet.has(mainQuestion.nextQuestion.toString())) {
+            console.log(`No optionsNextQuestion found, adding nextQuestion with ID ${mainQuestion.nextQuestion} for main question ${mainQuestionId}`);
+            nextQuestionQueue.push(mainQuestion.nextQuestion);
         }
+    }
+
+    while (nextQuestionQueue.length > 0) {
+        const nextId = nextQuestionQueue.shift();
+        console.log(`Processing next question in the queue with ID ${nextId}`);
+        await gatherSeriesQuestions(nextId, seriesSet, nextQuestionQueue, visitedQuestions, mainQuestionId);
     }
 };
 
-// Function to fetch all independent questions and their series
+
+
 const fetchAllQuestions = async () => {
     try {
+        console.log("Fetching all questions from the database.");
         const allQuestions = await Questions.find({});
         const referencedQuestionIds = new Set();
         const seriesSet = new Set();
+        const nextQuestionQueue = [];
+        const visitedQuestions = new Map();
 
-        // Find all questions that are referenced as optionNextQuestion
-        for (const question of allQuestions) {
-            if (question.options) {
-                for (const option of question.options) {
-                    if (option.optionsNextQuestion) {
-                        referencedQuestionIds.add(option.optionsNextQuestion.toString());
-                    }
+        allQuestions.forEach(question => {
+            question.options?.forEach(option => {
+                if (option.optionsNextQuestion) {
+                    referencedQuestionIds.add(option.optionsNextQuestion.toString());
+                    console.log(`Referenced question ID ${option.optionsNextQuestion} found in options of question ${question._id}`);
                 }
-            }
-        }
-
-        // Gather series questions for each independent question
-        for (const question of allQuestions) {
-            if (!referencedQuestionIds.has(question._id.toString())) {
-                await gatherSeriesQuestions(question._id, seriesSet);
-            }
-        }
-
-        // Fetch independent questions
-        const independentQuestions = allQuestions.filter(question => 
-            !referencedQuestionIds.has(question._id.toString())
-        );
-
-        // Fetch series questions
-        const seriesQuestions = await Questions.find({
-            '_id': { $in: Array.from(seriesSet) }
+            });
         });
 
-        return { independentQuestions, seriesQuestions };
+        console.log("Gathering series questions for independent questions.");
+        for (const question of allQuestions) {
+            if (!referencedQuestionIds.has(question._id.toString())) {
+                console.log(`Question with ID ${question._id} is an independent question.`);
+                await gatherSeriesQuestions(question._id, seriesSet, nextQuestionQueue, visitedQuestions);
+            }
+        }
+
+        console.log("Fetching series questions from the database.");
+        const seriesQuestions = await Questions.find({
+            '_id': { $in: Array.from(seriesSet) },
+        });
+
+        return { independentQuestions: Array.from(visitedQuestions.values()), seriesQuestions };
     } catch (error) {
         console.error("Error fetching all questions:", error);
         throw error;
     }
 };
+
 
 router.get('/fetchAllQuestions', async (req, res) => {
     try {

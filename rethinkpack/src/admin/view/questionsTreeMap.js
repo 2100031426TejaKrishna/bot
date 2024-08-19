@@ -11,12 +11,12 @@ const QuestionsTreeMap = () => {
   const [data, setData] = useState(null);
   const [downloadFormat, setDownloadFormat] = useState('png');
   const treeContainerRef = useRef(null);
+  const [translate, setTranslate] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
 
   const fetchQuestions = async () => {
     try {
       console.log("Fetching all questions...");
-      //for server -https and change to http  for local machine
-
       const response = await fetch(`http://${destination}/api/displayQuestions`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -108,6 +108,10 @@ const QuestionsTreeMap = () => {
 
   useEffect(() => {
     fetchQuestions();
+    if (treeContainerRef.current) {
+      const dimensions = treeContainerRef.current.getBoundingClientRect();
+      setTranslate({ x: dimensions.width / 2, y: 50 });
+    }
   }, []);
 
   const handleNodeClick = (nodeData) => {
@@ -163,12 +167,30 @@ const QuestionsTreeMap = () => {
     }
   };
 
+  const handleZoom = (event) => {
+    const newZoom = Math.min(Math.max(zoom * event.deltaY < 0 ? 1.1 : 0.9, 0.5), 2.5);
+    setZoom(newZoom);
+  };
+
+  const handleDrag = (event) => {
+    if (event.buttons !== 1) return;
+    setTranslate(prev => ({
+      x: prev.x + event.movementX,
+      y: prev.y + event.movementY,
+    }));
+  };
+
   if (!data) {
     return <div>Loading...</div>;
   }
 
   return (
-    <div className="container">
+    <div
+      className="container"
+      onWheel={handleZoom}
+      onMouseMove={handleDrag}
+      style={{ cursor: 'grab' }}
+    >
       <div className="controls">
         <select className='dropdown' value={downloadFormat} onChange={(e) => setDownloadFormat(e.target.value)}>
           <option value="png">PNG</option>
@@ -184,8 +206,12 @@ const QuestionsTreeMap = () => {
           orientation="vertical"
           pathFunc="straight"
           separation={{ siblings: 2, nonSiblings: 2 }}
-          collapsible={false}
-          transitionDuration={0}
+          collapsible={true}  // Enable collapsible nodes
+          transitionDuration={500} // Animation duration for node expansion/contraction
+          zoomable={true}
+          scaleExtent={{ min: 0.5, max: 2.5 }}  // Min and max zoom level
+          translate={translate}  // Center the tree in the viewport
+          zoom={zoom}  // Control zoom level
           linkComponent={CustomLink}
           onClick={handleNodeClick}
           nodeSize={{ x: 200, y: 100 }}
