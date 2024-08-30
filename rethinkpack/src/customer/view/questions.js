@@ -33,7 +33,7 @@ const Questions = () => {
   const [addedQuestions, setAddedQuestions] = useState({});
   const [isTitleLoading, setIsTitleLoading] = useState(false);
   const [questionStack, setQuestionStack] = useState([]);
-
+  const [loading, setLoading] = useState(false);
   const countries = [
     "Afghanistan", "Albania", "Algeria", "Andorra", "Angola",
     "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria",
@@ -77,6 +77,20 @@ const Questions = () => {
     "Zambia", "Zimbabwe"
   ];
 
+  useEffect(() => {
+    const handleBeforeUnload = (event) => {
+      event.preventDefault();
+      event.returnValue = "Are you sure you want to refresh? All your responses will be lost.";
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, []);
+
+ 
   const countryRefs = useRef(countries.reduce((acc, country) => {
     acc[country] = React.createRef();
     return acc;
@@ -85,15 +99,20 @@ const Questions = () => {
   const navigate = useNavigate();
   const destination = "localhost:5000"; // Ensure this is the correct backend URL
 
+  useEffect(()=>{
+    console.log(questionStack);
+  },[questionStack])
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
         const response = await fetch(`http://${destination}/api/fetchQuestionsSeries`);
         const data = await response.json();
+        console.log(data)
         const { independentQuestions } = data;
 
         setQuestions(independentQuestions);
         setQuestionFlow(independentQuestions.map(question => ({ ...question, isVisible: true })));
+        console.log(questionFlow);
         setIsLoading(false);
       } catch (error) {
         console.error("Error fetching questions:", error);
@@ -122,7 +141,15 @@ const Questions = () => {
     };
 
     if (questions.length > 0) {
+      setQuestionStack(prevStack => {
+        if (prevStack.length === 0 || prevStack[prevStack.length - 1].questionId !== currentQuestion?._id) {
+            return [...prevStack, { questionId: currentQuestion?._id }];
+        }
+        return prevStack;
+    });
+
       const currentQuestion = questions[currentQuestionIndex];
+      setQuestionStack(questionStack);
       if (!currentQuestion) {
         setCurrentTitle('');
         return;
@@ -272,7 +299,7 @@ const Questions = () => {
       ...prevAnswers,
       [questionId]: newAnswer
     }));
-    console.log("Updated Answers:", { ...answers, [questionId]: newAnswer }); // Logging for debugging
+    // console.log("Updated Answers:", { ...answers, [questionId]: newAnswer }); // Logging for debugging
     localStorage.setItem('surveyResponses', JSON.stringify({ ...answers, [questionId]: newAnswer }));
   };
 
@@ -292,72 +319,183 @@ const Questions = () => {
       return null;
     }
   };
+  const findPreviousQuestion = (currentQuestionId, questionFlow) => {
+    let previousQuestion = null;
 
+    // Find the current question in the question flow
+    if (Array.isArray(questionFlow)) {
+        const currentQuestionIndex = questionFlow.findIndex(q => q._id === currentQuestionId);
+        
+        if (currentQuestionIndex > 0) {
+            // Check if the previous question is directly before the current question
+            previousQuestion = questionFlow[currentQuestionIndex - 1];
+        } else {
+            // Find the question whose nextQuestion is the currentQuestionId
+            previousQuestion = questionFlow.find(q => q.nextQuestion === currentQuestionId);
+        }
+    }
 
-  const handleNextQuestion = async () => {
-    const currentQuestion = questions[currentQuestionIndex];
-    let newAnswer;
-  
-    if (currentQuestion?.optionType === 'checkbox') {
-        newAnswer = selectedOptions;
-    } else if (currentQuestion?.optionType.includes('Grid')) {
-        newAnswer = gridAnswers;
-    } else if (currentQuestion?.optionType === 'openEnded') {
-        newAnswer = openEndedText;
-    } else {
-        newAnswer = currentAnswer;
+    if (previousQuestion) {
+        console.log('Previous Question:', previousQuestion);
+        return previousQuestion;
     }
-  
-    updateAnswers(newAnswer, currentQuestion?._id);
-    setNavigationHistory(prevHistory => [...prevHistory, currentQuestionIndex]);
-  
-    // Determine the correct next question based on the user's current answer
-    if (currentQuestion?.optionType === 'multipleChoice' || currentQuestion?.optionType === 'dropdown') {
-        const selectedOption = currentQuestion.options.find(option => option.text === currentAnswer);
-        if (selectedOption && selectedOption.optionsNextQuestion) {
-            await handleOptionsNextQuestion(selectedOption.optionsNextQuestion);
-        } else if (currentQuestion.nextQuestion) {
-            await handleDirectNextQuestion(currentQuestion.nextQuestion);
-        } else if (questionStack.length > 0) {
-            const nextContext = questionStack.pop();
-            setQuestionStack(questionStack);
-            await handleDirectNextQuestion(nextContext.nextQuestion); 
-        }
-    } else if (currentQuestion?.optionType === 'checkbox') {
-        const nextQuestionIds = selectedOptions.map(optionText => {
-            const selectedOption = currentQuestion.options.find(option => option.text === optionText);
-            return selectedOption?.optionsNextQuestion;
-        }).filter(Boolean);
-  
-        if (nextQuestionIds.length > 0) {
-            for (const nextQuestionId of nextQuestionIds) {
-                await handleOptionsNextQuestion(nextQuestionId);
-            }
-        } else if (currentQuestion.nextQuestion) {
-            await handleDirectNextQuestion(currentQuestion.nextQuestion);
-        } else if (questionStack.length > 0) {
-            const nextContext = questionStack.pop();
-            setQuestionStack(questionStack);
-            await handleDirectNextQuestion(nextContext.nextQuestion); 
-        }
-    } else if (currentQuestion?.optionType === 'openEnded') {
-        if (currentQuestion.nextQuestion) {
-            await handleDirectNextQuestion(currentQuestion.nextQuestion);
-        } else if (currentQuestion.options?.[0]?.optionsNextQuestion) {
-            await handleOptionsNextQuestion(currentQuestion.options[0].optionsNextQuestion);
-        } else if (questionStack.length > 0) {
-            const nextContext = questionStack.pop();
-            setQuestionStack(questionStack);
-            await handleDirectNextQuestion(nextContext.nextQuestion); 
-        }
-    } else if (currentQuestion.nextQuestion) {
-        await handleDirectNextQuestion(currentQuestion.nextQuestion);
-    } else if (questionStack.length > 0) {
-        const nextContext = questionStack.pop();
-        setQuestionStack(questionStack);
-        await handleDirectNextQuestion(nextContext.nextQuestion);
-    }
+
+    console.log('Previous Question not found');
+    return null;
 };
+
+
+const findNextQuestion = (currentQuestionId, answer, questionFlow, questionStack) => {
+  // Initialize currentQuestion to null
+  let currentQuestion = null;
+
+  // Find the current question in the question flow
+  if (Array.isArray(questionFlow)) {
+      currentQuestion = questionFlow.find(q => q._id === currentQuestionId);
+  }
+
+  if (!currentQuestion) {
+      console.error("Current question not found in the question flow");
+      return null;
+  }
+
+  // Handle different question types
+  if (currentQuestion.optionType === 'multipleChoice' || currentQuestion.optionType === 'dropdown') {
+      const selectedOption = currentQuestion.options.find(option => option.text === answer);
+      if (selectedOption && selectedOption.optionsNextQuestion) {
+          return selectedOption.optionsNextQuestion;
+      }
+  } else if (currentQuestion.optionType === 'checkbox') {
+      const nextQuestionIds = currentQuestion.options
+          .filter(option => answer.includes(option.text))
+          .map(option => option.optionsNextQuestion)
+          .filter(Boolean);
+      if (nextQuestionIds.length > 0) {
+          return nextQuestionIds[0]; // Returning the first next question for simplicity
+      }
+  } else if (currentQuestion.optionType === 'openEnded') {
+      if (currentQuestion.nextQuestion) {
+          return currentQuestion.nextQuestion;
+      } else if (currentQuestion.options?.[0]?.optionsNextQuestion) {
+          return currentQuestion.options[0].optionsNextQuestion;
+      }
+  }
+
+  // If the question has a direct nextQuestion reference
+  if (currentQuestion.nextQuestion) {
+      return currentQuestion.nextQuestion;
+  }
+
+  // If no specific next question is found, look for the next question in the series
+  const currentQuestionIndex = questionFlow.findIndex(q => q._id === currentQuestionId);
+  if (currentQuestionIndex !== -1 && currentQuestionIndex < questionFlow.length - 1) {
+      return questionFlow[currentQuestionIndex + 1]._id;
+  }
+
+  // Stack-based search if no next question is found
+  if (questionStack && questionStack.length > 0) {
+    while (questionStack.length > 0) {
+      const stackItem = questionStack.pop(); // Remove the last item from the stack
+      const topQuestion = questionFlow.find(q => q._id === stackItem.questionId);
+      if (topQuestion && topQuestion.nextQuestion) {
+        // Return the next question ID found
+        return topQuestion.nextQuestion;
+      }
+    }
+  }
+
+  console.log('Next Question not found');
+  return null;
+};
+
+const handleNextQuestion = async () => {
+  // setLoading(true);
+  const currentQuestion = questions[currentQuestionIndex];
+  let newAnswer;
+
+  if (currentQuestion?.optionType === 'checkbox') {
+      newAnswer = selectedOptions;
+  } else if (currentQuestion?.optionType.includes('Grid')) {
+      newAnswer = gridAnswers;
+  } else if (currentQuestion?.optionType === 'openEnded') {
+      newAnswer = openEndedText;
+  } else {
+      newAnswer = currentAnswer;
+  }
+
+  updateAnswers(newAnswer, currentQuestion?._id);
+  setNavigationHistory(prevHistory => [...prevHistory, currentQuestionIndex]);
+
+  // Push the current question to the stack
+  setQuestionStack(prevStack => {
+      // Check if the current question is already in the stack
+      if (prevStack.length === 0 || prevStack[prevStack.length - 1].questionId !== currentQuestion?._id) {
+          return [...prevStack, { questionId: currentQuestion?._id, answer: newAnswer }];
+      }
+      return prevStack;
+  });
+
+  // Find the next question using the findNextQuestion function
+  const nextQuestionId = findNextQuestion(currentQuestion?._id, newAnswer, questionFlow, questionStack);
+
+  if (nextQuestionId) {
+      await handleDirectNextQuestion(nextQuestionId);
+  } else if (questionStack.length > 0) {
+      // Pop the last item in stack to get the next context
+      const nextContext = questionStack.pop();
+      setQuestionStack([...questionStack]); // Update state with the new stack
+      await handleDirectNextQuestion(nextContext.questionId);
+  }
+
+  setLoading(false);
+};
+
+
+const handlePreviousQuestion = () => {
+  // setLoading(true);
+  if (currentQuestionIndex > 0) {
+      // Retrieve the previous index from the navigation history
+      const lastVisitedIndex = navigationHistory.length > 1 ? navigationHistory[navigationHistory.length - 2] : 0;
+      const updatedHistory = navigationHistory.slice(0, -1); // Remove the last entry from history
+
+      // Remove items from the stack up to the last visited index
+      setQuestionStack(prevStack => {
+          // Remove questions from the stack after the last visited index
+          const newStack = prevStack.filter(stackItem => 
+              questions.findIndex(q => q._id === stackItem.questionId) <= lastVisitedIndex
+          );
+          return newStack;
+      });
+
+      setCurrentQuestionIndex(lastVisitedIndex);
+      setNavigationHistory(updatedHistory);
+
+      const prevQuestion = questions[lastVisitedIndex];
+      const prevAnswer = answers[prevQuestion._id];
+
+      // Restore the previous state based on the type of question
+      if (Array.isArray(prevAnswer)) {
+          setSelectedOptions(prevAnswer);
+          setCanProceed(prevAnswer.length > 0);
+      } else if (typeof prevAnswer === 'object' && prevAnswer !== null) {
+          setGridAnswers(prevAnswer);
+          const isValid = validateGridAnswersWithTempAnswers(prevAnswer, prevQuestion);
+          setCanProceed(isValid);
+      } else {
+          setCurrentAnswer(prevAnswer || '');
+          setOpenEndedText(prevAnswer || '');
+          setCanProceed(prevAnswer?.trim() !== '');
+      }
+
+      // Ensure only the correct questions are visible
+      setQuestionFlow(questionFlow.map((question, index) => ({
+          ...question,
+          isVisible: index <= lastVisitedIndex
+      })));
+  }
+  setLoading(false);
+};
+
 
 const handleOptionsNextQuestion = async (optionsNextQuestionId) => {
   let nextQuestionId = optionsNextQuestionId;
@@ -421,39 +559,76 @@ const handleOptionsNextQuestion = async (optionsNextQuestionId) => {
     });
   };
 
-  const handlePreviousQuestion = () => {
-    if (currentQuestionIndex > 0) {
-      // Move to the previous question in one step
-      const lastVisitedIndex = navigationHistory.length > 1 ? navigationHistory[navigationHistory.length - 2] : 0;
-      const updatedHistory = navigationHistory.slice(0, -1); // Remove the last entry from history
+  // const handlePreviousQuestion = () => {
+  //   if (currentQuestionIndex > 0) {
+  //     // Move to the previous question in one step
+  //     const lastVisitedIndex = navigationHistory.length > 1 ? navigationHistory[navigationHistory.length - 2] : 0;
+  //     const updatedHistory = navigationHistory.slice(0, -1); // Remove the last entry from history
   
-      setCurrentQuestionIndex(lastVisitedIndex); // Set to the last visited index
-      setNavigationHistory(updatedHistory); // Update history
+  //     setCurrentQuestionIndex(lastVisitedIndex); // Set to the last visited index
+  //     setNavigationHistory(updatedHistory); // Update history
   
-      const prevQuestion = questions[lastVisitedIndex]; // Get the previous question
-      const prevAnswer = answers[prevQuestion._id]; // Retrieve the previous answer
+  //     const prevQuestion = questions[lastVisitedIndex]; // Get the previous question
+  //     const prevAnswer = answers[prevQuestion._id]; // Retrieve the previous answer
   
-      // Restore the previous state
-      if (Array.isArray(prevAnswer)) {
-        setSelectedOptions(prevAnswer);
-        setCanProceed(prevAnswer.length > 0);
-      } else if (typeof prevAnswer === 'object' && prevAnswer !== null) {
-        setGridAnswers(prevAnswer);
-        const isValid = validateGridAnswersWithTempAnswers(prevAnswer, prevQuestion);
-        setCanProceed(isValid);
-      } else {
-        setCurrentAnswer(prevAnswer || '');
-        setOpenEndedText(prevAnswer || '');
-        setCanProceed(prevAnswer?.trim() !== '');
-      }
+  //     // Restore the previous state
+  //     if (Array.isArray(prevAnswer)) {
+  //       setSelectedOptions(prevAnswer);
+  //       setCanProceed(prevAnswer.length > 0);
+  //     } else if (typeof prevAnswer === 'object' && prevAnswer !== null) {
+  //       setGridAnswers(prevAnswer);
+  //       const isValid = validateGridAnswersWithTempAnswers(prevAnswer, prevQuestion);
+  //       setCanProceed(isValid);
+  //     } else {
+  //       setCurrentAnswer(prevAnswer || '');
+  //       setOpenEndedText(prevAnswer || '');
+  //       setCanProceed(prevAnswer?.trim() !== '');
+  //     }
   
-      // Ensure only the correct questions are visible
-      setQuestionFlow(questionFlow.map((question, index) => ({
-        ...question,
-        isVisible: index <= lastVisitedIndex
-      })));
-    }
-  };
+  //     // Ensure only the correct questions are visible
+  //     setQuestionFlow(questionFlow.map((question, index) => ({
+  //       ...question,
+  //       isVisible: index <= lastVisitedIndex
+  //     })));
+  //   }
+  // };
+
+//   const handlePreviousQuestion = () => {
+//     // setLoading(true)
+//     if (currentQuestionIndex > 0) {
+//         // Retrieve the previous index from the navigation history
+//         const lastVisitedIndex = navigationHistory.length > 1 ? navigationHistory[navigationHistory.length - 2] : 0;
+//         const updatedHistory = navigationHistory.slice(0, -1); // Remove the last entry from history
+
+//         setCurrentQuestionIndex(lastVisitedIndex);
+//         setNavigationHistory(updatedHistory);
+
+//         const prevQuestion = questions[lastVisitedIndex];
+//         const prevAnswer = answers[prevQuestion._id];
+
+//         // Restore the previous state based on the type of question
+   
+//         if (Array.isArray(prevAnswer)) {
+//             setSelectedOptions(prevAnswer);
+//             setCanProceed(prevAnswer.length > 0);
+//         } else if (typeof prevAnswer === 'object' && prevAnswer !== null) {
+//             setGridAnswers(prevAnswer);
+//             const isValid = validateGridAnswersWithTempAnswers(prevAnswer, prevQuestion);
+//             setCanProceed(isValid);
+//         } else {
+//             setCurrentAnswer(prevAnswer || '');
+//             setOpenEndedText(prevAnswer || '');
+//             setCanProceed(prevAnswer?.trim() !== '');
+//         }
+
+//         // Ensure only the correct questions are visible
+//         setQuestionFlow(questionFlow.map((question, index) => ({
+//             ...question,
+//             isVisible: index <= lastVisitedIndex
+//         })));
+//     }
+//     setLoading(false);
+// };
 
 
   const handleClearSelection = () => {
@@ -850,6 +1025,17 @@ const handleOptionsNextQuestion = async (optionsNextQuestionId) => {
       </div>
     );
   };
+
+  // if (loading) {
+  //   return (
+  //     <div className="flex space-x-2 justify-center items-center h-screen dark:invert">
+  //       <span className="sr-only">Loading...</span>
+  //       <div className="h-8 w-8 bg-black rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+  //       <div className="h-8 w-8 bg-black rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+  //       <div className="h-8 w-8 bg-black rounded-full animate-bounce"></div>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="survey-questions-container">
