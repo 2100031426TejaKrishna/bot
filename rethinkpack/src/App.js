@@ -15,6 +15,7 @@ import SubtitleQuestions from './admin/view/subtitleQuestions';
 import NestedtitleQuestions from './admin/view/nestedtitleQuestions';
 import TitleTab from './admin/view/titleTab';
 import DetailsTab from './admin/view/DetailsTab'; // Import the new component
+import UserResponseMarks from './admin/view/userResponseMarks';
 
 const destination = "localhost:5000"; // Ensure this matches your server configuration
 
@@ -112,6 +113,15 @@ const AppContent = () => {
                     Details
                   </a>
                 </li>
+                <li className="nav-item">
+  <a
+    className={`nav-link ${activeTab === 'UserResponseMarks' ? 'active' : ''}`}
+    href="#"
+    onClick={() => setActiveTab('UserResponseMarks')}
+  >
+    UserResponseMarks
+  </a>
+</li>
               </ul>
               
               {activeTab === 'list' && <Questions triggerRefresh={triggerRefresh} />}
@@ -119,6 +129,8 @@ const AppContent = () => {
               {activeTab === 'unlinked' && <UnlinkedQuestions />}
               {activeTab === 'title' && <TitleTab />}
               {activeTab === 'details' && <DetailsTab />}
+              {activeTab === 'UserResponseMarks' && <UserResponseMarks />}
+
               {activeTab === activeSubTitle && <SubtitleQuestions selectedSubtitle={selectedSubtitle} />}
               {activeTab === activeNestedTitle && <NestedtitleQuestions selectedNestedtitle={selectedNestedtitle} />}
             </div>
