@@ -5,6 +5,8 @@ import { faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router-dom';
 
 const Questions = () => {
+  const [isFinal,setFinal] = useState(false)
+  const [visitedQuestions, setVisitedQuestions] = useState(new Set());
   const [questions, setQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [currentAnswer, setCurrentAnswer] = useState('');
@@ -33,7 +35,11 @@ const Questions = () => {
   const [addedQuestions, setAddedQuestions] = useState({});
   const [isTitleLoading, setIsTitleLoading] = useState(false);
   const [questionStack, setQuestionStack] = useState([]);
+  const [visitedStack, setVisitedStack] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [currentquestion,setcurrentquestion] = useState({});
+  const [showFinalModal,setshowFinalModal] = useState(false);
+  const [countryFinal,setcountryFinal] = useState(false);
   const countries = [
     "Afghanistan", "Albania", "Algeria", "Andorra", "Angola",
     "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria",
@@ -77,18 +83,6 @@ const Questions = () => {
     "Zambia", "Zimbabwe"
   ];
 
-  useEffect(() => {
-    const handleBeforeUnload = (event) => {
-      event.preventDefault();
-      event.returnValue = "Are you sure you want to refresh? All your responses will be lost.";
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, []);
 
  
   const countryRefs = useRef(countries.reduce((acc, country) => {
@@ -99,9 +93,12 @@ const Questions = () => {
   const navigate = useNavigate();
   const destination = "localhost:5000"; // Ensure this is the correct backend URL
 
-  useEffect(()=>{
-    console.log(questionStack);
-  },[questionStack])
+  // useEffect(()=>{
+  //   if(currentquestion.islastQuestion === false){
+  //     setShowCountrySelection(false);
+  //   }
+  // },[currentquestion])
+
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
@@ -403,7 +400,6 @@ const findNextQuestion = (currentQuestionId, answer, questionFlow, questionStack
       }
     }
   }
-
   console.log('Next Question not found');
   return null;
 };
@@ -411,8 +407,18 @@ const findNextQuestion = (currentQuestionId, answer, questionFlow, questionStack
 const handleNextQuestion = async () => {
   // setLoading(true);
   const currentQuestion = questions[currentQuestionIndex];
-  let newAnswer;
+  setcurrentquestion(currentQuestion);
+  if(currentQuestion?.islastQuestion === true && currentStage=='general'){
+    setshowFinalModal(true);
+    return null
+  }
+  // if(currentQuestion?.islastQuestion === true && currentStage=='country'){
+  //   // setshowFinalModal(true);
+  //   setcountryFinal(true);
+  //   return null
+  // }
 
+  let newAnswer;
   if (currentQuestion?.optionType === 'checkbox') {
       newAnswer = selectedOptions;
   } else if (currentQuestion?.optionType.includes('Grid')) {
@@ -422,11 +428,8 @@ const handleNextQuestion = async () => {
   } else {
       newAnswer = currentAnswer;
   }
-
   updateAnswers(newAnswer, currentQuestion?._id);
   setNavigationHistory(prevHistory => [...prevHistory, currentQuestionIndex]);
-
-  // Push the current question to the stack
   setQuestionStack(prevStack => {
       // Check if the current question is already in the stack
       if (prevStack.length === 0 || prevStack[prevStack.length - 1].questionId !== currentQuestion?._id) {
@@ -434,10 +437,28 @@ const handleNextQuestion = async () => {
       }
       return prevStack;
   });
+  // set.add({questionId: currentQuestion?._id})
+  setVisitedQuestions(prevSet => {
+    const newSet = new Set(prevSet);
+    newSet.add(currentQuestion?._id); // Add current question as visited
+    return newSet;
+  });
 
-  // Find the next question using the findNextQuestion function
   const nextQuestionId = findNextQuestion(currentQuestion?._id, newAnswer, questionFlow, questionStack);
-
+  console.log(nextQuestionId)
+  console.log(currentStage)
+  if(nextQuestionId == null && currentStage === 'country'){
+    setcountryFinal(true);
+    return null; 
+  }
+if(currentStage=='country'){
+  if (visitedQuestions.has(nextQuestionId)) {
+    setcountryFinal(true);
+    return null;
+  } else {
+    console.log("Next question is not visited, proceeding:", nextQuestionId);
+  }}
+  
   if (nextQuestionId) {
       await handleDirectNextQuestion(nextQuestionId);
   } else if (questionStack.length > 0) {
@@ -453,11 +474,13 @@ const handleNextQuestion = async () => {
 
 const handlePreviousQuestion = () => {
   // setLoading(true);
+  
+  setShowCountrySelection(false);
+  setShowCountrySelectionModal(false);
   if (currentQuestionIndex > 0) {
       // Retrieve the previous index from the navigation history
       const lastVisitedIndex = navigationHistory.length > 1 ? navigationHistory[navigationHistory.length - 2] : 0;
       const updatedHistory = navigationHistory.slice(0, -1); // Remove the last entry from history
-
       // Remove items from the stack up to the last visited index
       setQuestionStack(prevStack => {
           // Remove questions from the stack after the last visited index
@@ -466,13 +489,26 @@ const handlePreviousQuestion = () => {
           );
           return newStack;
       });
+      setVisitedQuestions(prevSet => {
+        const newSet = new Set(prevSet);
+        // Remove all question IDs that occur after the last visited index
+        questions.forEach((question, index) => {
+            if (index > lastVisitedIndex) {
+                newSet.delete(question._id);
+            }
+        });
+        return newSet;
+    });
+    
 
       setCurrentQuestionIndex(lastVisitedIndex);
+      setcurrentquestion(questions[lastVisitedIndex]);
       setNavigationHistory(updatedHistory);
 
       const prevQuestion = questions[lastVisitedIndex];
       const prevAnswer = answers[prevQuestion._id];
-
+      setShowCountrySelection(false);
+      setShowCountrySelectionModal(false);
       // Restore the previous state based on the type of question
       if (Array.isArray(prevAnswer)) {
           setSelectedOptions(prevAnswer);
@@ -492,9 +528,60 @@ const handlePreviousQuestion = () => {
           ...question,
           isVisible: index <= lastVisitedIndex
       })));
+      
   }
   setLoading(false);
 };
+
+// Add the skippedQuestions state in your component
+const [skippedQuestions, setSkippedQuestions] = useState(new Set());
+
+const handleSkipQuestion = async () => {
+    const currentQuestion = questions[currentQuestionIndex];
+    
+    // Add the current question to the skipped questions set
+    setSkippedQuestions(prevSet => {
+        const newSet = new Set(prevSet);
+        newSet.add(currentQuestion?._id); // Add the current question as skipped
+        return newSet;
+    });
+
+    // Update navigation history to exclude the skipped question
+    setNavigationHistory(prevHistory => {
+        return prevHistory.filter(index => questions[index]._id !== currentQuestion?._id);
+    });
+
+    // Remove the skipped question from the question stack
+    setQuestionStack(prevStack => {
+        return prevStack.filter(stackItem => stackItem.questionId !== currentQuestion?._id);
+    });
+
+    // Mark the current question as visited (in case of future backtracking)
+    setVisitedQuestions(prevSet => {
+        const newSet = new Set(prevSet);
+        newSet.add(currentQuestion?._id); // Add the current question as visited
+        return newSet;
+    });
+
+    // Find the next question after skipping
+    const nextQuestionId = findNextQuestion(currentQuestion?._id, null, questionFlow, questionStack);
+
+    if (nextQuestionId) {
+        // Proceed to the next question if available
+        await handleDirectNextQuestion(nextQuestionId);
+    } else if (questionStack.length > 0) {
+        // If no next question, pop the last item in stack and go to that question
+        const nextContext = questionStack.pop();
+        setQuestionStack([...questionStack]); // Update state with the new stack
+        await handleDirectNextQuestion(nextContext.questionId);
+    } else {
+        // Handle case if no more questions remain in the flow
+        setshowFinalModal(true);
+    }
+
+    setLoading(false);
+};
+
 
 
 const handleOptionsNextQuestion = async (optionsNextQuestionId) => {
@@ -530,6 +617,7 @@ const handleOptionsNextQuestion = async (optionsNextQuestionId) => {
     if (nextQuestion) {
       addQuestionToFlow(nextQuestion);
       setCurrentQuestionIndex(prevIndex => prevIndex + 1);
+      
       setRecommendations({});
     } else {
       console.error("Error: Next question not found for ID", nextQuestionId);
@@ -699,7 +787,7 @@ const handleOptionsNextQuestion = async (optionsNextQuestionId) => {
 
         const countrySpecificQuestions = await response.json();
         console.log("Specific country questions:", countrySpecificQuestions);
-
+        
         if (countrySpecificQuestions.length === 0) {
           alert("No questions available for the selected countries.");
           setShowCountrySelection(true);
@@ -709,11 +797,12 @@ const handleOptionsNextQuestion = async (optionsNextQuestionId) => {
 
         setCountryQuestions(countrySpecificQuestions);
         setQuestions(countrySpecificQuestions);
+        setQuestionStack([]);
+        setVisitedQuestions(new Set());
         setQuestionFlow(countrySpecificQuestions.map(question => ({ ...question, isVisible: true })));
         setCurrentQuestionIndex(0);
         setCurrentStage('country');
         setIsLoading(false);
-
       } catch (error) {
         console.error("Error processing countries or fetching related questions:", error);
       }
@@ -814,12 +903,16 @@ const handleOptionsNextQuestion = async (optionsNextQuestionId) => {
     handleCountrySelectionConfirm();
     setShowCountrySelection(true);
   };
+  const dehandleGotoCountrySelection = ()=>{
+    setShowCountrySelection(false);
+    setShowCountrySelectionModal(false);
+  }
 
   if (isLoading) {
     return <div>Loading questions...</div>;
   }
 
-  const showCountrySelectionButton = currentStage === 'general' && currentQuestionIndex === questions.length - 1;
+  const showCountrySelectionButton = currentStage === 'general' && isFinal;
 
   const renderOptions = (question) => {
     if (!question) return null;
@@ -1036,6 +1129,11 @@ const handleOptionsNextQuestion = async (optionsNextQuestionId) => {
   //     </div>
   //   );
   // }
+  const handleSurveyConfirmSubmit=()=>{
+    setFinal(true);
+    setShowCountrySelection(true);
+    setshowFinalModal(false);
+  }
 
   return (
     <div className="survey-questions-container">
@@ -1051,17 +1149,21 @@ const handleOptionsNextQuestion = async (optionsNextQuestionId) => {
           </div>
           <footer className="survey-questions-footer">
             <div className="survey-questions-navigation-buttons">
-              {(currentStage === 'general' && currentQuestionIndex > 0) || 
-              (currentStage === 'country' && currentQuestionIndex > 0) ? (
+              {(currentStage === 'general' && currentQuestionIndex > 0 && !isFinal) || 
+              (currentStage === 'country' && currentQuestionIndex > 0 && (!isFinal || !countryFinal)) ? (
                 <button className="survey-questions-button" onClick={handlePreviousQuestion}>Back</button>
               ) : null}
               {showCountrySelectionButton ? (
                 <button className="survey-questions-button" onClick={handleGoToCountrySelection}>Go to Country Selection</button>
-              ) : currentQuestionIndex < questions.length - 1 ? (
+              ) : !isFinal || !countryFinal ? (
+                <>
                 <button className="survey-questions-button" onClick={handleNextQuestion} disabled={!canProceed || isWordCountExceeded}>Next</button>
-              ) : (
+                <button className="survey-questions-button" onClick={handleSkipQuestion}>Skip</button>
+                </>
+              ) : countryFinal ?(
                 <button className="survey-questions-button" onClick={handleSubmit} disabled={!canProceed || isWordCountExceeded}>Submit</button>
-              )}
+                
+              ):(<></>)}
             </div>
             <button className="survey-questions-button text-button" onClick={handleClearSelection}>Clear</button>
           </footer>
@@ -1082,6 +1184,26 @@ const handleOptionsNextQuestion = async (optionsNextQuestionId) => {
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" data-bs-dismiss="modal" onClick={() => setShowModal(false)}>Close</button>
                 <button type="button" className="btn btn-primary" onClick={handleConfirmSubmit}>Confirm</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+{showFinalModal && (
+        <div className="modal show" style={{ display: "block" }} tabIndex="-1">
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Confirm Submission</h5>
+                <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close" onClick={() => setshowFinalModal(false)}></button>
+              </div>
+              <div className="modal-body">
+                <p>Are you sure you want to submit your answers?</p>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" data-bs-dismiss="modal" onClick={() => setshowFinalModal(false)}>Close</button>
+                <button type="button" className="btn btn-primary" onClick={handleSurveyConfirmSubmit}>Confirm</button>
               </div>
             </div>
           </div>
