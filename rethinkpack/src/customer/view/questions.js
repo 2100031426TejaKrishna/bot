@@ -119,6 +119,18 @@ const Questions = () => {
 
     fetchQuestions();
   }, [destination]);
+  useEffect(() => {
+    const savedAnswers = JSON.parse(localStorage.getItem('answers'));
+    const savedIndex = parseInt(localStorage.getItem('currentQuestionIndex'), 10);
+
+    if (savedAnswers) {
+        setAnswers(savedAnswers);
+    }
+    if (!isNaN(savedIndex)) {
+        setCurrentQuestionIndex(savedIndex);
+    }
+}, []);
+
 
   useEffect(() => {
     const fetchTitle = async (questionId) => {
@@ -405,18 +417,14 @@ const findNextQuestion = (currentQuestionId, answer, questionFlow, questionStack
 };
 
 const handleNextQuestion = async () => {
-  // setLoading(true);
   const currentQuestion = questions[currentQuestionIndex];
   setcurrentquestion(currentQuestion);
-  if(currentQuestion?.islastQuestion === true && currentStage=='general'){
+
+  // If it's the last question in 'general' stage, show final modal
+  if (currentQuestion?.islastQuestion === true && currentStage === 'general') {
     setshowFinalModal(true);
-    return null
+    return null;
   }
-  // if(currentQuestion?.islastQuestion === true && currentStage=='country'){
-  //   // setshowFinalModal(true);
-  //   setcountryFinal(true);
-  //   return null
-  // }
 
   let newAnswer;
   if (currentQuestion?.optionType === 'checkbox') {
@@ -428,8 +436,10 @@ const handleNextQuestion = async () => {
   } else {
       newAnswer = currentAnswer;
   }
+
   updateAnswers(newAnswer, currentQuestion?._id);
   setNavigationHistory(prevHistory => [...prevHistory, currentQuestionIndex]);
+  
   setQuestionStack(prevStack => {
       // Check if the current question is already in the stack
       if (prevStack.length === 0 || prevStack[prevStack.length - 1].questionId !== currentQuestion?._id) {
@@ -437,7 +447,7 @@ const handleNextQuestion = async () => {
       }
       return prevStack;
   });
-  // set.add({questionId: currentQuestion?._id})
+
   setVisitedQuestions(prevSet => {
     const newSet = new Set(prevSet);
     newSet.add(currentQuestion?._id); // Add current question as visited
@@ -445,27 +455,28 @@ const handleNextQuestion = async () => {
   });
 
   const nextQuestionId = findNextQuestion(currentQuestion?._id, newAnswer, questionFlow, questionStack);
-  console.log(nextQuestionId)
-  console.log(currentStage)
-  if(nextQuestionId == null && currentStage === 'country'){
+
+  if (nextQuestionId == null && currentStage === 'country') {
     setcountryFinal(true);
     return null; 
   }
-if(currentStage=='country'){
-  if (visitedQuestions.has(nextQuestionId)) {
-    setcountryFinal(true);
-    return null;
-  } else {
-    console.log("Next question is not visited, proceeding:", nextQuestionId);
-  }}
-  
-  if (nextQuestionId) {
-      await handleDirectNextQuestion(nextQuestionId);
+
+  // Handle when next question is already visited
+  if (nextQuestionId && !visitedQuestions.has(nextQuestionId)) {
+    await handleDirectNextQuestion(nextQuestionId);
   } else if (questionStack.length > 0) {
-      // Pop the last item in stack to get the next context
-      const nextContext = questionStack.pop();
-      setQuestionStack([...questionStack]); // Update state with the new stack
-      await handleDirectNextQuestion(nextContext.questionId);
+    // Pop the last item in stack to get the next context
+    const nextContext = questionStack.pop();
+    setQuestionStack([...questionStack]); // Update state with the new stack
+    await handleDirectNextQuestion(nextContext.questionId);
+  } else {
+    console.log("No more questions to display.");
+    // Prevent repeated questions after the last one
+    if (currentStage === 'country') {
+      setcountryFinal(true);
+    } else if (currentStage === 'general') {
+      setshowFinalModal(true);
+    }
   }
 
   setLoading(false);
@@ -473,116 +484,87 @@ if(currentStage=='country'){
 
 
 const handlePreviousQuestion = () => {
-  // setLoading(true);
-  
-  setShowCountrySelection(false);
-  setShowCountrySelectionModal(false);
   if (currentQuestionIndex > 0) {
-      // Retrieve the previous index from the navigation history
-      const lastVisitedIndex = navigationHistory.length > 1 ? navigationHistory[navigationHistory.length - 2] : 0;
-      const updatedHistory = navigationHistory.slice(0, -1); // Remove the last entry from history
-      // Remove items from the stack up to the last visited index
-      setQuestionStack(prevStack => {
-          // Remove questions from the stack after the last visited index
-          const newStack = prevStack.filter(stackItem => 
-              questions.findIndex(q => q._id === stackItem.questionId) <= lastVisitedIndex
-          );
-          return newStack;
-      });
-      setVisitedQuestions(prevSet => {
-        const newSet = new Set(prevSet);
-        // Remove all question IDs that occur after the last visited index
-        questions.forEach((question, index) => {
-            if (index > lastVisitedIndex) {
-                newSet.delete(question._id);
-            }
-        });
-        return newSet;
-    });
-    
-
-      setCurrentQuestionIndex(lastVisitedIndex);
-      setcurrentquestion(questions[lastVisitedIndex]);
-      setNavigationHistory(updatedHistory);
-
-      const prevQuestion = questions[lastVisitedIndex];
-      const prevAnswer = answers[prevQuestion._id];
-      setShowCountrySelection(false);
-      setShowCountrySelectionModal(false);
-      // Restore the previous state based on the type of question
-      if (Array.isArray(prevAnswer)) {
-          setSelectedOptions(prevAnswer);
-          setCanProceed(prevAnswer.length > 0);
-      } else if (typeof prevAnswer === 'object' && prevAnswer !== null) {
-          setGridAnswers(prevAnswer);
-          const isValid = validateGridAnswersWithTempAnswers(prevAnswer, prevQuestion);
-          setCanProceed(isValid);
-      } else {
-          setCurrentAnswer(prevAnswer || '');
-          setOpenEndedText(prevAnswer || '');
-          setCanProceed(prevAnswer?.trim() !== '');
-      }
-
-      // Ensure only the correct questions are visible
-      setQuestionFlow(questionFlow.map((question, index) => ({
-          ...question,
-          isVisible: index <= lastVisitedIndex
-      })));
+      const prevIndex = currentQuestionIndex - 1;
       
+      setCurrentQuestionIndex(prevIndex);
+      setRecommendations({});
+
+      // Save to local storage
+      localStorage.setItem('currentQuestionIndex', prevIndex);
+      localStorage.setItem('answers', JSON.stringify(answers));
+      localStorage.setItem('questionOrder', JSON.stringify(questions));
+
+      const prevQuestion = questions[prevIndex];
+      if (prevQuestion && prevQuestion._id) {
+          restorePreviousQuestionState(prevQuestion);
+      } else {
+          console.error('Previous question does not have a valid ID.');
+      }
+      
+      // Update navigation history
+      const updatedNavigationHistory = navigationHistory.slice(0, -1);
+      setNavigationHistory(updatedNavigationHistory);
+      localStorage.setItem('navigationHistory', JSON.stringify(updatedNavigationHistory));
+  } else {
+      console.warn('Cannot go back, currentQuestionIndex is 0.');
   }
-  setLoading(false);
 };
 
-// Add the skippedQuestions state in your component
-const [skippedQuestions, setSkippedQuestions] = useState(new Set());
+const restorePreviousQuestionState = (question) => {
+  const prevAnswer = answers[question._id];
+
+  if (Array.isArray(prevAnswer)) {
+      setSelectedOptions(prevAnswer);
+      setCanProceed(prevAnswer.length > 0);
+  } else if (typeof prevAnswer === 'object' && prevAnswer !== null) {
+      setGridAnswers(prevAnswer);
+      const isValid = validateGridAnswersWithTempAnswers(prevAnswer, question);
+      setCanProceed(isValid);
+  } else {
+      setCurrentAnswer(prevAnswer || '');
+      setOpenEndedText(prevAnswer || '');
+      setCanProceed(prevAnswer?.trim() !== '');
+  }
+
+  setQuestionFlow(questionFlow.map((q, index) => ({
+      ...q,
+      isVisible: index <= currentQuestionIndex
+  })));
+};
+
 
 const handleSkipQuestion = async () => {
-    const currentQuestion = questions[currentQuestionIndex];
-    
-    // Add the current question to the skipped questions set
-    setSkippedQuestions(prevSet => {
-        const newSet = new Set(prevSet);
-        newSet.add(currentQuestion?._id); // Add the current question as skipped
-        return newSet;
-    });
+  // Check if current question is marked as the last question
+  const currentQuestion = questions[currentQuestionIndex];
+  setcurrentquestion(currentQuestion);
 
-    // Update navigation history to exclude the skipped question
-    setNavigationHistory(prevHistory => {
-        return prevHistory.filter(index => questions[index]._id !== currentQuestion?._id);
-    });
+  if (currentQuestion?.islastQuestion === true && currentStage === 'general') {
+    // Disable skip functionality if it's the last question
+    console.log("This is the last question. Skipping is disabled.");
+    return null;
+  }
 
-    // Remove the skipped question from the question stack
-    setQuestionStack(prevStack => {
-        return prevStack.filter(stackItem => stackItem.questionId !== currentQuestion?._id);
-    });
+  // If current question is not the last question, proceed with skipping
+  const nextQuestionId = findNextQuestion(currentQuestion?._id, currentAnswer, questionFlow, questionStack);
 
-    // Mark the current question as visited (in case of future backtracking)
-    setVisitedQuestions(prevSet => {
-        const newSet = new Set(prevSet);
-        newSet.add(currentQuestion?._id); // Add the current question as visited
-        return newSet;
-    });
-
-    // Find the next question after skipping
-    const nextQuestionId = findNextQuestion(currentQuestion?._id, null, questionFlow, questionStack);
-
-    if (nextQuestionId) {
-        // Proceed to the next question if available
-        await handleDirectNextQuestion(nextQuestionId);
-    } else if (questionStack.length > 0) {
-        // If no next question, pop the last item in stack and go to that question
-        const nextContext = questionStack.pop();
-        setQuestionStack([...questionStack]); // Update state with the new stack
-        await handleDirectNextQuestion(nextContext.questionId);
-    } else {
-        // Handle case if no more questions remain in the flow
-        setshowFinalModal(true);
-    }
-
-    setLoading(false);
+  if (nextQuestionId) {
+    await handleDirectNextQuestion(nextQuestionId);
+  } else if (questionStack.length > 0) {
+    // Pop the last item in the stack to get the next context if no nextQuestionId is found
+    const nextContext = questionStack.pop();
+    setQuestionStack([...questionStack]); // Update state with the new stack
+    await handleDirectNextQuestion(nextContext.questionId);
+  } else {
+    console.log("No next question to skip to.");
+  }
 };
 
-
+const handleSaveProgress = () => {
+  localStorage.setItem('currentQuestionIndex', currentQuestionIndex);
+  localStorage.setItem('answers', JSON.stringify(answers));
+  alert("Progress saved successfully!");
+};
 
 const handleOptionsNextQuestion = async (optionsNextQuestionId) => {
   let nextQuestionId = optionsNextQuestionId;
@@ -1149,24 +1131,35 @@ const handleOptionsNextQuestion = async (optionsNextQuestionId) => {
           </div>
           <footer className="survey-questions-footer">
             <div className="survey-questions-navigation-buttons">
-              {(currentStage === 'general' && currentQuestionIndex > 0 && !isFinal) || 
+              {/* Back Button Logic */}
+              {(currentStage === 'general' && currentQuestionIndex > 0 && !isFinal) ||
               (currentStage === 'country' && currentQuestionIndex > 0 && (!isFinal || !countryFinal)) ? (
                 <button className="survey-questions-button" onClick={handlePreviousQuestion}>Back</button>
               ) : null}
+
+              {/* Country Selection Button */}
               {showCountrySelectionButton ? (
                 <button className="survey-questions-button" onClick={handleGoToCountrySelection}>Go to Country Selection</button>
               ) : !isFinal || !countryFinal ? (
-                <>
                 <button className="survey-questions-button" onClick={handleNextQuestion} disabled={!canProceed || isWordCountExceeded}>Next</button>
-                <button className="survey-questions-button" onClick={handleSkipQuestion}>Skip</button>
-                </>
-              ) : countryFinal ?(
+              ) : countryFinal ? (
                 <button className="survey-questions-button" onClick={handleSubmit} disabled={!canProceed || isWordCountExceeded}>Submit</button>
-                
-              ):(<></>)}
+              ) : (<></>)}
+
+              {/* Dynamic Skip Button */}
+              {currentQuestionIndex < questions.length - 1 && !currentquestion?.islastQuestion ? (
+                <button className="survey-questions-button" onClick={handleSkipQuestion}>
+                  Skip
+                </button>
+              ) : null}
+
+              <button className="survey-questions-button" onClick={handleSaveProgress}>Save Progress</button>
             </div>
+            
+            {/* Clear Selection Button */}
             <button className="survey-questions-button text-button" onClick={handleClearSelection}>Clear</button>
           </footer>
+
         </div>
       )}
       {showCountrySelection && renderCountrySelection()}
