@@ -6,6 +6,7 @@ const mongoose = require('mongoose');
 // Connect to the database
 
 
+
 // Endpoint to get all questions
 router.get('/displayQuestions', async (req, res) => {
   try {

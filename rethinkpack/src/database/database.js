@@ -5,11 +5,11 @@ const connectToDatabase = () => {
 
   return mongoose.connect(uri, {
     dbName: 'Questions',
-    // useNewUrlParser: true,
-    // useUnifiedTopology: true
-  }).then(() => {
+  })
+  .then(() => {
     console.log('Connected to Questions database');
-  }).catch(err => {
+  })
+  .catch(err => {
     console.error('Database connection error:', err);
     process.exit(1);
   });

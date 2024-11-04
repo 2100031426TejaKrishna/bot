@@ -4,7 +4,7 @@ import { AuthProvider } from './AuthContext';
 import PrivateRoute from './PrivateRoute';
 import Login from './components/Login';
 import AdminLogin from './components/AdminLogin';
-//import Responses from './customer/view/responses';
+import Responses from './admin/view/userResponseMarks';
 import CustomerLogin from './components/CustomerLogin';
 import CreateQuestion from './admin/view/createQuestion';
 import Questions from './admin/view/questions';
@@ -14,8 +14,10 @@ import UnlinkedQuestions from './admin/view/unlinkedQuestions';
 import SubtitleQuestions from './admin/view/subtitleQuestions';
 import NestedtitleQuestions from './admin/view/nestedtitleQuestions';
 import TitleTab from './admin/view/titleTab';
-import DetailsTab from './admin/view/DetailsTab'; // Import the new component
-import UserResponseMarks from './admin/view/userResponseMarks';
+import DetailsTab from './admin/view/DetailsTab'; 
+import CustomerDashboard from './customer/view/CustomerDashboard'; // Import the new CustomerDashboard component
+import Profile from './customer/view/Profile'; // Import the new CustomerDashboard component
+import EditProfile from './customer/view/EditProfile';
 
 const destination = "localhost:5000"; // Ensure this matches your server configuration
 
@@ -58,11 +60,20 @@ const AppContent = () => {
         <Route path="/" element={<Login />} />
         <Route path="/admin-login" element={<AdminLogin />} />
         <Route path="/customer-login" element={<CustomerLogin />} />
+        <Route path="/customer-dashboard" element={
+          <PrivateRoute redirectPath="/customer-login">
+            <CustomerDashboard /> {/* Render Customer Dashboard here */}
+          </PrivateRoute>
+        } />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/editprofile" element={<EditProfile />} />
+
         <Route path="/customer" element={
           <PrivateRoute redirectPath="/customer-login">
             <CustomerQuestions triggerRefresh={triggerRefresh} />
           </PrivateRoute>
         } />
+        <Route path="/responses" element={<Responses />} />
         <Route path="/admin" element={
           <PrivateRoute redirectPath="/admin-login">
             <div className="App">
@@ -113,15 +124,6 @@ const AppContent = () => {
                     Details
                   </a>
                 </li>
-                <li className="nav-item">
-  <a
-    className={`nav-link ${activeTab === 'UserResponseMarks' ? 'active' : ''}`}
-    href="#"
-    onClick={() => setActiveTab('UserResponseMarks')}
-  >
-    UserResponseMarks
-  </a>
-</li>
               </ul>
               
               {activeTab === 'list' && <Questions triggerRefresh={triggerRefresh} />}
@@ -129,8 +131,6 @@ const AppContent = () => {
               {activeTab === 'unlinked' && <UnlinkedQuestions />}
               {activeTab === 'title' && <TitleTab />}
               {activeTab === 'details' && <DetailsTab />}
-              {activeTab === 'UserResponseMarks' && <UserResponseMarks />}
-
               {activeTab === activeSubTitle && <SubtitleQuestions selectedSubtitle={selectedSubtitle} />}
               {activeTab === activeNestedTitle && <NestedtitleQuestions selectedNestedtitle={selectedNestedtitle} />}
             </div>

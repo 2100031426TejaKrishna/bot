@@ -10,10 +10,12 @@ const AdminSchema = new mongoose.Schema({
 }, { collection: 'adminlogin' }); // Ensure it uses the 'adminlogin' collection
 
 const CustomerSchema = new mongoose.Schema({
+  name: String,  // Add name field to customer schema
   email: String,
-  password: String
-}, { collection: 'customerlogin' }); // Ensure it uses the 'customerlogin' collection
-
+  password: String,
+  address: String,
+  phone: String
+}, { collection: 'customerlogin' }); 
 const AdminLogin = mongoose.model('AdminLogin', AdminSchema);
 const CustomerLogin = mongoose.model('CustomerLogin', CustomerSchema);
 
@@ -36,6 +38,22 @@ router.get('/adminLogin', async (req, res) => {
   }
 });
 
+// Endpoint to get all customers data
+router.get('/allCustomers', async (req, res) => {
+  try {
+    // Fetch all customers and store their data (name, email, password) in JSON format
+    const customers = await CustomerLogin.find().lean();
+
+    // Send the JSON data with the response
+    console.log(customers);
+    res.json(customers);
+  } catch (error) {
+    console.error('Error fetching customer data:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+
 // Customer login route
 router.get('/customerLogin', async (req, res) => {
   const { email, password } = req.query;
@@ -57,13 +75,16 @@ router.get('/customerLogin', async (req, res) => {
 
 // Customer sign-up route
 router.post('/customerSignup', async (req, res) => {
-  const { email, password } = req.body;
+  // Debug: Log req.body to check if name, email, and password are received
+  console.log(req.body);
+
+  const { name, email, password, address, phone } = req.body; // Accept name in request body
   try {
     const existingCustomer = await CustomerLogin.findOne({ email }).lean();
     if (existingCustomer) {
       return res.status(400).json({ success: false, message: 'Customer already exists' });
     }
-    const newCustomer = new CustomerLogin({ email, password });
+    const newCustomer = new CustomerLogin({ name, email, password, address, phone }); // Include name in new customer data
     await newCustomer.save();
     res.json({ success: true });
   } catch (error) {

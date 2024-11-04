@@ -1,4 +1,3 @@
-// src/components/CustomerLogin.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
@@ -8,10 +7,15 @@ const CustomerLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [name, setName] = useState('');
+  const [address, setAddress] = useState(''); // New state for address
+  const [phone, setPhone] = useState(''); // New state for phone number
   const [isSignUp, setIsSignUp] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
+  const [nameError, setNameError] = useState('');
+  const [phoneError, setPhoneError] = useState(''); // New state for phone error
   const navigate = useNavigate();
   const { login } = useAuth();
 
@@ -33,7 +37,19 @@ const CustomerLogin = () => {
     } else {
       setConfirmPasswordError('');
     }
-  }, [email, password, confirmPassword, isSignUp]);
+
+    if (isSignUp && name.trim() === '') {
+      setNameError('Name is required');
+    } else {
+      setNameError('');
+    }
+
+    if (isSignUp && phone && !/^\d{10}$/.test(phone)) {
+      setPhoneError('Please enter a valid 10-digit phone number');
+    } else {
+      setPhoneError('');
+    }
+  }, [email, password, confirmPassword, isSignUp, name, phone]);
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
@@ -43,14 +59,13 @@ const CustomerLogin = () => {
     }
 
     try {
-      //for server -https and change to http  for local machine
-
       const response = await fetch(`http://localhost:5000/api/customerLogin?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
       const result = await response.json();
 
       if (result.success) {
         login('customer');
-        navigate('/customer');
+        localStorage.setItem('customerEmail', email);
+        navigate('/customer-dashboard');
       } else {
         alert(result.message || 'Login failed');
       }
@@ -63,19 +78,17 @@ const CustomerLogin = () => {
   const handleSignUpSubmit = async (e) => {
     e.preventDefault();
 
-    if (emailError || passwordError || confirmPasswordError) {
+    if (emailError || passwordError || confirmPasswordError || nameError || phoneError) {
       return;
     }
 
     try {
-      //for server -https and change to http  for local machine
-
-      const response = await fetch('https://localhost:5000/api/customerSignup', {
+      const response = await fetch('http://localhost:5000/api/customerSignup', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ name, email, password, address, phone }), 
       });
       const result = await response.json();
 
@@ -95,6 +108,35 @@ const CustomerLogin = () => {
     <div className="customer-login-container">
       <h2>{isSignUp ? 'Customer Signup' : 'Customer Login'}</h2>
       <form onSubmit={isSignUp ? handleSignUpSubmit : handleLoginSubmit}>
+        {isSignUp && (
+          <>
+            <input
+              type="text"
+              placeholder="Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+            {nameError && <p className="error-message">{nameError}</p>}
+            
+            <input
+              type="text"
+              placeholder="Address"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              required
+            />
+            
+            <input
+              type="tel"
+              placeholder="Phone Number"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              required
+            />
+            {phoneError && <p className="error-message">{phoneError}</p>}
+          </>
+        )}
         <input
           type="email"
           placeholder="Email"
