@@ -93,4 +93,29 @@ router.post('/customerSignup', async (req, res) => {
   }
 });
 
+router.put('/customerProfile', async (req, res) => {
+  console.log('Received PUT request to update profile:', req.body); // Log request data
+  const { email, name, phone, address } = req.body;
+  
+
+  try {
+    const customer = await CustomerLogin.findOneAndUpdate(
+      { email }, // Find customer by email
+      { name, phone, address }, // Update fields
+      { new: true, runValidators: true }
+    );
+
+    if (!customer) {
+      return res.status(404).json({ success: false, message: 'Customer not found' });
+    }
+
+    res.json({ success: true, message: 'Profile updated successfully', customer });
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+
+
 module.exports = router;

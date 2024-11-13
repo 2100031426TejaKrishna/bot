@@ -8,19 +8,22 @@ const UserResponseMarks = () => {
     const [titles, setTitles] = useState({});
     const [scores, setScores] = useState([]);
     const [scoreDetails, setScoreDetails] = useState({});
+    const [isLoading, setIsLoading] = useState(true); // Add loading state
+
 
     const navigate = useNavigate();
 
+    
     useEffect(() => {
         const storedResponses = localStorage.getItem('surveyResponses');
         if (storedResponses) {
+            console.log(storedResponses)
             const parsedResponses = JSON.parse(storedResponses);
             setResponses(parsedResponses);
 
             const fetchQuestions = async () => {
                 try {
-                    //for server -https and change to http  for local machine
-
+                    setIsLoading(true);  // Show popup while fetching data
                     const allQuestionsResponse = await fetch('http://localhost:5000/api/fetchAllQuestions');
                     if (!allQuestionsResponse.ok) throw new Error(`HTTP error! status: ${allQuestionsResponse.status}`);
                     const allQuestionsData = await allQuestionsResponse.json();
@@ -29,10 +32,11 @@ const UserResponseMarks = () => {
                     await Promise.all(
                         allQuestionsData.map(question => fetchTitleForQuestion(question._id))
                     );
-
                     calculateScores(parsedResponses, allQuestionsData);
                 } catch (error) {
                     console.error("Error fetching questions:", error);
+                } finally {
+                    setIsLoading(false);  // Hide popup when loading finishes
                 }
             };
 
@@ -47,26 +51,33 @@ const UserResponseMarks = () => {
     }, [scores, titles]);
 
     const calculateScores = (responses, questions) => {
-        const newScores = responses.map(response => {
-            const question = questions.find(q => q._id === response.questionId);
+        if (typeof responses !== 'object' || responses === null) {
+            console.error("Responses is not an object:", responses);
+            return;
+        }
+    
+        console.log(responses);
+    
+        const newScores = Object.entries(responses).map(([questionId, answer]) => {
+            const question = questions.find(q => q._id === questionId);
             if (!question) return 0;
-
+    
             switch (question.optionType) {
                 case 'multipleChoice':
-                    return question.options.some(option => option.isCorrect && option.text === response.answer) ? 1 : 0;
+                    return question.options.some(option => option.isCorrect && option.text === answer) ? 1 : 0;
                 case 'checkbox':
                     const correctOptions = question.options.filter(option => option.isCorrect).map(option => option.text);
-                    return correctOptions.sort().toString() === response.answer.sort().toString() ? 1 : 0;
+                    return correctOptions.sort().toString() === answer.sort().toString() ? 1 : 0;
                 case 'dropdown':
-                    return question.options.some(option => option.isCorrect && option.text === response.answer) ? 1 : 0;
+                    return question.options.some(option => option.isCorrect && option.text === answer) ? 1 : 0;
                 case 'linear':
-                    return response.answer ? 1 : 0;
+                    return answer ? 1 : 0;
                 case 'multipleChoiceGrid':
                     if (!question.grid || !question.grid.answers) return 0;
                     const correctAnswersMCG = question.grid.answers;
                     let isCorrectMCG = true;
                     correctAnswersMCG.forEach(({ rowIndex, columnIndex, isCorrect }) => {
-                        const isSelected = response.answer[rowIndex]?.includes(columnIndex) || false;
+                        const isSelected = answer[rowIndex]?.includes(columnIndex) || false;
                         if (isSelected !== isCorrect) {
                             isCorrectMCG = false;
                         }
@@ -77,27 +88,80 @@ const UserResponseMarks = () => {
                     const correctAnswersCBG = question.grid.answers;
                     let isCorrectCBG = true;
                     correctAnswersCBG.forEach(({ rowIndex, columnIndex, isCorrect }) => {
-                        const isSelected = response.answer[rowIndex]?.includes(columnIndex) || false;
+                        const isSelected = answer[rowIndex]?.includes(columnIndex) || false;
                         if (isSelected !== isCorrect) {
                             isCorrectCBG = false;
                         }
                     });
                     return isCorrectCBG ? 1 : 0;
                 case 'openEnded':
-                    return question.options.some(option => option.text.trim().toLowerCase() === response.answer.trim().toLowerCase()) ? 1 : 0;
+                    return question.options.some(option => option.text.trim().toLowerCase() === answer.trim().toLowerCase()) ? 1 : 0;
                 default:
                     return 0;
             }
         });
+    
+        console.log(newScores);
         setScores(newScores);
+        console.log(scores);
     };
+    
+    // const calculateScores = (responses, questions) => {
+    //     console.log(responses)
+    //     const newScores = responses.map(response => {
+    //         const question = questions.find(q => q._id === response.questionId);
+    //         if (!question) return 0;
+
+    //         switch (question.optionType) {
+    //             case 'multipleChoice':
+    //                 return question.options.some(option => option.isCorrect && option.text === response.answer) ? 1 : 0;
+    //             case 'checkbox':
+    //                 const correctOptions = question.options.filter(option => option.isCorrect).map(option => option.text);
+    //                 return correctOptions.sort().toString() === response.answer.sort().toString() ? 1 : 0;
+    //             case 'dropdown':
+    //                 return question.options.some(option => option.isCorrect && option.text === response.answer) ? 1 : 0;
+    //             case 'linear':
+    //                 return response.answer ? 1 : 0;
+    //             case 'multipleChoiceGrid':
+    //                 if (!question.grid || !question.grid.answers) return 0;
+    //                 const correctAnswersMCG = question.grid.answers;
+    //                 let isCorrectMCG = true;
+    //                 correctAnswersMCG.forEach(({ rowIndex, columnIndex, isCorrect }) => {
+    //                     const isSelected = response.answer[rowIndex]?.includes(columnIndex) || false;
+    //                     if (isSelected !== isCorrect) {
+    //                         isCorrectMCG = false;
+    //                     }
+    //                 });
+    //                 return isCorrectMCG ? 1 : 0;
+    //             case 'checkboxGrid':
+    //                 if (!question.grid || !question.grid.answers) return 0;
+    //                 const correctAnswersCBG = question.grid.answers;
+    //                 let isCorrectCBG = true;
+    //                 correctAnswersCBG.forEach(({ rowIndex, columnIndex, isCorrect }) => {
+    //                     const isSelected = response.answer[rowIndex]?.includes(columnIndex) || false;
+    //                     if (isSelected !== isCorrect) {
+    //                         isCorrectCBG = false;
+    //                     }
+    //                 });
+    //                 return isCorrectCBG ? 1 : 0;
+    //             case 'openEnded':
+    //                 return question.options.some(option => option.text.trim().toLowerCase() === response.answer.trim().toLowerCase()) ? 1 : 0;
+    //             default:
+    //                 return 0;
+    //         }
+    //     });
+    //     console.log(newScores)
+    //     setScores(newScores);
+    //     console.log(scores)
+    //     console.log(responses)
+    // };
 
     const fetchTitleForQuestion = async (questionId) => {
         try {
             //for server -https and change to http  for local machine
 
             const response = await fetch(`http://localhost:5000/api/fetchTitleForQuestion/${questionId}`);
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            // if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const { title, subtitle, nestedTitle } = await response.json();
             const fullTitle = `${title}`;
             setTitles((prevTitles) => ({ ...prevTitles, [questionId]: fullTitle }));
@@ -111,9 +175,12 @@ const UserResponseMarks = () => {
         const questionsCountByTitle = {};
         const newScoreDetails = {};
 
-        responses.forEach((response, index) => {
-            const title = titles[response.questionId];
+        Object.entries(responses).forEach((response, index) => {
+            console.log(response)
+            const title = titles[response.at(0)];
+            
             const score = scores[index];
+            console.log(index,title,score,scoresByTitle[title])
 
             if (!scoresByTitle[title]) {
                 scoresByTitle[title] = [];
@@ -124,6 +191,7 @@ const UserResponseMarks = () => {
             questionsCountByTitle[title]++;
         });
 
+        console.log(scoresByTitle)
         Object.entries(scoresByTitle).forEach(([title, scores]) => {
             const sumOfScores = scores.reduce((acc, score) => acc + score, 0);
             const totalQuestions = questionsCountByTitle[title];
@@ -285,14 +353,26 @@ const UserResponseMarks = () => {
         }
     };
 
+    // console.log(scores)
     const totalScore = scores.reduce((acc, score) => acc + score, 0);
-    const totalQuestions = responses.length;
+    const totalQuestions = Object.entries(responses).length;
+
+    console.log(totalScore)
+    console.log(totalQuestions)
     const percentage = totalQuestions ? ((totalScore / totalQuestions) * 100).toFixed(2) : 0;
 
-    if (!responses.length) {
+    if (responses.length===0) {
+        console.log(responses)
         return <div>No responses found.</div>;
     }
 
+    if (isLoading) {
+        return (
+            <div className="loading-popup">
+                <p>Please wait while your marks are being calculated... ⏳</p>
+            </div>
+        );
+    }
     return (
         <div className="result-page">
             <div className="header">
@@ -329,18 +409,19 @@ const UserResponseMarks = () => {
             </div>
             </div>
             </div>
+            <br></br>
             <div className="questions-heading">
                 <h2>Assessment Details</h2>
             </div>
             <div className="responses-container">
                 <ul className="responses-list">
-                    {responses.map((response, index) => {
-                        const question = getQuestion(response.questionId);
+                    {Object.entries(responses).map((response, index) => {
+                        const question = getQuestion(response.at(0));
                         return (
-                            <li key={response.questionId} className="response-item">
-                                <h3 className="response-title">{question && titles[response.questionId]}</h3>
+                            <li key={response.at(0)} className="response-item">
+                                <h3 className="response-title">{question && titles[response.at(0)]}</h3>
                                 <h4>{index + 1}. {question ? question.question : 'Unknown Question'}</h4>
-                                {question && renderOptions(question, response.answer)}
+                                {question && renderOptions(question, response.at(1))}
                                 <p>Score: {scores[index]}</p>
                             </li>
                         );

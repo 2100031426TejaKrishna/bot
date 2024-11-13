@@ -1,64 +1,151 @@
-/* EditProfile.css */
+* {
+  margin: 0;
+  padding: 0;
+  font-family: "Poppins", sans-serif;
+}
+body {
+  margin: 0;
+  padding: 0;
+  height: 100vh; /* Full viewport height */
+  background: url('https://img.freepik.com/free-photo/abstract-textured-backgound_1258-30495.jpg?t=st=1730876780~exp=1730880380~hmac=35513278afabd616bb0010fb07c7d9d7699f038d0b1fbf9236133ad09135c295&w=740') no-repeat center center;
+  background-size: cover; /* Ensure it covers the entire screen */
+}
+
+
 .edit-profile-container {
-    background-color: #bfeffe;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    max-width: 400px;
-    margin: 50px auto;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    text-align: center;
-  }
-  
-  .edit-profile-container h2 {
-    margin-bottom: 20px;
-    color: #333;
-  }
-  
-  .edit-profile-form {
-    width: 100%;
-  }
-  
-  .form-group {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 15px;
-  }
-  
-  .form-group label {
-    margin-bottom: 5px;
-    color: #555;
-    font-weight: 500;
-  }
-  
-  .form-group input {
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    font-size: 16px;
-    color: #333;
-  }
-  
-  .form-group input:focus {
-    border-color: #007bff;
-    outline: none;
-  }
-  
-  .save-button {
-    margin-top: 20px;
-    padding: 10px 20px;
-    background-color: #007bff;
-    color: #fff;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-  }
-  
-  .save-button:hover {
-    background-color: #0056b3;
-  }
-  
+  max-width: 600px;
+  width: 100%; /* Ensure responsiveness */
+  padding: 30px;
+  background: url('https://img.freepik.com/free-photo/abstract-luxury-gradient-blue-background-smooth-dark-blue-with-black-vignette-studio-banner_1258-72581.jpg?t=st=1730876611~exp=1730880211~hmac=e7da8f115f30f3649e04ef771f0e5a3252c5386637de63fad026122c2b34f1cc&w=740') no-repeat center center;
+  background-size: cover; /* Cover the entire container */
+  border-radius: 10px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+  position: absolute; /* Absolute positioning */
+  top: 40%; /* Center vertically */
+  left: 50%; /* Center horizontally */
+  transform: translate(-50%, -50%); /* Offset to truly center the container */
+  margin-top: 20px;
+}
+
+
+.edit-profile-container::before,
+.edit-profile-container::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  -webkit-filter: blur(20px);
+          filter: blur(20px);
+  z-index: -1;
+}
+
+
+
+
+.edit-profile-heading {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #ffffff;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.edit-profile-form .form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.9rem;
+  color: #cbd5e1;
+  margin-bottom: 5px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  background: #374151;
+  border: 1px solid #4b5563;
+  color: #f9fafb;
+}
+
+.form-group input:read-only {
+  cursor: not-allowed;
+}
+
+.button-container {
+  text-align: right;
+}
+
+.update-button {
+  background: linear-gradient(to right, #268289, #4d9ec1);
+  padding: 10px 20px;
+  color: white;
+  font-weight: bold;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: opacity 0.3s ease;
+}
+
+.update-button:hover {
+  opacity: 0.8;
+}
+
+.success-message,
+.error-message {
+  color: #4ade80;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+/* Existing styles... */
+
+.back-link {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 0.9rem;
+  color: #38bdf8;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.3s ease;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+
+/* Existing styles... */
+
+.button-container {
+  display: flex;
+  flex-direction: column; /* Stack buttons vertically */
+  align-items: center;
+}
+
+.update-button {
+  color: white;
+  font-weight: bold;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: opacity 0.3s ease;
+  margin-bottom: 10px;
+}
+
+.update-button:hover {
+  opacity: 0.8;
+}
+
+.back-link {
+  font-size: 0.9rem;
+  color: #131314;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.3s ease;
+  background: none;
+  border: none;
+  padding: 0;
+}
+

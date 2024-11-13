@@ -119,18 +119,18 @@ const Questions = () => {
 
     fetchQuestions();
   }, [destination]);
+
   useEffect(() => {
-    const savedAnswers = JSON.parse(localStorage.getItem('answers'));
-    const savedIndex = parseInt(localStorage.getItem('currentQuestionIndex'), 10);
-
-    if (savedAnswers) {
-        setAnswers(savedAnswers);
+    const savedResponses = JSON.parse(localStorage.getItem('surveyResponses'));
+    const lastQuestionIndex = parseInt(localStorage.getItem('lastQuestionIndex'), 10);
+    if (savedResponses) {
+      setAnswers(savedResponses);
     }
-    if (!isNaN(savedIndex)) {
-        setCurrentQuestionIndex(savedIndex);
+    if (!isNaN(lastQuestionIndex)) {
+      setCurrentQuestionIndex(lastQuestionIndex);
     }
-}, []);
-
+  }, []);
+  
 
   useEffect(() => {
     const fetchTitle = async (questionId) => {
@@ -308,9 +308,10 @@ const Questions = () => {
       ...prevAnswers,
       [questionId]: newAnswer
     }));
-    // console.log("Updated Answers:", { ...answers, [questionId]: newAnswer }); // Logging for debugging
     localStorage.setItem('surveyResponses', JSON.stringify({ ...answers, [questionId]: newAnswer }));
+    localStorage.setItem('lastQuestionIndex', currentQuestionIndex);
   };
+  
 
   const getWordCount = (text) => {
     return text.trim().split(/\s+/).filter(Boolean).length;
@@ -538,7 +539,7 @@ const handleSkipQuestion = async () => {
   // Check if current question is marked as the last question
   const currentQuestion = questions[currentQuestionIndex];
   setcurrentquestion(currentQuestion);
-
+  
   if (currentQuestion?.islastQuestion === true && currentStage === 'general') {
     // Disable skip functionality if it's the last question
     console.log("This is the last question. Skipping is disabled.");
@@ -559,12 +560,13 @@ const handleSkipQuestion = async () => {
     console.log("No next question to skip to.");
   }
 };
-
 const handleSaveProgress = () => {
-  localStorage.setItem('currentQuestionIndex', currentQuestionIndex);
-  localStorage.setItem('answers', JSON.stringify(answers));
+  localStorage.setItem('surveyResponses', JSON.stringify(answers));
+  localStorage.setItem('lastQuestionIndex', currentQuestionIndex);
   alert("Progress saved successfully!");
 };
+
+
 
 const handleOptionsNextQuestion = async (optionsNextQuestionId) => {
   let nextQuestionId = optionsNextQuestionId;
@@ -1131,13 +1133,11 @@ const handleOptionsNextQuestion = async (optionsNextQuestionId) => {
           </div>
           <footer className="survey-questions-footer">
             <div className="survey-questions-navigation-buttons">
-              {/* Back Button Logic */}
               {(currentStage === 'general' && currentQuestionIndex > 0 && !isFinal) ||
               (currentStage === 'country' && currentQuestionIndex > 0 && (!isFinal || !countryFinal)) ? (
                 <button className="survey-questions-button" onClick={handlePreviousQuestion}>Back</button>
               ) : null}
 
-              {/* Country Selection Button */}
               {showCountrySelectionButton ? (
                 <button className="survey-questions-button" onClick={handleGoToCountrySelection}>Go to Country Selection</button>
               ) : !isFinal || !countryFinal ? (
@@ -1145,21 +1145,15 @@ const handleOptionsNextQuestion = async (optionsNextQuestionId) => {
               ) : countryFinal ? (
                 <button className="survey-questions-button" onClick={handleSubmit} disabled={!canProceed || isWordCountExceeded}>Submit</button>
               ) : (<></>)}
-
-              {/* Dynamic Skip Button */}
-              {currentQuestionIndex < questions.length - 1 && !currentquestion?.islastQuestion ? (
+              {(!currentquestion?.islastQuestion || currentStage !== 'general') && (
                 <button className="survey-questions-button" onClick={handleSkipQuestion}>
                   Skip
                 </button>
-              ) : null}
-
-              <button className="survey-questions-button" onClick={handleSaveProgress}>Save Progress</button>
+              )}
+              <button className="survey-questions-button" onClick={handleSaveProgress}>Save</button> 
             </div>
-            
-            {/* Clear Selection Button */}
             <button className="survey-questions-button text-button" onClick={handleClearSelection}>Clear</button>
           </footer>
-
         </div>
       )}
       {showCountrySelection && renderCountrySelection()}
