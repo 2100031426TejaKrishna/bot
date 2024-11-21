@@ -750,6 +750,35 @@ fetchCountries = async () => {
     }))
   }
 
+  handleDropdownSearch = (event) => {
+    const searchQuery = event.target.value.toLowerCase();
+  
+    // Update the state with the filtered query
+    this.setState({ searchQuery });
+  };
+  
+  handleQuestionSelect = (selectedQuestion) => {
+    console.log('Selected question:', selectedQuestion);
+    this.setState((prevState) => ({
+      questionList: {
+        ...prevState.questionList,
+        nextQuestion: selectedQuestion._id,
+      },
+    }));
+  };
+  
+  
+  handleSearchChange = (event) => {
+    const searchQuery = event.target.value.toLowerCase();
+    const filteredQuestions = this.state.allQuestions.filter((question) =>
+      question.question.toLowerCase().includes(searchQuery)
+    );
+  
+    // Update state with search query and filtered questions
+    this.setState({ searchQuery, filteredQuestions });
+  };
+  
+
   handleQuestionOptionType = (e) => {
     this.setState((prevState) => ({
       questionList: {
@@ -1287,20 +1316,32 @@ fetchCountries = async () => {
             onChange={(e) => this.handleOptionRecommendationChange(index, e.target.value)}
           /> */}
                   {isLeadingQuestion && (
-                      <select
-                        className="form-select mx-2"
-                        style={{ flex: '1' }}
-                        value={questionList.options[index].optionsNextQuestion}
-                        onChange={(e) => this.handleOptionsNextQuestionChange(index, e.target.value)}
-                      >
-                        <option value="">Select Question After this...</option>
-                        {allQuestions.map((question) => (
-                          <option key={question._id} value={question._id}>
-                            {question.question}
-                          </option>
-                        ))}
-                      </select>
-                    )}
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+    {/* Dropdown */}
+    <select
+      className="form-select mx-2"
+      style={{ flex: '1', marginBottom: '10px' }}
+      value={questionList.options[index].optionsNextQuestion}
+      onChange={(e) => this.handleOptionsNextQuestionChange(index, e.target.value)}
+    >
+      <option value="">Select Question After this...</option>
+      {allQuestions.map((question) => (
+        <option key={question._id} value={question._id}>
+          {question.question}
+        </option>
+      ))}
+    </select>
+
+    {/* Text Field */}
+    <input
+      type="text"
+      className="form-control"
+      placeholder="Enter custom text..."
+      onChange={(e) => this.handleCustomInputChange(index, e.target.value)}
+    />
+  </div>
+)}
+
                   {/* {isLeadingQuestion && (
                       <select
                         className="form-select mx-2"
@@ -2729,25 +2770,70 @@ fetchCountries = async () => {
             {/* Next Question */}
             {!isLeadingQuestion && filteredQuestions && (
               <div className="mb-3">
-                <label htmlFor="nextQuestion" className="col-form-label">
-                  Question After this....:
-                </label>
-                <select
-                  className="form-select"
-                  id="nextQuestion"
-                  value={this.state.questionList.nextQuestion}
-                  onChange={this.handleQuestionNextQuestion}
-                >
-                  <option value="">Select Question After this...</option>
-                  {filteredQuestions
-                    .filter(question =>  !question.firstQuestion && !this.isOptionNextQuestionUsed(question))
-                    .map((question) => (
-                      <option key={question._id} value={question._id}>
-                        {question.question}
-                      </option>
-                    ))}
-                </select>
-              </div>
+              <label htmlFor="nextQuestion" className="col-form-label">
+                Question After this...:
+              </label>
+{/*             
+              {/* Dropdown Menu with Search */}
+              <ul
+                className="dropdown-menu"
+                style={{ display: 'block', maxHeight: '150px', overflowY: 'auto' }}
+              >
+                {/* Search Input */}
+                <li>
+                  <div className="input-group mt-2 mx-2">
+                    <div className="form-outline w-auto">
+                      <input
+                        type="search"
+                        id="search-input-dropdown"
+                        className="form-control"
+                        placeholder="Search questions..."
+                        value={this.state.searchQuery}
+                        onChange={this.handleSearchChange}
+                      />
+                    </div>
+                  </div>
+                </li>
+                <li>
+                  <hr className="dropdown-divider" />
+                </li>
+            
+                {/* Filtered Questions */}
+                {this.state.filteredQuestions.map((question, index) => (
+                  <li
+                    key={index}
+                    className="input-group-dropdown-item dropdown-item"
+                    style={{ display: 'flex' }}
+                    onClick={() => this.handleQuestionSelect(question)}
+                  >
+                    {question.question}
+                  </li>
+                ))}
+              </ul>
+            
+              {/* Select Dropdown for Next Question */}
+              <select
+                className="form-select"
+                id="nextQuestion"
+                value={this.state.questionList.nextQuestion}
+                onChange={this.handleQuestionNextQuestion}
+              >
+                <option value="">Select Question After this...</option>
+                {this.state.filteredQuestions
+                  .filter(
+                    (question) =>
+                      !question.firstQuestion && !this.isOptionNextQuestionUsed(question)
+                  )
+                  .map((question) => (
+                    <option key={question._id} value={question._id}>
+                      {question.question}
+                    </option>
+                  ))}
+              </select>
+
+               */}
+            </div>  
+                       
             )}
             </form>
         </Modal.Body>

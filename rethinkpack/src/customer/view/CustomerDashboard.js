@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../AuthContext';
+import { useNavigate } from 'react-router-dom';
 import './CustomerDashboard.css';
 
 const CustomerDashboard = () => {
   const { logout } = useAuth();
+  const navigate = useNavigate();
   const [isDropdownOpen, setDropdownOpen] = useState(false);
   const [customer, setCustomer] = useState(null);
   const [error, setError] = useState(null);
@@ -45,41 +47,62 @@ const CustomerDashboard = () => {
     setDropdownOpen(false);
   };
 
-  const menuToggle = () => {
-    setDropdownOpen(!isDropdownOpen);
+  const menuToggle = (event) => {
+    if (event.type === 'click' || event.key === 'Enter') {
+      setDropdownOpen(!isDropdownOpen);
+    }
   };
 
   return (
     <div className="dashboard-container">
+      {/* Transparent Navbar */}<br></br>
+      <nav className="transparent-navbar">
+        <div className="navbar-left">
+          <button onClick={() => navigate('/subscribe')} className="navbar-btn">
+            Subscribe
+          </button>
+          <button onClick={() => navigate('/contact')} className="navbar-btn">
+            Contact Us
+          </button>
+        </div>
+        <div className="navbar-right">
+          <div
+            className="profile"
+            onClick={menuToggle}
+            tabIndex={0}
+            role="button"
+            aria-label="Profile"
+          >
+            👤
+          </div>
+          {isDropdownOpen && (
+            <div className="menu active">
+              <ul>
+                <li><a href="/profile">My Profile</a></li>
+                <li><a href="/editprofile">Update Profile</a></li>
+                <li><a href="/" onClick={handleLogout}>Logout</a></li>
+              </ul>
+            </div>
+          )}
+        </div>
+      </nav>
+
       {/* Background video */}
       <video className="dashboard-video" autoPlay loop muted>
         <source src="https://cdn.pixabay.com/video/2022/06/13/120172-720504774_large.mp4" type="video/mp4" />
       </video>
 
-      <div className="profile-action">
-        <div className="profile" onClick={menuToggle}>
-          <span role="img" aria-label="Profile Icon">👤</span>
-        </div>
-        {isDropdownOpen && (
-          <div className="menu active">
-            <ul>
-              <li><a href="/profile">My Profile</a></li>
-              <li><a href="/editprofile">Update Profile</a></li>
-              <li><a href="/" onClick={handleLogout}>Logout</a></li>
-            </ul>
-          </div>
-        )}
-      </div>
-
+      {/* Welcome Message */}
       <div className="welcome-message">
         <h1>Welcome {customer ? customer.name : 'Customer'} !</h1>
         {error && <p className="error-message">{error}</p>}
       </div>
 
+      {/* Card Section */}
       <div className="card">
         <h2>Get Started with Your Assessment</h2>
-        <button onClick={() => (window.location.href = '/customer')}>Start Assessment</button><br />
-        <button onClick={() => (window.location.href = '/#')}>Resume Assessment</button>
+        <button onClick={() => navigate('/customer')}>Start Assessment</button><br />
+        <button onClick={() => navigate('/#')}>Resume Assessment</button>
       </div>
     </div>
   );

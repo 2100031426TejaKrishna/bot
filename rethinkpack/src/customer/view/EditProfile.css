@@ -7,7 +7,7 @@ body {
   margin: 0;
   padding: 0;
   height: 100vh; /* Full viewport height */
-  background: url('https://img.freepik.com/free-photo/abstract-textured-backgound_1258-30495.jpg?t=st=1730876780~exp=1730880380~hmac=35513278afabd616bb0010fb07c7d9d7699f038d0b1fbf9236133ad09135c295&w=740') no-repeat center center;
+  /*background: url('https://img.freepik.com/free-photo/abstract-textured-backgound_1258-30495.jpg?t=st=1730876780~exp=1730880380~hmac=35513278afabd616bb0010fb07c7d9d7699f038d0b1fbf9236133ad09135c295&w=740') no-repeat center center;
   background-size: cover; /* Ensure it covers the entire screen */
 }
 

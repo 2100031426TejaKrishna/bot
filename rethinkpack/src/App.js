@@ -18,6 +18,9 @@ import DetailsTab from './admin/view/DetailsTab';
 import CustomerDashboard from './customer/view/CustomerDashboard'; // Import the new CustomerDashboard component
 import Profile from './customer/view/Profile'; // Import the new CustomerDashboard component
 import EditProfile from './customer/view/EditProfile';
+import Subscribe from './customer/view/SubscribePage';
+import Contact from './customer/view/ContactUs';
+
 
 const destination = "localhost:5000"; // Ensure this matches your server configuration
 
@@ -67,6 +70,8 @@ const AppContent = () => {
         } />
         <Route path="/profile" element={<Profile />} />
         <Route path="/editprofile" element={<EditProfile />} />
+        <Route path="/subscribe" element={<Subscribe />} />
+        <Route path="/contact" element={<Contact />} />
 
         <Route path="/customer" element={
           <PrivateRoute redirectPath="/customer-login">

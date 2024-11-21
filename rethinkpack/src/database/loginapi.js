@@ -45,7 +45,7 @@ router.get('/allCustomers', async (req, res) => {
     const customers = await CustomerLogin.find().lean();
 
     // Send the JSON data with the response
-    console.log(customers);
+   //console.log(customers);
     res.json(customers);
   } catch (error) {
     console.error('Error fetching customer data:', error);
